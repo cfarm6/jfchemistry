@@ -13,11 +13,13 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64"]
 
 [tool.pixi.dependencies]
-python = "*"
-jobflow = "*"
+python = ">=3.12.11,<3.13"
+jobflow = ">=0.2.0,<0.3"
 rdkit = "*"
-ase = "*"
-pymatgen = "*"
+ase = ">=3.26.0,<4"
+pymatgen = ">=2025.10.7,<2026"
+openbabel = ">=3.1.1,<4"
+pip = ">=25.2,<26"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
@@ -72,6 +74,7 @@ ignore = [
     "PLR0914", # Too many locals
     "PLR0915", # Too many statements
     "PLR1702", # Too many nested-blocks
+    "PLC0415", # Import-outside-top-level
 ]
 
 [tool.ruff.lint.per-file-ignores]
