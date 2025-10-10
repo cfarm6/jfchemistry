@@ -54,7 +54,6 @@ class RDKitGeneration(StructureGeneration):
         params = getattr(rdDistGeom, self.method)()
         param_keys = [x[0] for x in inspect.getmembers(params)]
         for key, value in vars(self).items():
-            print(key, value)
 
             def _to_camel_case(s: str) -> str:
                 parts = s.split("_")

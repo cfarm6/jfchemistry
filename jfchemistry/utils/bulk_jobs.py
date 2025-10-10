@@ -65,8 +65,11 @@ def handle_structures(
 ) -> Response[dict[str, Any]] | None:
     """Handle a list of structures."""
     jobs: list[Response[dict[str, Any]]] = []
-    for structure in structures:
-        jobs.append(maker.make(structure))
+    if isinstance(structures, list):
+        for structure in structures:
+            jobs.append(maker.make(structure))
+    else:
+        return None
 
     return Response(
         output={
