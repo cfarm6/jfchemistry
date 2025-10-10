@@ -1,4 +1,4 @@
-"""Base class for structure generation."""
+"""Base class for conformer generation."""
 
 from dataclasses import dataclass
 from typing import Any, cast
@@ -11,12 +11,12 @@ from jfchemistry.utils.bulk_jobs import handle_structures
 
 
 @dataclass
-class GeometryOptimization(Maker):
+class ConformerGeneration(Maker):
     """Maker for generating a structure."""
 
-    name: str = "Geometry Optimization"
+    name: str = "Conformer Generation"
 
-    def optimize_structure(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
+    def generate_conformers(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
         """Generate a structure."""
         raise NotImplementedError
 
@@ -31,7 +31,7 @@ class GeometryOptimization(Maker):
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure
-            structure, properties = self.optimize_structure(cast("IMolecule", molecule))
+            structure, properties = self.generate_conformers(cast("IMolecule", molecule))
             if structure is None:
                 return Response(stop_children=True)
 

@@ -1,7 +1,7 @@
 """RDKit generation."""
 
 from dataclasses import dataclass
-from typing import Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pymatgen.core.structure import Molecule
 
@@ -26,16 +26,16 @@ class RDKitGeneration(StructureGeneration):
     enforce_chirality: Optional[bool] = None
     force_trans_amides: Optional[bool] = None
     ignore_smoothing_failures: Optional[bool] = None
-    max_iterations: Optional[int] = None
-    num_threads: Optional[int] = 1
-    num_zero_fail: Optional[int] = None
+    max_iterations: Optional[Annotated[int, "positive"]] = None
+    num_threads: Annotated[int, "positive"] = 1
+    num_zero_fail: Optional[Annotated[int, "positive"]] = None
     only_heavy_atoms_for_rms: Optional[bool] = None
     optimizer_force_tol: Optional[float] = None
     prune_rms_thresh: Optional[float] = None
     rand_neg_eig: Optional[bool] = None
-    random_seed: Optional[int] = None
+    random_seed: Optional[Annotated[int, "positive"]] = None
     symmetrize_conjugated_terminal_groups_for_pruning: Optional[bool] = None
-    timeout: Optional[int] = None
+    timeout: Optional[Annotated[int, "positive"]] = None
     track_failures: Optional[bool] = None
     use_basic_knowledge: Optional[bool] = None
     use_exp_torsion_angle_prefs: Optional[bool] = None
@@ -44,8 +44,9 @@ class RDKitGeneration(StructureGeneration):
     use_random_coords: Optional[bool] = None
     use_small_ring_torsions: Optional[bool] = None
     use_symmetry_for_pruning: Optional[bool] = None
+    num_conformers: Annotated[int, "positive"] = 1
 
-    def generate_structure(self, mol: RDMolMolecule) -> Union[Molecule, None]:
+    def generate_structure(self, mol: RDMolMolecule) -> Union[Molecule, list[Molecule], None]:
         """Generate a structure using RDKit."""
         import inspect
 
@@ -63,10 +64,15 @@ class RDKitGeneration(StructureGeneration):
             if camel_key not in param_keys or value is None:
                 continue
             setattr(params, camel_key, value)
-        rdDistGeom.EmbedMultipleConfs(mol, 1, params)
-        rdmolfiles.MolToV3KMolFile(mol, "mol.sdf")
-        molecule = Molecule.from_str(rdmolfiles.MolToV3KMolBlock(mol), fmt="sdf")  # type: ignore[arg-type]
-        charge = rdmolops.GetFormalCharge(mol)
-        spin = int(2 * (abs(charge) // 2) + 1)
-        molecule.set_charge_and_spin(charge, spin)
-        return molecule
+        rdDistGeom.EmbedMultipleConfs(mol, self.num_conformers, params)
+        molecules = []
+        for confId in range(mol.GetNumConformers()):
+            molecule = Molecule.from_str(
+                rdmolfiles.MolToV3KMolBlock(mol, confId=int(confId)),
+                fmt="sdf",  # type: ignore[arg-type]
+            )
+            molecules.append(molecule)
+            charge = rdmolops.GetFormalCharge(mol)
+            spin = int(2 * (abs(charge) // 2) + 1)
+            molecule.set_charge_and_spin(charge, spin)
+        return molecules

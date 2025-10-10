@@ -27,6 +27,6 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         charge = int(structure.charge)
         spin_multiplicity = int(structure.spin_multiplicity)
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
-        opt = getattr(ase.optimize, self.optimizer)(atoms, logfile="log.out")
+        opt = getattr(ase.optimize, self.optimizer)(atoms, logfile=None)
         opt.run(self.fmax, self.steps)
         return IMolecule.from_ase_atoms(atoms), self.get_properties(atoms)

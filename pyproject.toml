@@ -22,8 +22,9 @@ openbabel = ">=3.1.1,<4"
 pip = ">=25.2,<26"
 tblite = ">=0.4.0,<0.5"
 tblite-python = ">=0.4.0,<0.5"
-numpy = ">=2.0,<3"
 rich = "<14"
+cuda = ">=13.0.2,<14"
+cuda-nvrtc = ">=13.0.88,<14"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
@@ -36,6 +37,7 @@ orb = { features = ["orb"], solve-group = "default"}
 
 [tool.pixi.feature.aimnet2.pypi-dependencies]
 aimnet = {git = "https://github.com/cfarm6/aimnetcentral.git", branch = "numpy2.0"}
+torch = ">=2.8.0,<3"
 
 [tool.pixi.feature.orb.pypi-dependencies]
 orb_models = {git = "https://github.com/orbital-materials/orb-models.git"}
@@ -44,7 +46,7 @@ torch = ">=2.8.0,<3"
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd="ruff format ." }
 lint = { cmd="ruff check . --fix" }
-types = { cmd="mypy" }
+types = { cmd="ty check" }
 test = { cmd="pytest" }
 all = { depends-on = ["fmt", "lint", "types", "test"] }
 
@@ -52,10 +54,11 @@ all = { depends-on = ["fmt", "lint", "types", "test"] }
 pytest = ">=8.3"
 pytest-cov = ">=6.0"
 ruff = ">=0.11"
-mypy = ">=1.15"
 pre-commit = ">=4.2"
 pytest-xdist = "*"
 
+[tool.pixi.feature.dev.pypi-dependencies]
+ty = "*"
 
 [tool.ruff]
 line-length = 100

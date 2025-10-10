@@ -15,7 +15,7 @@ def handle_conformers(maker: Maker, structure: RDMolMolecule) -> Response[dict[s
     jobs: list[Response[dict[str, Any]]] = []
     for confId in range(structure.GetNumConformers()):
         s = RDMolMolecule(rdchem.Mol(structure, confId=confId))
-        jobs.append(maker.make(s))
+        jobs.append(maker.make(s))  # type: ignore
 
     return Response(
         output={
@@ -23,7 +23,7 @@ def handle_conformers(maker: Maker, structure: RDMolMolecule) -> Response[dict[s
             "files": [job.output["files"] for job in jobs],
             "properties": [job.output["properties"] for job in jobs],
         },
-        detour=jobs,
+        detour=jobs,  # type: ignore
     )
 
 
@@ -36,7 +36,7 @@ def handle_list_of_structures(
         if structure.GetNumConformers() > 1:
             jobs.append(handle_conformers(maker, structure))
         else:
-            jobs.append(maker.make(structure))
+            jobs.append(maker.make(structure))  # type: ignore
 
     return Response(
         output={
@@ -44,7 +44,7 @@ def handle_list_of_structures(
             "files": [job.output["files"] for job in jobs],
             "properties": [job.output["properties"] for job in jobs],
         },
-        detour=jobs,
+        detour=jobs,  # type: ignore
     )
 
 
@@ -67,7 +67,7 @@ def handle_structures(
     jobs: list[Response[dict[str, Any]]] = []
     if isinstance(structures, list):
         for structure in structures:
-            jobs.append(maker.make(structure))
+            jobs.append(maker.make(structure))  # type: ignore
     else:
         return None
 
@@ -77,5 +77,5 @@ def handle_structures(
             "files": [job.output["files"] for job in jobs],
             "properties": [job.output["properties"] for job in jobs],
         },
-        detour=jobs,
+        detour=jobs,  # type: ignore
     )
