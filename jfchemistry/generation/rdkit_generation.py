@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal, Optional, Union
 
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import Molecule
 
 from jfchemistry.generation.base import StructureGeneration
 from jfchemistry.jfchemistry import RDMolMolecule
@@ -45,11 +45,11 @@ class RDKitGeneration(StructureGeneration):
     use_small_ring_torsions: Optional[bool] = None
     use_symmetry_for_pruning: Optional[bool] = None
 
-    def generate_structure(self, mol: RDMolMolecule) -> Union[IMolecule, None]:
+    def generate_structure(self, mol: RDMolMolecule) -> Union[Molecule, None]:
         """Generate a structure using RDKit."""
         import inspect
 
-        from rdkit.Chem import rdDistGeom, rdmolfiles
+        from rdkit.Chem import rdDistGeom, rdmolfiles, rdmolops
 
         params = getattr(rdDistGeom, self.method)()
         param_keys = [x[0] for x in inspect.getmembers(params)]
@@ -66,5 +66,8 @@ class RDKitGeneration(StructureGeneration):
             setattr(params, camel_key, value)
         rdDistGeom.EmbedMultipleConfs(mol, 1, params)
         rdmolfiles.MolToV3KMolFile(mol, "mol.sdf")
-        molecule = IMolecule.from_str(rdmolfiles.MolToV3KMolBlock(mol), fmt="mol")  # type: ignore[arg-type]
+        molecule = Molecule.from_str(rdmolfiles.MolToV3KMolBlock(mol), fmt="sdf")  # type: ignore[arg-type]
+        charge = rdmolops.GetFormalCharge(mol)
+        spin = int(2 * (abs(charge) // 2) + 1)
+        molecule.set_charge_and_spin(charge, spin)
         return molecule

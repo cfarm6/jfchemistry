@@ -8,7 +8,7 @@ from jobflow.core.maker import Maker
 from pymatgen.core.structure import IMolecule
 
 from jfchemistry.jfchemistry import RDMolMolecule
-from jfchemistry.utils.bulk_jobs import handle_structure
+from jfchemistry.utils.bulk_jobs import handle_molecule
 
 
 @dataclass
@@ -27,7 +27,7 @@ class StructureGeneration(Maker):
     @job(files="files", properties="properties")
     def make(self, molecule: RDMolMolecule | list[RDMolMolecule]) -> Response[dict[str, Any]]:
         """Make the job."""
-        resp = handle_structure(self, molecule)
+        resp = handle_molecule(self, molecule)
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure
@@ -38,7 +38,7 @@ class StructureGeneration(Maker):
             return Response(
                 output={
                     "structure": structure,
-                    "files": structure.to(fmt="sdf"),
+                    "files": structure.to(fmt="mol"),
                     "properties": None,
                 }
             )

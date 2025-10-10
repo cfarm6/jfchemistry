@@ -23,6 +23,7 @@ pip = ">=25.2,<26"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
+aimnet = {git = "https://github.com/cfarm6/aimnetcentral.git", branch = "numpy2.0"}
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
