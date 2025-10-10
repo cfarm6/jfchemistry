@@ -1,11 +1,11 @@
 [project]
 name = "jfchemistry"
 description = "JFChemistry"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 version = "0.0.1"
 readme = "README.md"
 keywords = []
-authors = [{name = "Carson Farmer"}]
+authors = [{ name = "Carson Farmer" }]
 requires-python = ">=3.12"
 dependencies = ["tomli-w>=1.2.0,<2"]
 
@@ -32,23 +32,23 @@ jfchemistry = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default"}
-aimnet2 = { features = ["aimnet2"], solve-group = "default"}
-orb = { features = ["orb"], solve-group = "default"}
+dev = { features = ["dev"], solve-group = "default" }
+aimnet2 = { features = ["aimnet2"], solve-group = "default" }
+orb = { features = ["orb"], solve-group = "default" }
 
 [tool.pixi.feature.aimnet2.pypi-dependencies]
-aimnet = {git = "https://github.com/cfarm6/aimnetcentral.git", branch = "numpy2.0"}
+aimnet = { git = "https://github.com/cfarm6/aimnetcentral.git", branch = "numpy2.0" }
 torch = ">=2.8.0,<3"
 
 [tool.pixi.feature.orb.pypi-dependencies]
-orb_models = {git = "https://github.com/orbital-materials/orb-models.git"}
+orb_models = { git = "https://github.com/orbital-materials/orb-models.git" }
 torch = ">=2.8.0,<3"
 
 [tool.pixi.feature.dev.tasks]
-fmt = { cmd="ruff format ." }
-lint = { cmd="ruff check . --fix" }
-types = { cmd="ty check" }
-test = { cmd="pytest" }
+fmt = { cmd = "ruff format ." }
+lint = { cmd = "ruff check . --fix" }
+types = { cmd = "ty check" }
+test = { cmd = "pytest" }
 all = { depends-on = ["fmt", "lint", "types", "test"] }
 
 [tool.pixi.feature.dev.dependencies]
@@ -66,26 +66,26 @@ line-length = 100
 
 [tool.ruff.lint]
 select = [
-    "B",  # bugbear
-    "D",  # pydocstyle
-    "E",  # pycodestyle errors
-    "F",  # pyflakes
-    "I",  # isort
-    "N",  # pep8-naming conventions
-    "W",  # pycodestyle warnings
-    "C4", # comprehensions
-    "PL", # pylint
-    "PT", # flake8-pytest-style
-    "PIE", # misc lints
-    "PYI", # flake8-pyi
-    "TID", # tidy imports
-    "TCH", # type-checking imports
-    "RUF", # Ruff-specific rules
-    "RSE", # flake8-raise
+    "B",      # bugbear
+    "D",      # pydocstyle
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming conventions
+    "W",      # pycodestyle warnings
+    "C4",     # comprehensions
+    "PL",     # pylint
+    "PT",     # flake8-pytest-style
+    "PIE",    # misc lints
+    "PYI",    # flake8-pyi
+    "TID",    # tidy imports
+    "TCH",    # type-checking imports
+    "RUF",    # Ruff-specific rules
+    "RSE",    # flake8-raise
     "ICN001", # unconventional-import-alias
 ]
 ignore = [
-    "N806", # Non-lowercase variable in function
+    "N806",    # Non-lowercase variable in function
     "PLR0911", # Too many returns
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments to function call
@@ -101,10 +101,6 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.mypy]
-files = ["jfchemistry", "tests"]
-strict = true
-pretty = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "jfchemistry"]
