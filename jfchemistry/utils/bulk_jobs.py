@@ -11,7 +11,7 @@ from jfchemistry.jfchemistry import RDMolMolecule
 
 
 def handle_conformers(maker: Maker, structure: RDMolMolecule) -> Response[dict[str, Any]]:
-    """Handle conformers."""
+    """Handle distributing jobs for conformers."""
     jobs: list[Response[dict[str, Any]]] = []
     for confId in range(structure.GetNumConformers()):
         s = RDMolMolecule(rdchem.Mol(structure, confId=confId))
@@ -30,7 +30,7 @@ def handle_conformers(maker: Maker, structure: RDMolMolecule) -> Response[dict[s
 def handle_list_of_structures(
     maker: Maker, structures: list[RDMolMolecule]
 ) -> Response[dict[str, Any]]:
-    """Handle a list of structures."""
+    """Handle distributing jobs for a list of structures."""
     jobs: list[Response[dict[str, Any]]] = []
     for structure in structures:
         if structure.GetNumConformers() > 1:
@@ -51,7 +51,7 @@ def handle_list_of_structures(
 def handle_molecule(
     maker: Maker, structure: RDMolMolecule | list[RDMolMolecule]
 ) -> Response[dict[str, Any]] | None:
-    """Handle a structure."""
+    """Handle distributing jobs for a RDKit molecule."""
     if type(structure) is list:
         return handle_list_of_structures(maker, structure)
     elif cast("RDMolMolecule", structure).GetNumConformers() > 1:
@@ -63,7 +63,7 @@ def handle_molecule(
 def handle_structures(
     maker: Maker, structures: list[IMolecule] | IMolecule
 ) -> Response[dict[str, Any]] | None:
-    """Handle a list of structures."""
+    """Handle distributing jobs for a list of Molecules."""
     jobs: list[Response[dict[str, Any]]] = []
     if isinstance(structures, list):
         for structure in structures:

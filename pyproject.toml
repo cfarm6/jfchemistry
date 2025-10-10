@@ -7,6 +7,7 @@ readme = "README.md"
 keywords = []
 authors = [{name = "Carson Farmer"}]
 requires-python = ">=3.12"
+dependencies = ["tomli-w>=1.2.0,<2"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
