@@ -1,7 +1,7 @@
-"""Base class for conformer generation."""
+"""Base class for structure modifications."""
 
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
@@ -11,12 +11,14 @@ from jfchemistry.utils.bulk_jobs import handle_structures
 
 
 @dataclass
-class ConformerGeneration(Maker):
-    """Maker for generating a structure."""
+class StructureModification(Maker):
+    """Maker for modifying a structure."""
 
-    name: str = "Conformer Generation"
+    name: str = "Structure Modification"
 
-    def generate_conformers(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
+    def modify_structure(
+        self, structure: IMolecule
+    ) -> tuple[Optional[list[IMolecule] | IMolecule], Optional[dict[str, Any]]]:
         """Generate a structure."""
         raise NotImplementedError
 
@@ -27,14 +29,20 @@ class ConformerGeneration(Maker):
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure
-            conformers, properties = self.generate_conformers(cast("IMolecule", molecule))
-            if conformers is None:
+            print(len(molecule))
+            structures, properties = self.modify_structure(cast("IMolecule", molecule))
+            print(len(structures[0]))
+            if structures is None:
                 return Response(stop_children=True)
 
-            files = [conformer.to(fmt="xyz") for conformer in conformers]
+            if isinstance(structures, list):
+                files = [structure.to(fmt="xyz") for structure in structures]
+            else:
+                files = [structures.to(fmt="xyz")]
+
             return Response(
                 output={
-                    "structure": conformers,
+                    "structure": structures,
                     "files": files,
                     "properties": properties,
                 }

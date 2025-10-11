@@ -26,6 +26,7 @@ tblite-python = ">=0.4.0,<0.5"
 rich = "<14"
 cuda = ">=13.0.2,<14"
 cuda-nvrtc = ">=13.0.88,<14"
+crest = ">=3.0.2,<4"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
@@ -85,13 +86,13 @@ select = [
     "ICN001", # unconventional-import-alias
 ]
 ignore = [
-    "N806",    # Non-lowercase variable in function
-    "PLR0911", # Too many returns
+    "N806", # Non-lowercase variable in function
+    # "PLR0911", # Too many returns
     "PLR0912", # Too many branches
-    "PLR0913", # Too many arguments to function call
-    "PLR0914", # Too many locals
-    "PLR0915", # Too many statements
-    "PLR1702", # Too many nested-blocks
+    # "PLR0913", # Too many arguments to function call
+    # "PLR0914", # Too many locals
+    # "PLR0915", # Too many statements
+    # "PLR1702", # Too many nested-blocks
     "PLC0415", # Import-outside-top-level
 ]
 

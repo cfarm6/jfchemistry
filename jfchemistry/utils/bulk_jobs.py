@@ -73,7 +73,7 @@ def handle_structures(
 
     return Response(
         output={
-            "structures": [job.output["structure"] for job in jobs],
+            "structure": [job.output["structure"] for job in jobs],
             "files": [job.output["files"] for job in jobs],
             "properties": [job.output["properties"] for job in jobs],
         },

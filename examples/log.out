@@ -1,278 +1,315 @@
-       Step     Time          Energy          fmax
-LBFGS:    0 14:42:39    -3223.265073        3.113451
-LBFGS:    1 14:42:39    -3223.503191        1.890675
-LBFGS:    2 14:42:39    -3223.646927        0.822316
-LBFGS:    3 14:42:39    -3223.707681        0.773500
-LBFGS:    4 14:42:39    -3223.773287        0.542309
-LBFGS:    5 14:42:39    -3223.792529        0.404350
-LBFGS:    6 14:42:39    -3223.814745        0.403592
-LBFGS:    7 14:42:39    -3223.839950        0.544658
-LBFGS:    8 14:42:39    -3223.862373        0.444042
-LBFGS:    9 14:42:39    -3223.878944        0.335454
-LBFGS:   10 14:42:39    -3223.893211        0.359997
-LBFGS:   11 14:42:39    -3223.910341        0.390755
-LBFGS:   12 14:42:39    -3223.926502        0.308795
-LBFGS:   13 14:42:39    -3223.934487        0.218180
-LBFGS:   14 14:42:39    -3223.937774        0.153772
-LBFGS:   15 14:42:39    -3223.940263        0.127624
-LBFGS:   16 14:42:39    -3223.941986        0.118431
-LBFGS:   17 14:42:39    -3223.943168        0.088335
-LBFGS:   18 14:42:39    -3223.943836        0.109942
-LBFGS:   19 14:42:39    -3223.944290        0.055146
-LBFGS:   20 14:42:39    -3223.944587        0.044878
-       Step     Time          Energy          fmax
-LBFGS:    0 14:48:33    -3223.265073        3.113451
-LBFGS:    1 14:48:33    -3223.503191        1.890675
-LBFGS:    2 14:48:33    -3223.646927        0.822316
-LBFGS:    3 14:48:33    -3223.707681        0.773500
-LBFGS:    4 14:48:33    -3223.773287        0.542309
-LBFGS:    5 14:48:33    -3223.792529        0.404350
-LBFGS:    6 14:48:33    -3223.814745        0.403592
-LBFGS:    7 14:48:33    -3223.839950        0.544658
-LBFGS:    8 14:48:33    -3223.862373        0.444042
-LBFGS:    9 14:48:33    -3223.878944        0.335454
-LBFGS:   10 14:48:33    -3223.893211        0.359997
-LBFGS:   11 14:48:33    -3223.910341        0.390755
-LBFGS:   12 14:48:33    -3223.926502        0.308795
-LBFGS:   13 14:48:33    -3223.934487        0.218180
-LBFGS:   14 14:48:33    -3223.937774        0.153772
-LBFGS:   15 14:48:33    -3223.940263        0.127624
-LBFGS:   16 14:48:33    -3223.941986        0.118431
-LBFGS:   17 14:48:33    -3223.943168        0.088335
-LBFGS:   18 14:48:33    -3223.943836        0.109942
-LBFGS:   19 14:48:33    -3223.944290        0.055146
-LBFGS:   20 14:48:33    -3223.944587        0.044878
-       Step     Time          Energy          fmax
-LBFGS:    0 14:50:11    -3223.265073        3.113451
-LBFGS:    1 14:50:11    -3223.503191        1.890675
-LBFGS:    2 14:50:11    -3223.646927        0.822316
-LBFGS:    3 14:50:11    -3223.707681        0.773500
-LBFGS:    4 14:50:11    -3223.773287        0.542309
-LBFGS:    5 14:50:11    -3223.792529        0.404350
-LBFGS:    6 14:50:11    -3223.814745        0.403592
-LBFGS:    7 14:50:11    -3223.839950        0.544658
-LBFGS:    8 14:50:11    -3223.862373        0.444042
-LBFGS:    9 14:50:11    -3223.878944        0.335454
-LBFGS:   10 14:50:11    -3223.893211        0.359997
-LBFGS:   11 14:50:11    -3223.910341        0.390755
-LBFGS:   12 14:50:11    -3223.926502        0.308795
-LBFGS:   13 14:50:11    -3223.934487        0.218180
-LBFGS:   14 14:50:11    -3223.937774        0.153772
-LBFGS:   15 14:50:11    -3223.940263        0.127624
-LBFGS:   16 14:50:11    -3223.941986        0.118431
-LBFGS:   17 14:50:11    -3223.943168        0.088335
-LBFGS:   18 14:50:11    -3223.943836        0.109942
-LBFGS:   19 14:50:11    -3223.944290        0.055146
-LBFGS:   20 14:50:11    -3223.944587        0.044878
-       Step     Time          Energy          fmax
-LBFGS:    0 14:53:09    -3225.054065        1.622198
-LBFGS:    1 14:53:09    -3225.139568        1.006824
-LBFGS:    2 14:53:09    -3225.228617        0.726690
-LBFGS:    3 14:53:09    -3225.265243        0.554250
-LBFGS:    4 14:53:09    -3225.288412        0.370484
-LBFGS:    5 14:53:09    -3225.300133        0.354200
-LBFGS:    6 14:53:09    -3225.322192        0.484424
-LBFGS:    7 14:53:09    -3225.340870        0.470619
-LBFGS:    8 14:53:10    -3225.355550        0.362106
-LBFGS:    9 14:53:10    -3225.365635        0.268027
-LBFGS:   10 14:53:10    -3225.375123        0.295623
-LBFGS:   11 14:53:10    -3225.383550        0.264973
-LBFGS:   12 14:53:10    -3225.388206        0.151525
-LBFGS:   13 14:53:10    -3225.389624        0.103537
-LBFGS:   14 14:53:10    -3225.390375        0.083440
-LBFGS:   15 14:53:10    -3225.390980        0.065183
-LBFGS:   16 14:53:10    -3225.391318        0.050879
-LBFGS:   17 14:53:10    -3225.391475        0.027413
-       Step     Time          Energy          fmax
-LBFGS:    0 14:54:47    -3225.054065        1.622198
-LBFGS:    1 14:54:47    -3225.139568        1.006824
-LBFGS:    2 14:54:47    -3225.228617        0.726690
-LBFGS:    3 14:54:47    -3225.265243        0.554250
-LBFGS:    4 14:54:47    -3225.288412        0.370484
-LBFGS:    5 14:54:47    -3225.300133        0.354200
-LBFGS:    6 14:54:47    -3225.322192        0.484424
-LBFGS:    7 14:54:47    -3225.340870        0.470619
-LBFGS:    8 14:54:47    -3225.355550        0.362106
-LBFGS:    9 14:54:47    -3225.365635        0.268027
-LBFGS:   10 14:54:47    -3225.375123        0.295623
-LBFGS:   11 14:54:47    -3225.383550        0.264973
-LBFGS:   12 14:54:47    -3225.388206        0.151525
-LBFGS:   13 14:54:47    -3225.389624        0.103537
-LBFGS:   14 14:54:47    -3225.390375        0.083440
-LBFGS:   15 14:54:47    -3225.390980        0.065183
-LBFGS:   16 14:54:47    -3225.391318        0.050879
-LBFGS:   17 14:54:47    -3225.391475        0.027413
-       Step     Time          Energy          fmax
-LBFGS:    0 14:54:58    -3216.073505        3.757606
-LBFGS:    1 14:54:58    -3216.359997        1.690274
-LBFGS:    2 14:54:58    -3216.520848        0.844556
-LBFGS:    3 14:54:58    -3216.553867        0.597696
-LBFGS:    4 14:54:58    -3216.573092        0.359441
-LBFGS:    5 14:54:58    -3216.576811        0.289232
-LBFGS:    6 14:54:58    -3216.583463        0.154908
-LBFGS:    7 14:54:58    -3216.584659        0.096482
-LBFGS:    8 14:54:58    -3216.585261        0.061479
-LBFGS:    9 14:54:58    -3216.585603        0.071145
-LBFGS:   10 14:54:58    -3216.586012        0.061560
-LBFGS:   11 14:54:58    -3216.586177        0.030893
-       Step     Time          Energy          fmax
-LBFGS:    0 15:10:47     -273.401036        1.705310
-LBFGS:    1 15:10:47     -273.481337        1.188041
-LBFGS:    2 15:10:47     -273.562402        0.499471
-LBFGS:    3 15:10:47     -273.582645        0.507905
-LBFGS:    4 15:10:47     -273.605962        0.397405
-LBFGS:    5 15:10:47     -273.617211        0.340216
-LBFGS:    6 15:10:47     -273.633436        0.399919
-LBFGS:    7 15:10:47     -273.650962        0.413790
-LBFGS:    8 15:10:47     -273.667499        0.341379
-LBFGS:    9 15:10:47     -273.678044        0.303183
-LBFGS:   10 15:10:47     -273.688984        0.250526
-LBFGS:   11 15:10:47     -273.697817        0.259600
-LBFGS:   12 15:10:47     -273.703550        0.179691
-LBFGS:   13 15:10:47     -273.707264        0.161384
-LBFGS:   14 15:10:47     -273.709496        0.145200
-LBFGS:   15 15:10:47     -273.710741        0.096378
-LBFGS:   16 15:10:47     -273.711401        0.080494
-LBFGS:   17 15:10:47     -273.711756        0.053623
-LBFGS:   18 15:10:47     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:14:02     -273.401036        1.705310
-LBFGS:    1 15:14:02     -273.481337        1.188041
-LBFGS:    2 15:14:02     -273.562402        0.499471
-LBFGS:    3 15:14:02     -273.582645        0.507905
-LBFGS:    4 15:14:02     -273.605962        0.397405
-LBFGS:    5 15:14:02     -273.617211        0.340216
-LBFGS:    6 15:14:02     -273.633436        0.399919
-LBFGS:    7 15:14:02     -273.650962        0.413790
-LBFGS:    8 15:14:02     -273.667499        0.341379
-LBFGS:    9 15:14:02     -273.678044        0.303183
-LBFGS:   10 15:14:02     -273.688984        0.250526
-LBFGS:   11 15:14:02     -273.697817        0.259600
-LBFGS:   12 15:14:02     -273.703550        0.179691
-LBFGS:   13 15:14:02     -273.707264        0.161384
-LBFGS:   14 15:14:02     -273.709496        0.145200
-LBFGS:   15 15:14:02     -273.710741        0.096378
-LBFGS:   16 15:14:02     -273.711401        0.080494
-LBFGS:   17 15:14:02     -273.711756        0.053623
-LBFGS:   18 15:14:02     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:14:21     -273.401036        1.705310
-LBFGS:    1 15:14:21     -273.481337        1.188041
-LBFGS:    2 15:14:21     -273.562402        0.499471
-LBFGS:    3 15:14:21     -273.582645        0.507905
-LBFGS:    4 15:14:21     -273.605962        0.397405
-LBFGS:    5 15:14:21     -273.617211        0.340216
-LBFGS:    6 15:14:21     -273.633436        0.399919
-LBFGS:    7 15:14:21     -273.650962        0.413790
-LBFGS:    8 15:14:21     -273.667499        0.341379
-LBFGS:    9 15:14:21     -273.678044        0.303183
-LBFGS:   10 15:14:21     -273.688984        0.250526
-LBFGS:   11 15:14:21     -273.697817        0.259600
-LBFGS:   12 15:14:21     -273.703550        0.179691
-LBFGS:   13 15:14:21     -273.707264        0.161384
-LBFGS:   14 15:14:21     -273.709496        0.145200
-LBFGS:   15 15:14:21     -273.710741        0.096378
-LBFGS:   16 15:14:21     -273.711401        0.080494
-LBFGS:   17 15:14:21     -273.711756        0.053623
-LBFGS:   18 15:14:21     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:14:30     -273.401036        1.705310
-LBFGS:    1 15:14:30     -273.481337        1.188041
-LBFGS:    2 15:14:30     -273.562402        0.499471
-LBFGS:    3 15:14:30     -273.582645        0.507905
-LBFGS:    4 15:14:30     -273.605962        0.397405
-LBFGS:    5 15:14:30     -273.617211        0.340216
-LBFGS:    6 15:14:30     -273.633436        0.399919
-LBFGS:    7 15:14:30     -273.650962        0.413790
-LBFGS:    8 15:14:30     -273.667499        0.341379
-LBFGS:    9 15:14:30     -273.678044        0.303183
-LBFGS:   10 15:14:30     -273.688984        0.250526
-LBFGS:   11 15:14:30     -273.697817        0.259600
-LBFGS:   12 15:14:30     -273.703550        0.179691
-LBFGS:   13 15:14:30     -273.707264        0.161384
-LBFGS:   14 15:14:30     -273.709496        0.145200
-LBFGS:   15 15:14:30     -273.710741        0.096378
-LBFGS:   16 15:14:30     -273.711401        0.080494
-LBFGS:   17 15:14:30     -273.711756        0.053623
-LBFGS:   18 15:14:30     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:14:37     -273.401036        1.705310
-LBFGS:    1 15:14:37     -273.481337        1.188041
-LBFGS:    2 15:14:37     -273.562402        0.499471
-LBFGS:    3 15:14:37     -273.582645        0.507905
-LBFGS:    4 15:14:37     -273.605962        0.397405
-LBFGS:    5 15:14:37     -273.617211        0.340216
-LBFGS:    6 15:14:37     -273.633436        0.399919
-LBFGS:    7 15:14:37     -273.650962        0.413790
-LBFGS:    8 15:14:37     -273.667499        0.341379
-LBFGS:    9 15:14:37     -273.678044        0.303183
-LBFGS:   10 15:14:37     -273.688984        0.250526
-LBFGS:   11 15:14:37     -273.697817        0.259600
-LBFGS:   12 15:14:37     -273.703550        0.179691
-LBFGS:   13 15:14:37     -273.707264        0.161384
-LBFGS:   14 15:14:37     -273.709496        0.145200
-LBFGS:   15 15:14:37     -273.710741        0.096378
-LBFGS:   16 15:14:37     -273.711401        0.080494
-LBFGS:   17 15:14:37     -273.711756        0.053623
-LBFGS:   18 15:14:37     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:44:44     -273.401036        1.705310
-LBFGS:    1 15:44:44     -273.481337        1.188041
-LBFGS:    2 15:44:44     -273.562402        0.499471
-LBFGS:    3 15:44:44     -273.582645        0.507905
-LBFGS:    4 15:44:44     -273.605962        0.397405
-LBFGS:    5 15:44:44     -273.617211        0.340216
-LBFGS:    6 15:44:44     -273.633436        0.399919
-LBFGS:    7 15:44:44     -273.650962        0.413790
-LBFGS:    8 15:44:44     -273.667499        0.341379
-LBFGS:    9 15:44:44     -273.678044        0.303183
-LBFGS:   10 15:44:44     -273.688984        0.250526
-LBFGS:   11 15:44:44     -273.697817        0.259600
-LBFGS:   12 15:44:44     -273.703550        0.179691
-LBFGS:   13 15:44:44     -273.707264        0.161384
-LBFGS:   14 15:44:44     -273.709496        0.145200
-LBFGS:   15 15:44:44     -273.710741        0.096378
-LBFGS:   16 15:44:44     -273.711401        0.080494
-LBFGS:   17 15:44:44     -273.711756        0.053623
-LBFGS:   18 15:44:44     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 15:44:52     -273.401036        1.705310
-LBFGS:    1 15:44:52     -273.481337        1.188041
-LBFGS:    2 15:44:52     -273.562402        0.499471
-LBFGS:    3 15:44:52     -273.582645        0.507905
-LBFGS:    4 15:44:52     -273.605962        0.397405
-LBFGS:    5 15:44:52     -273.617211        0.340216
-LBFGS:    6 15:44:52     -273.633436        0.399919
-LBFGS:    7 15:44:52     -273.650962        0.413790
-LBFGS:    8 15:44:52     -273.667499        0.341379
-LBFGS:    9 15:44:52     -273.678044        0.303183
-LBFGS:   10 15:44:52     -273.688984        0.250526
-LBFGS:   11 15:44:52     -273.697817        0.259600
-LBFGS:   12 15:44:52     -273.703550        0.179691
-LBFGS:   13 15:44:52     -273.707264        0.161384
-LBFGS:   14 15:44:52     -273.709496        0.145200
-LBFGS:   15 15:44:52     -273.710741        0.096378
-LBFGS:   16 15:44:52     -273.711401        0.080494
-LBFGS:   17 15:44:52     -273.711756        0.053623
-LBFGS:   18 15:44:52     -273.711947        0.029533
-       Step     Time          Energy          fmax
-LBFGS:    0 16:22:10    -3222.253906        1.092651
-LBFGS:    1 16:22:10    -3222.301025        0.559295
-LBFGS:    2 16:22:10    -3222.347900        0.623536
-LBFGS:    3 16:22:10    -3222.375488        0.482035
-LBFGS:    4 16:22:10    -3222.399658        0.466577
-LBFGS:    5 16:22:10    -3222.415283        0.346803
-LBFGS:    6 16:22:11    -3222.432861        0.477341
-LBFGS:    7 16:22:11    -3222.450195        0.397540
-LBFGS:    8 16:22:11    -3222.465820        0.364094
-LBFGS:    9 16:22:11    -3222.478760        0.297431
-LBFGS:   10 16:22:11    -3222.488770        0.304663
-LBFGS:   11 16:22:11    -3222.500000        0.407083
-LBFGS:   12 16:22:11    -3222.511475        0.361798
-LBFGS:   13 16:22:11    -3222.517334        0.187615
-LBFGS:   14 16:22:11    -3222.520020        0.122223
-LBFGS:   15 16:22:11    -3222.521729        0.103406
-LBFGS:   16 16:22:11    -3222.522705        0.085446
-LBFGS:   17 16:22:11    -3222.523438        0.063819
-LBFGS:   18 16:22:11    -3222.523926        0.053478
-LBFGS:   19 16:22:11    -3222.524170        0.041171
+
+       ╔════════════════════════════════════════════╗
+       ║            ___ ___ ___ ___ _____           ║
+       ║           / __| _ \ __/ __|_   _|          ║
+       ║          | (__|   / _|\__ \ | |            ║
+       ║           \___|_|_\___|___/ |_|            ║
+       ║                                            ║
+       ║  Conformer-Rotamer Ensemble Sampling Tool  ║
+       ║          based on the xTB methods          ║
+       ║                                            ║
+       ╚════════════════════════════════════════════╝
+       Version 3.0.2, Tue, 05 August 16:25:20, 08/05/2025
+       commit (6914a25) compiled by 'usr@b54ea9d7c43e'
+
+   Cite work conducted with this code as
+
+   • P.Pracht, F.Bohle, S.Grimme, PCCP, 2020, 22, 7169-7192.
+   • S.Grimme, JCTC, 2019, 15, 2847-2862.
+   • P.Pracht, S.Grimme, C.Bannwarth, F.Bohle, S.Ehlert,
+     G.Feldmann, J.Gorges, M.Müller, T.Neudecker, C.Plett,
+     S.Spicher, P.Steinbach, P.Wesołowski, F.Zeller,
+     J. Chem. Phys., 2024, 160, 114110.
+
+   for works involving QCG cite
+
+   • S.Spicher, C.Plett, P.Pracht, A.Hansen, S.Grimme,
+     JCTC, 2022, 18 (5), 3174-3189.
+   • C.Plett, S. Grimme,
+     Angew. Chem. Int. Ed. 2023, 62, e202214477.
+
+   for works involving MECP screening cite
+
+   • P.Pracht, C.Bannwarth, JCTC, 2022, 18 (10), 6370-6385.
+
+   Original code
+     P.Pracht, S.Grimme, Universität Bonn, MCTC
+   with help from (alphabetical order):
+     C.Bannwarth, F.Bohle, S.Ehlert, G.Feldmann, J.Gorges,
+     S.Grimme, C.Plett, P.Pracht, S.Spicher, P.Steinbach,
+     P.Wesolowski, F.Zeller
+
+   Online documentation is available at
+   https://crest-lab.github.io/crest-docs/
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Lesser General Public License (LGPL) for more details.
+
+ Command line input:
+ $ crest input.sdf --deprotonate --input crest.toml --chrg 0.0 --newversion
+
+ reading crest.toml
+********************************************************************************
+* INPUT FILE crest.toml content (without comments):
+********************************************************************************
+* [calculation]
+* [[calculation.level]]
+* method = "gfn2"
+* rdwbo = true
+********************************************************************************
+  --deprotonate : automated deprotonation script
+  --chrg 0.0
+
+ -----------------------------
+ Initial Geometry Optimization
+ -----------------------------
+ Geometry successfully optimized.
+
+      _                      _                    _
+   __| | ___ _ __  _ __ ___ | |_ ___  _ __   __ _| |_ ___
+  / _` |/ _ \ '_ \| '__/ _ \| __/ _ \| '_ \ / _` | __/ _ \
+ | (_| |  __/ |_) | | | (_) | || (_) | | | | (_| | ||  __/
+  \__,_|\___| .__/|_|  \___/ \__\___/|_| |_|\__,_|\__\___|
+            |_|
+ ---------------------------------------------------------
+       automated deprotonation site screening script
+             revised version (c) P.Pracht 2024
+ Cite as:
+   P.Pracht, R.Wilcken, A.Udvarhelyi, S.Rodde, S.Grimme
+   JCAMD, 2018, 32, 1139-1149.
+
+ =============================
+  # threads =           1
+ =============================
+
+ Input structure:
+  10
+
+ C         -0.0432495045       -0.5338539481       -0.0001188544
+ C          1.2778219187        0.2697767149        0.0001036775
+ C         -1.2215345675        0.3472332727        0.0002903378
+ H         -0.0467266215       -1.1709789752       -0.8887910610
+ H         -0.0465954346       -1.1714753900        0.8881510045
+ H          2.1267069370       -0.4095143054       -0.0001231658
+ H          1.3326671838        0.9014198673        0.8832352262
+ H          1.3326519815        0.9021787538       -0.8824613596
+ H         -1.6037001752        0.7446730260        0.9200795982
+ H         -1.6048404166        0.7439624078       -0.9202092217
+
+--------------------------------------------------------------------------------
+
+> Re-sorting input structure ...
+  10
+
+ C         -0.0432495045       -0.5338539481       -0.0001188544
+ C          1.2778219187        0.2697767149        0.0001036775
+ C         -1.2215345675        0.3472332727        0.0002903378
+ H         -0.0467266215       -1.1709789752       -0.8887910610
+ H         -0.0465954346       -1.1714753900        0.8881510045
+ H          2.1267069370       -0.4095143054       -0.0001231658
+ H          1.3326671838        0.9014198673        0.8832352262
+ H          1.3326519815        0.9021787538       -0.8824613596
+ H         -1.6037001752        0.7446730260        0.9200795982
+ H         -1.6048404166        0.7439624078       -0.9202092217
+
+> Generating candidate structures ...
+> Up to 7 new structures
+> Decreasing the molecular charge by 1
+> Write deprotonate_0.xyz with 7 candidates ...
+> done.
+
+ ---------------------------------------
+ Deprotomer Ensemble FF Pre-Optimization
+ ---------------------------------------
+> Removal of some hydrogen atoms may lead to initial
+  extremely high-energy candidates which can undergo unwanted
+  chemical changes in optimizations. Classical force-fields
+  with defined bond-topology can help circumvent this issue.
+> Setting up force-field structure pre-optimization ...
+ ----------------
+ Calculation info
+ ----------------
+> User-defined calculation level:
+ : GFN-FF calculation via GFNFF lib
+ :   Molecular charge    : -1
+
+ Optimization engine: ANCOPT
+ Hessian update type: BFGS
+ E/G convergence criteria:  0.500E-05 Eh, 0.100E-02 Eh/a0
+ maximum optimization steps: 10000
+> 7 structures to optimize ...
+ |>14.3% |>28.6% |>42.9% |>57.1% |>71.4% |>85.7% |>100.0%
+ done.
+> 7 of 7 structures successfully optimized (100.0% success)
+> Total runtime for 7 optimizations:
+ * wall-time:     0 d,  0 h,  0 min,  0.037 sec
+ *  cpu-time:     0 d,  0 h,  0 min,  0.848 sec
+ * ratio c/w:    22.872 speedup
+> Corresponding to approximately 0.005 sec per processed structure
+> Write deprotonate_1.xyz with optimized structures ...
+> Sorting structures by energy to remove failed opts. ...
+ input  file name : deprotonate_1.xyz
+ output file name : deprotonate_1.xyz.sorted
+ sorting energy window (EWIN)   : 1000.0000 / kcal*mol⁻¹
+ reference state Etot           :  -2.3435534699999998
+
+=====================================================
+============== ordered structure list ===============
+=====================================================
+ written to file <deprotonate_1.xyz.sorted>
+
+ structure      ΔE(kcal/mol)                 Etot(Eh)
+         1            0.0000            -2.3435534700
+         2            0.0002            -2.3435531200
+         3           55.8146            -2.2546071900
+         4           55.8824            -2.2544991500
+         5           55.8827            -2.2544987600
+         6           61.7483            -2.2451513300
+         7           61.7484            -2.2451511900
+
+> Sorted file was renamed to deprotonate_1.xyz
+> WARNING: These are force-field energies which are
+           NOT(!) accurate for bond formation and breaking!
+
+ --------------------------------------------
+ Deprotomer Ensemble Frozen-Atom Optimization
+ --------------------------------------------
+> Setting up frozen structure optimization ...
+> 3 frozen atoms. All H non-frozen.
+ ----------------
+ Calculation info
+ ----------------
+> User-defined calculation level:
+ : xTB calculation via tblite lib
+ : GFN2-xTB level
+ :   Molecular charge    : -1
+ :   Fermi temperature   : 300.00000
+ :   Accuracy            : 1.00000
+ :   max SCC cycles      : 500
+
+> 7 structures to optimize ...
+ |>14.3% |>28.6% |>42.9% |>57.1% |>71.4% |>85.7% |>100.0%
+ done.
+> 7 of 7 structures successfully optimized (100.0% success)
+> Total runtime for 7 optimizations:
+ * wall-time:     0 d,  0 h,  0 min,  0.124 sec
+ *  cpu-time:     0 d,  0 h,  0 min,  1.131 sec
+ * ratio c/w:     9.151 speedup
+> Corresponding to approximately 0.018 sec per processed structure
+> Write deprotonate_2.xyz with optimized structures ...
+> Sorting structures by energy to remove failed opts. ...
+ input  file name : deprotonate_2.xyz
+ output file name : deprotonate_2.xyz.sorted
+ sorting energy window (EWIN)   :  150.0000 / kcal*mol⁻¹
+ reference state Etot           :  -9.5078278699999998
+
+=====================================================
+============== ordered structure list ===============
+=====================================================
+ written to file <deprotonate_2.xyz.sorted>
+
+ structure      ΔE(kcal/mol)                 Etot(Eh)
+         1            0.0000            -9.5078278700
+         2            0.0358            -9.5077707400
+         3            8.1157            -9.4948946900
+         4           18.2657            -9.4787196800
+         5           18.2751            -9.4787046100
+         6           31.6954            -9.4573180300
+         7           31.7010            -9.4573090700
+
+> Sorted file was renamed to deprotonate_2.xyz
+
+ --------------------------------------
+ Final Deprotomer Ensemble Optimization
+ --------------------------------------
+ ----------------
+ Calculation info
+ ----------------
+> User-defined calculation level:
+ : xTB calculation via tblite lib
+ : GFN2-xTB level
+ :   Molecular charge    : -1
+ :   Fermi temperature   : 300.00000
+ :   Accuracy            : 1.00000
+ :   max SCC cycles      : 500
+ :   Read WBOs?          : yes
+
+ Optimization engine: ANCOPT
+ Hessian update type: BFGS
+ E/G convergence criteria:  0.100E-06 Eh, 0.200E-03 Eh/a0
+ maximum optimization steps: 200
+> 7 structures to optimize ...
+ |>14.3% |>28.6% |>42.9% |>57.1% |>71.4% |>85.7% |>100.0%
+ done.
+> 7 of 7 structures successfully optimized (100.0% success)
+> Total runtime for 7 optimizations:
+ * wall-time:     0 d,  0 h,  0 min,  0.126 sec
+ *  cpu-time:     0 d,  0 h,  0 min,  0.252 sec
+ * ratio c/w:     1.999 speedup
+> Corresponding to approximately 0.018 sec per processed structure
+> Write deprotonate_3.xyz with optimized structures ...
+> Sorting structures by energy ...
+ input  file name : deprotonate_3.xyz
+ output file name : deprotonate_3.xyz.sorted
+ sorting energy window (EWIN)   :   90.0000 / kcal*mol⁻¹
+ reference state Etot           :  -9.5115581599999999
+
+=====================================================
+============== ordered structure list ===============
+=====================================================
+ written to file <deprotonate_3.xyz.sorted>
+
+ structure      ΔE(kcal/mol)                 Etot(Eh)
+         1            0.0000            -9.5115581600
+         2            0.0000            -9.5115581600
+         3            6.6217            -9.5010058600
+         4           16.3371            -9.4855233400
+         5           16.3371            -9.4855233400
+         6           30.6635            -9.4626927900
+         7           30.6635            -9.4626927900
+
+ ---------------------------------------------
+ Remove duplicates via canonical atom identity
+ ---------------------------------------------
+> Setting up canonical atom order for 7 structures via CN-based molecular graphs ...
+ |>14.3% |>28.6% |>42.9% |>57.1% |>71.4% |>85.7% |>100.0%
+ done.
+> 3 groups identified based on canonical atom identifier algorithm
+ input  file name : unique.xyz
+ output file name : unique.xyz.sorted
+ sorting energy window (EWIN)   :   90.0000 / kcal*mol⁻¹
+ reference state Etot           :  -9.5115581599999999
+
+=====================================================
+============== ordered structure list ===============
+=====================================================
+ written to file <unique.xyz.sorted>
+
+ structure      ΔE(kcal/mol)                 Etot(Eh)
+         1            0.0000            -9.5115581600
+         2            6.6217            -9.5010058600
+         3           30.6635            -9.4626927900
+
+> Sorted file was renamed to deprotonated.xyz
+> All other temporary deprotonate_*.xyz files are removed by default.
+
+ -----------------
+ Wall Time Summary
+ -----------------
+ CREST runtime (total)                   0 d,  0 h,  0 min,  0.333 sec
+ ----------------------------------------------------------------------
+ Ensemble optimization (FF)     ...        0 min,  0.037 sec ( 11.236%)
+ Ensemble optimization (frozen) ...        0 min,  0.124 sec ( 37.144%)
+ Ensemble refinement            ...        0 min,  0.000 sec (  0.131%)
+ Ensemble optimization          ...        0 min,  0.126 sec ( 37.906%)
+ I/O and setup                  ...        0 min,  0.045 sec ( 13.584%)
+ ----------------------------------------------------------------------
+ * wall-time:     0 d,  0 h,  0 min,  0.333 sec
+ *  cpu-time:     0 d,  0 h,  0 min,  2.806 sec
+ * ratio c/w:     8.428 speedup
+ ----------------------------------------------------------------------
+ * Total number of energy+grad calls: 340
+
+ CREST terminated normally.

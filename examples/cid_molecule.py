@@ -3,16 +3,31 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
+from jfchemistry.conformers.crest import CRESTConformers
 from jfchemistry.generation.rdkit_generation import RDKitGeneration
 from jfchemistry.inputs import PubChemCID
-from jfchemistry.optimizers.aimnet2_optimizer import AimNet2Optimizer
+from jfchemistry.modification.crest_deprotonation import CRESTDeprotonation
 
 pubchem_cid = PubChemCID().make(21688863)
-generate_structure = RDKitGeneration(basin_thresh=3.4, num_conformers=5).make(
-    pubchem_cid.output["structure"]
+
+generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output["structure"])
+
+# optimize_structure = AimNet2Optimizer().make(generate_structure.output["structure"])
+
+crest_conformers = CRESTConformers(
+    calculation_dynamics_method="gfnff", calculation_energy_method="gfnff"
+).make(generate_structure.output["structure"])
+
+deprotonation = CRESTDeprotonation().make(crest_conformers.output["structure"])
+
+flow = Flow(
+    [
+        pubchem_cid,
+        generate_structure,
+        crest_conformers,
+        deprotonation,
+    ]
 )
-optimize_structure = AimNet2Optimizer().make(generate_structure.output["structure"])
-flow = Flow([pubchem_cid, generate_structure, optimize_structure])
 
 response = run_locally(flow)
 
