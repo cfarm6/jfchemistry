@@ -7,6 +7,7 @@ from jfchemistry.conformers.crest import CRESTConformers
 from jfchemistry.generation.rdkit_generation import RDKitGeneration
 from jfchemistry.inputs import PubChemCID
 from jfchemistry.modification.crest_deprotonation import CRESTDeprotonation
+from jfchemistry.modification.crest_protonation import CRESTProtonation
 
 pubchem_cid = PubChemCID().make(21688863)
 
@@ -19,13 +20,14 @@ crest_conformers = CRESTConformers(
 ).make(generate_structure.output["structure"])
 
 deprotonation = CRESTDeprotonation().make(crest_conformers.output["structure"])
-
+protonation = CRESTProtonation(ion="Na+").make(deprotonation.output["structure"])
 flow = Flow(
     [
         pubchem_cid,
         generate_structure,
         crest_conformers,
         deprotonation,
+        protonation,
     ]
 )
 
