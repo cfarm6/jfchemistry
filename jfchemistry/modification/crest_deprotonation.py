@@ -1,4 +1,8 @@
-"""Structure deprotonation using CREST."""
+"""CREST-based deprotonation for generating deprotonated structures.
+
+This module provides integration with CREST's automated deprotonation workflow
+for generating low-energy deprotonated structures and tautomers.
+"""
 
 import glob
 import os
@@ -17,15 +21,34 @@ from jfchemistry.modification.base import StructureModification
 
 @dataclass
 class CRESTDeprotonation(StructureModification):
-    """Structure deprotonation using CREST.
+    """Generate deprotonated structures using CREST.
 
-    Parameters
-    ----------
-    - ewin: The energy window. Keep structures within this energy window.
+    Uses CREST's automated deprotonation workflow to identify acidic sites
+    and generate low-energy deprotonated structures. The method systematically
+    explores different deprotonation sites and optimizes the resulting structures
+    using GFN2-xTB.
 
-    References
-    ----------
-    - https://crest-lab.github.io/crest-docs/
+    Attributes:
+        name: Name of the job (default: "CREST Deprotonation").
+        ewin: Energy window in kcal/mol for selecting deprotonated structures
+            (default: None, uses CREST default). Structures within ewin of the
+            lowest energy structure are retained.
+
+    References:
+        - CREST Documentation: https://crest-lab.github.io/crest-docs/
+
+    Examples:
+        >>> from jfchemistry.modification import CRESTDeprotonation # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> >>> from ase.build import molecule # doctest: +SKIP
+        >>> ethane = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+        >>> # Deprotonate a ethane
+        >>> deprot = CRESTDeprotonation(ewin=6.0) # doctest: +SKIP
+        >>> job = deprot.make(ethane) # doctest: +SKIP
+        >>> deprotonated_structures = job.output["structure"] # doctest: +SKIP
+        >>>
+        >>> deprot_default = CRESTDeprotonation() # doctest: +SKIP
+        >>> job = deprot_default.make(ethane) # doctest: +SKIP
     """
 
     name: str = "CREST Deprotonation"
@@ -34,7 +57,29 @@ class CRESTDeprotonation(StructureModification):
     def operation(
         self, structure: SiteCollection
     ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Modify the structure."""
+        """Generate deprotonated structures using CREST.
+
+        Runs CREST's deprotonation workflow to identify acidic sites and
+        generate optimized deprotonated structures. The calculation uses
+        GFN2-xTB with Wiberg bond order analysis.
+
+        Args:
+            structure: Input molecular structure with 3D coordinates. The
+                structure's charge is used for the CREST calculation.
+
+        Returns:
+            Tuple containing:
+                - List of deprotonated structures sorted by energy
+                - None (no additional properties)
+
+        Examples:
+            >>> from pymatgen.core import Molecule # doctest: +SKIP
+            >>> from ase.build import molecule # doctest: +SKIP
+            >>> ethane = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> deprot = CRESTDeprotonation(ewin=8.0) # doctest: +SKIP
+            >>> structures, props = deprot.operation(ethane) # doctest: +SKIP
+            >>> print(f"Generated {len(structures)} deprotonated structures") # doctest: +SKIP
+        """
         structure.to("input.sdf", fmt="sdf")
 
         d = {"calculation": {"level": {"method": "gfn2", "rdwbo": True}}}

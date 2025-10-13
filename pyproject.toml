@@ -103,16 +103,15 @@ ignore = [
     "PLC0415", # Import-outside-top-level
 ]
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
-
-
 [tool.pytest.ini_options]
 testpaths = ["tests", "jfchemistry"]
-addopts = "--doctest-modules"
+addopts = "--doctest-modules --doctest-continue-on-failure"
 doctest_optionflags = "NORMALIZE_WHITESPACE"
 
 [build-system]

@@ -1,4 +1,8 @@
-"""Apply the AimNet2 calculator to a structure."""
+"""ORB machine learning force field calculator.
+
+This module provides integration with Orbital Materials' ORB machine learning
+force field models for molecular energy calculations.
+"""
 
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
@@ -10,7 +14,47 @@ from .ase_calculator import ASECalculator
 
 @dataclass
 class ORBModelCalculator(ASECalculator):
-    """Apply the AimNet2 calculator to a structure."""
+    """Orbital Materials ORB machine learning force field calculator.
+
+    ORB models are graph neural network-based force fields developed by Orbital
+    Materials for fast and accurate molecular property predictions. The calculator
+    supports both conservative and direct versions of the ORB-v3 model.
+
+    The calculator requires the 'orb-models' package from:
+    https://github.com/orbital-materials/orb-models
+
+    Attributes:
+        name: Name of the calculator (default: "ORB Model Calculator").
+        model: ORB model variant to use. Options:
+            - "orb-v3-conservative-omol": Conservative model (recommended)
+            - "orb-v3-direct-omol": Direct model
+        charge: Molecular charge override. If None, uses charge from structure.
+        multiplicity: Spin multiplicity override. If None, uses spin from structure.
+        device: Computation device ("cpu" or "cuda"). Default: "cpu".
+        precision: Numerical precision for calculations. Options:
+            - "float32-high": Standard precision (default)
+            - "float32-highest": Higher precision float32
+            - "float64": Double precision
+        compile: Whether to compile the model for faster inference (default: False).
+
+    Examples:
+        >>> from jfchemistry.calculators import ORBModelCalculator # doctest: +SKIP
+        >>>
+        >>> # Create calculator with GPU acceleration
+        >>> calc = ORBModelCalculator(
+        ...     model="orb-v3-conservative-omol", # doctest: +SKIP
+        ...     device="cuda", # doctest: +SKIP
+        ...     precision="float32-highest" # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>>
+        >>> # Setup on structure
+        >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
+        >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+        >>>
+        >>> # Get properties
+        >>> props = calc.get_properties(atoms) # doctest: +SKIP
+        >>> energy = props["Global"]["Total Energy [eV]"] # doctest: +SKIP
+    """
 
     name: str = "ORB Model Calculator"
     model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = "orb-v3-conservative-omol"
@@ -21,7 +65,31 @@ class ORBModelCalculator(ASECalculator):
     compile: bool = False
 
     def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
-        """Set the calculator for the atoms."""
+        """Set the ORB model calculator on the atoms object.
+
+        Loads the specified ORB model and attaches it as an ASE calculator to the
+        atoms object. Stores charge and spin information in atoms.info dictionary.
+
+        Args:
+            atoms: ASE Atoms object to attach calculator to.
+            charge: Total molecular charge (default: 0). Overridden by self.charge if set.
+            spin_multiplicity: Spin multiplicity 2S+1 (default: 1). Overridden by
+                self.multiplicity if set.
+
+        Returns:
+            ASE Atoms object with ORB calculator attached and charge/spin set.
+
+        Raises:
+            ImportError: If the 'orb-models' package is not installed.
+
+        Examples:
+            >>> calc = ORBModelCalculator(device="cuda", compile=True) # doctest: +SKIP
+            >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
+            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> # Charge and spin are stored in atoms.info
+            >>> print(atoms.info["charge"]) # doctest: +SKIP
+            0
+        """
         try:
             from orb_models.forcefield import pretrained  # type: ignore
             from orb_models.forcefield.calculator import ORBCalculator  # type: ignore
@@ -47,7 +115,26 @@ class ORBModelCalculator(ASECalculator):
         return atoms
 
     def get_properties(self, atoms: Atoms) -> dict[str, Any]:
-        """Return the properties of the structure."""
+        """Extract computed properties from the ORB calculation.
+
+        Retrieves the total energy from the ORB model calculation.
+
+        Args:
+            atoms: ASE Atoms object with ORB calculator attached and calculation
+                completed.
+
+        Returns:
+            Dictionary with structure:
+                - "Global": {"Total Energy [eV]": float}
+
+        Examples:
+            >>> calc = ORBModelCalculator() # doctest: +SKIP
+            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms.get_potential_energy()  # Trigger calculation # doctest: +SKIP
+            >>> props = calc.get_properties(atoms) # doctest: +SKIP
+            >>> print(props["Global"]["Total Energy [eV]"]) # doctest: +SKIP
+            -234.567
+        """
         energy = atoms.get_total_energy()  # type: ignore
         properties = {
             "Global": {"Total Energy [eV]": energy},

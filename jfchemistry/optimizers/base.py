@@ -20,8 +20,7 @@ class GeometryOptimization(SingleStructureMaker):
     implementations in jfchemistry. Subclasses should implement the
     optimize_structure and get_properties methods.
 
-    Attributes
-    ----------
+    Attributes:
         name: The name of the geometry optimization job.
     """
 
@@ -35,13 +34,11 @@ class GeometryOptimization(SingleStructureMaker):
         Args:
             structure: The molecular structure to optimize.
 
-        Returns
-        -------
+        Returns:
             A tuple containing the optimized molecular structure and a dictionary
             of properties from the optimization.
 
-        Raises
-        ------
+        Raises:
             NotImplementedError: This method must be implemented by subclasses.
         """
         raise NotImplementedError
@@ -52,12 +49,10 @@ class GeometryOptimization(SingleStructureMaker):
         Args:
             structure: The molecular structure to extract properties from.
 
-        Returns
-        -------
+        Returns:
             A dictionary containing the properties of the structure.
 
-        Raises
-        ------
+        Raises:
             NotImplementedError: This method must be implemented by subclasses.
         """
         raise NotImplementedError

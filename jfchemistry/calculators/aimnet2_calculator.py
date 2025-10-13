@@ -1,4 +1,8 @@
-"""Apply the AimNet2 calculator to a structure."""
+"""AimNet2 neural network calculator for molecular properties.
+
+This module provides integration with the AimNet2 neural network potential
+for fast and accurate calculation of molecular energies and partial charges.
+"""
 
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -10,7 +14,37 @@ from .ase_calculator import ASECalculator
 
 @dataclass
 class AimNet2Calculator(ASECalculator):
-    """Apply the AimNet2 calculator to a structure."""
+    """AimNet2 neural network potential calculator.
+
+    AimNet2 is a neural network-based calculator for computing molecular energies
+    and atomic partial charges. It provides fast predictions for molecules containing
+    H, B, C, N, O, F, Si, P, S, Cl, As, Se, Br, and I atoms.
+
+    The calculator requires the 'aimnet' package from:
+    https://github.com/cfarm6/aimnetcentral.git
+
+    Attributes:
+        name: Name of the calculator (default: "AimNet2 Calculator").
+        model: AimNet2 model to use (default: "aimnet2").
+        charge: Molecular charge override. If None, uses charge from structure.
+        multiplicity: Spin multiplicity override. If None, uses spin from structure.
+
+    Examples:
+        >>> from jfchemistry.calculators import AimNet2Calculator # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>>
+        >>> # Create calculator for neutral molecule
+        >>> calc = AimNet2Calculator(charge=0, multiplicity=1) # doctest: +SKIP
+        >>>
+        >>> # Setup calculator on structure
+        >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
+        >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+        >>>
+        >>> # Compute properties
+        >>> properties = calc.get_properties(atoms) # doctest: +SKIP
+        >>> energy = properties["Global"]["Total Energy [eV]"] # doctest: +SKIP
+        >>> charges = properties["Atomic"]["AimNet2 Partial Charges [e]"] # doctest: +SKIP
+    """
 
     name: str = "AimNet2 Calculator"
     model: str = "aimnet2"
@@ -18,7 +52,31 @@ class AimNet2Calculator(ASECalculator):
     multiplicity: Optional[int] = None
 
     def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
-        """Set the calculator for the atoms."""
+        """Set the AimNet2 calculator on the atoms object.
+
+        Attaches the AimNet2 ASE calculator to the atoms object with the specified
+        charge and spin multiplicity. Validates that all atoms are supported by AimNet2.
+
+        Args:
+            atoms: ASE Atoms object to attach calculator to.
+            charge: Total molecular charge (default: 0). Overridden by self.charge if set.
+            spin_multiplicity: Spin multiplicity 2S+1 (default: 1). Overridden by
+                self.multiplicity if set.
+
+        Returns:
+            ASE Atoms object with AimNet2 calculator attached.
+
+        Raises:
+            ImportError: If the 'aimnet' package is not installed.
+            ValueError: If molecule contains atoms not supported by AimNet2.
+
+        Examples:
+            >>> from ase import Atoms # doctest: +SKIP
+            >>> calc = AimNet2Calculator() # doctest: +SKIP
+            >>> atoms = Atoms('H2O', positions=[[0,0,0], [1,0,0], [0,1,0]]) # doctest: +SKIP
+            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> energy = atoms.get_potential_energy() # doctest: +SKIP
+        """
         try:
             from aimnet.calculators import AIMNet2ASE  # type: ignore
         except ImportError as e:
@@ -42,7 +100,26 @@ class AimNet2Calculator(ASECalculator):
         return atoms
 
     def get_properties(self, atoms: Atoms) -> dict[str, Any]:
-        """Return the properties of the structure."""
+        """Extract computed properties from the AimNet2 calculation.
+
+        Retrieves the total energy and atomic partial charges from the AimNet2
+        calculation on the atoms object.
+
+        Args:
+            atoms: ASE Atoms object with AimNet2 calculator attached and calculation
+                completed.
+
+        Returns:
+            Dictionary with structure:
+                - "Global": {"Total Energy [eV]": float}
+                - "Atomic": {"AimNet2 Partial Charges [e]": array}
+
+        Examples:
+            >>> calc = AimNet2Calculator() # doctest: +SKIP
+            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms.get_potential_energy()  # Trigger calculation # doctest: +SKIP
+            >>> props = calc.get_properties(atoms) # doctest: +SKIP
+        """
         energy = atoms.get_total_energy()  # type: ignore
         charge = atoms.get_charges()  # type: ignore
         properties = {

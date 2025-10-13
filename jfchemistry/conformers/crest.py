@@ -1,4 +1,9 @@
-"""Geometry Optimization using AimNet2."""
+"""CREST-based conformer generation using metadynamics.
+
+This module provides integration with CREST (Conformer-Rotamer Ensemble
+Sampling Tool) for comprehensive conformational searching using metadynamics
+and GFN-xTB methods.
+"""
 
 import glob
 import os
@@ -17,49 +22,89 @@ from jfchemistry.conformers.base import ConformerGeneration
 
 @dataclass
 class CRESTConformers(ConformerGeneration):
-    """CREST Conformer Generation.
+    """CREST conformer generation using metadynamics sampling.
 
-    Parameters
-    ----------
-    - runtype: The type of run to perform.
-    - preopt: Whether to preoptimize the structure.
-    - multilevelopt: Whether to use multiple optimization engines.
-    - topo: Whether to use topology optimization.
-    - parallel: The number of parallel threads to use.
-    - opt_engine: The optimization engine to use.
-    - hess_update: The hessian update method to use.
-    - maxcycle: The maximum number of cycles to run.
-    - optlev: The optimization level to use.
-    - converge_e: The convergence energy.
-    - converge_g: The convergence gradient.
-    - freeze: The freeze string.
-    - ewin: The energy window.
-    - ethr: The energy threshold.
-    - rthr: The root mean square gradient threshold.
-    - bthr: The bond threshold.
-    - calculation_energy_method: The energy calculation method to use.
-    - calculation_energy_calcspace: The energy calculation calcspace.
-    - calculation_energy_chrg: The energy calculation charge.
-    - calculation_energy_uhf: The energy calculation UHF.
-    - calculation_energy_rdwbo: The energy calculation RDWBO.
-    - calculation_energy_rddip: The energy calculation RDDIP.
-    - calculation_energy_dipgrad: The energy calculation DIPGRAD.
-    - calculation_energy_gradfile: The energy calculation gradfile.
-    - calculation_energy_gradtype: The energy calculation gradtype.
-    - calculation_dynamics_method: The dynamics calculation method to use.
-    - calculation_dynamics_calcspace: The dynamics calculation calcspace.
-    - calculation_dynamics_chrg: The dynamics calculation charge.
-    - calculation_dynamics_uhf: The dynamics calculation UHF.
-    - calculation_dynamics_rdwbo: The dynamics calculation RDWBO.
-    - calculation_dynamics_rddip: The dynamics calculation RDDIP.
-    - calculation_dynamics_dipgrad: The dynamics calculation DIPGRAD.
-    - calculation_dynamics_gradfile: The dynamics calculation gradfile.
-    - calculation_dynamics_gradtype: The dynamics calculation gradtype.
-    - dynamics_dump: The dynamics dump.
+    CREST (Conformer-Rotamer Ensemble Sampling Tool) performs automated
+    conformational and rotameric searches using metadynamics simulations
+    with GFN-xTB tight-binding methods. It efficiently explores conformational
+    space to identify unique low-energy conformers.
 
-    References
-    ----------
-    - https://crest-lab.github.io/crest-docs/
+    The implementation supports various metadynamics protocols and provides
+    extensive control over optimization settings, energy calculations, and
+    conformer filtering.
+
+    Attributes:
+        name: Name of the job (default: "CREST Conformer Generation").
+        runtype: Metadynamics protocol to use:
+            - "imtd-gc": Iterative metadynamics with genetic crossing (default)
+            - "nci-mtd": Non-covalent interaction metadynamics
+            - "imtd-smtd": Iterative metadynamics with static metadynamics
+        preopt: Pre-optimize structure before conformer search (default: True).
+        multilevelopt: Use multi-level optimization (default: True).
+        topo: Enable topology-based filtering (default: True).
+        parallel: Number of parallel threads (default: 1).
+        opt_engine: Optimization algorithm:
+            - "ancopt": Approximate normal coordinate optimizer (default)
+            - "rfo": Rational function optimizer
+            - "gd": Gradient descent
+        hess_update: Hessian update method:
+            - "bfgs": BFGS update (default)
+            - "powell": Powell update
+            - "sd1": Steepest descent
+            - "bofill": Bofill update
+            - "schlegel": Schlegel update
+        maxcycle: Maximum optimization cycles (default: None, auto).
+        optlev: Optimization convergence level:
+            - "crude", "vloose", "loose", "normal" (default), "tight", "vtight", "extreme"
+        converge_e: Energy convergence threshold (default: None, auto).
+        converge_g: Gradient convergence threshold (default: None, auto).
+        freeze: Freeze constraints string (default: None).
+        ewin: Energy window for conformer selection in kcal/mol (default: 6.0).
+        ethr: Energy threshold for duplicate detection in kcal/mol (default: 0.05).
+        rthr: RMSD threshold for structural similarity in Angstrom (default: 0.125).
+        bthr: Rotational constant threshold for duplicate detection (default: 0.01).
+        calculation_energy_method: Method for energy calculations:
+            - "gfn2" (default), "gfn1", "gfn0", "gfnff"
+        calculation_energy_calcspace: Calculation space setting (default: None).
+        calculation_energy_chrg: Charge for energy calculations (default: None, from structure).
+        calculation_energy_uhf: Unpaired electrons for energy calc (default: None).
+        calculation_energy_rdwbo: Read Wiberg bond orders (default: False).
+        calculation_energy_rddip: Read dipole moments (default: False).
+        calculation_energy_dipgrad: Compute dipole gradients (default: False).
+        calculation_energy_gradfile: External gradient file (default: None).
+        calculation_energy_gradtype: Gradient file type (default: None).
+        calculation_dynamics_method: Method for metadynamics:
+            - "gfn2" (default), "gfn1", "gfn0", "gfnff"
+        calculation_dynamics_calcspace: Calculation space for dynamics (default: None).
+        calculation_dynamics_chrg: Charge for dynamics (default: None, from structure).
+        calculation_dynamics_uhf: Unpaired electrons for dynamics (default: None).
+        calculation_dynamics_rdwbo: Read Wiberg bond orders in dynamics (default: False).
+        calculation_dynamics_rddip: Read dipole in dynamics (default: False).
+        calculation_dynamics_dipgrad: Compute dipole gradients in dynamics (default: False).
+        calculation_dynamics_gradfile: External gradient file for dynamics (default: None).
+        calculation_dynamics_gradtype: Gradient file type for dynamics (default: None).
+        dynamics_dump: Dynamics trajectory dump frequency (default: 100.0).
+
+    References:
+        - CREST Documentation: https://crest-lab.github.io/crest-docs/
+        - Pracht et al., PCCP 2020, 22, 7169-7192
+
+    Examples:
+        >>> from pymatgen.core import Molecule
+        >>> from ase.build import molecule
+        >>> from jfchemistry.conformers import CRESTConformers
+        >>>
+        >>> mol = Molecule.from_ase_atoms(molecule("C2H6"))
+        >>> mol = mol.set_charge_and_spin(0, 1)
+        >>> # Basic conformer search
+        >>> conf_gen = CRESTConformers(
+        ...     ewin=6.0,
+        ...     calculation_energy_method="gfnff",
+        ...     calculation_dynamics_method="gfnff"
+        ... )
+        >>> structures, properties = conf_gen.operation(mol)
+        >>> type(structures[0])
+        <class 'pymatgen.core.structure.Molecule'>
     """
 
     name: str = "CREST Conformer Generation"
@@ -116,7 +161,33 @@ class CRESTConformers(ConformerGeneration):
     def operation(
         self, structure: SiteCollection
     ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Generate conformers using CREST."""
+        """Generate conformers using CREST metadynamics search.
+
+        Performs a conformational search using CREST with the configured
+        metadynamics protocol and GFN-xTB method. The calculation runs in
+        a temporary directory and returns the unique low-energy conformers.
+
+        Args:
+            structure: Input molecular structure with 3D coordinates. The
+                structure's charge property is used if calculation charges
+                are not explicitly set.
+
+        Returns:
+            Tuple containing:
+                - List of conformer structures sorted by energy
+                - None (no additional properties returned)
+
+        Examples:
+            >>> from jfchemistry.conformers import CRESTConformers
+            >>> from pymatgen.core import Molecule
+            >>> from ase.build import molecule
+            >>> mol = Molecule.from_ase_atoms(molecule("C2H6"))
+            >>> mol = mol.set_charge_and_spin(0, 1)
+            >>> gen = CRESTConformers(ewin=6.0, parallel=4)
+            >>> conformers, props = gen.operation(mol)
+            >>> len(conformers)
+            1
+        """
         # Write structures to sdf file
         structure.to("input.sdf", fmt="sdf")
 
@@ -196,4 +267,4 @@ class CRESTConformers(ConformerGeneration):
         conformers = cast(
             "list[SiteCollection]", XYZ.from_file("crest_conformers.xyz").all_molecules
         )
-        return conformers, None
+        return conformers, {}

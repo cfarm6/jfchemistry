@@ -8,7 +8,7 @@ from jfchemistry.generation.rdkit_generation import RDKitGeneration
 from jfchemistry.inputs import PubChemCID
 from jfchemistry.modification.crest_deprotonation import CRESTDeprotonation
 from jfchemistry.modification.crest_protonation import CRESTProtonation
-from jfchemistry.optimizers.aimnet2_optimizer import AimNet2Optimizer
+from jfchemistry.optimizers.aimnet2 import AimNet2Optimizer
 
 pubchem_cid = PubChemCID().make(21688863)
 

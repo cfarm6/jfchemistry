@@ -1,4 +1,8 @@
-"""Structure protonation using CREST."""
+"""CREST-based protonation for generating protonated structures.
+
+This module provides integration with CREST's automated protonation workflow
+for generating low-energy protonated structures at different sites.
+"""
 
 import glob
 import os
@@ -17,15 +21,47 @@ from jfchemistry.modification.base import StructureModification
 
 @dataclass
 class CRESTProtonation(StructureModification):
-    """Structure protonation using CREST.
+    """Generate protonated structures using CREST.
 
-    Parameters
-    ----------
-    - ewin: The energy window. Keep structures within this energy window.
+    Uses CREST's automated protonation workflow to identify basic sites
+    and generate low-energy protonated structures. The method systematically
+    explores different protonation sites and optimizes the resulting structures.
 
-    References
-    ----------
-    - https://crest-lab.github.io/crest-docs/
+    Attributes:
+        name: Name of the job (default: "CREST Protonation").
+        runtype: Workflow type (default: "protonate").
+        ion: Ion to add for protonation (default: None, uses H+).
+        ion_charge: Charge of the ion (default: 1).
+        ewin: Energy window in kcal/mol for selecting protonated structures
+            (default: None, uses CREST default).
+        ffopt: Perform force field pre-optimization (default: True).
+        freezeopt: Freeze constraint string for optimization (default: None).
+        finalopt: Perform final optimization (default: True).
+        threads: Number of parallel threads (default: 1).
+
+    References:
+        - CREST Documentation: https://crest-lab.github.io/crest-docs/
+
+    Examples:
+        >>> from jfchemistry.modification import CRESTProtonation
+        >>> from pymatgen.core import Molecule
+        >>> from ase.build import molecule
+        >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
+        >>>
+        >>> # Protonate an amine
+        >>> prot = CRESTProtonation(ewin=6.0, threads=4)
+        >>> job = prot.make(molecule)
+        >>> protonated_structures = job.output["structure"]
+        >>>
+        >>> # Protonate with custom settings
+        >>> prot_custom = CRESTProtonation(
+        ...     ewin=8.0,
+        ...     ffopt=True,
+        ...     finalopt=True,
+        ...     threads=8
+        ... )
+        >>> job = prot_custom.make(molecule)
+        >>> protonated_structures = job.output["structure"]
     """
 
     name: str = "CREST Protonation"
@@ -39,7 +75,20 @@ class CRESTProtonation(StructureModification):
     threads: int = 1
 
     def make_dict(self):
-        """Make a dictionary of the parameters."""
+        """Create parameter dictionary for CREST configuration.
+
+        Extracts relevant protonation parameters and packages them for
+        the CREST TOML configuration file.
+
+        Returns:
+            Dictionary of non-None protonation parameters.
+
+        Examples:
+            >>> prot = CRESTProtonation(ewin=6.0, ffopt=True)
+            >>> params = prot.make_dict()
+            >>> print(params)
+            {'ewin': 6.0, 'ffopt': True, 'finalopt': True}
+        """
         keys = ["ion", "ewin", "ffopt", "freezeopt", "finalopt"]
         d = {}
         for k, v in vars(self).items():
@@ -51,7 +100,27 @@ class CRESTProtonation(StructureModification):
     def operation(
         self, structure: SiteCollection
     ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Modify the structure."""
+        """Generate protonated structures using CREST.
+
+        Runs CREST's protonation workflow to identify basic sites and
+        generate optimized protonated structures.
+
+        Args:
+            structure: Input molecular structure with 3D coordinates. The
+                structure's charge is used for the CREST calculation.
+
+        Returns:
+            Tuple containing:
+                - List of protonated structures sorted by energy
+                - None (no additional properties)
+
+        Examples:
+            >>> from pymatgen.core import Molecule # doctest: +SKIP
+            >>> from ase.build import molecule # doctest: +SKIP
+            >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> prot = CRESTProtonation(ewin=6.0, threads=4) # doctest: +SKIP
+            >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
+        """
         structure.to("input.xyz", fmt="xyz")
 
         # Write the input file

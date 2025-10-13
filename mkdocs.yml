@@ -1,0 +1,44 @@
+site_name: Jobflow Chemistry
+
+nav:
+  - "Home": index.md
+  - "Nodes":
+    - "Base Nodes": base_nodes.md
+    - "Calculators": calculators.md
+    - "Geometry Optimizers": geometry_optimizers.md
+
+plugins:
+- search
+- mkdocstrings:
+    default_handler: python
+    enable_inventory: null
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Dark Mode
+      primary: teal
+      accent: deep orange
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Light Mode
+      primary: teal
+      accent: orange
+  font:
+    text: Open Sans
+    code: Red Hat Mono
+  icon:
+    logo: material/molecule
