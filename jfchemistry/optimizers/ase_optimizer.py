@@ -1,10 +1,10 @@
 """Geometry Optimization using ASE."""
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import ase.optimize
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import Molecule, SiteCollection
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
 from jfchemistry.optimizers.base import GeometryOptimization
@@ -21,7 +21,9 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
     fmax: float = 0.05
     steps: int = 250000
 
-    def optimize_structure(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
         """Optimize the structure using ASE."""
         atoms = structure.to_ase_atoms()
         charge = int(structure.charge)
@@ -29,4 +31,4 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
         opt = getattr(ase.optimize, self.optimizer)(atoms, logfile=None)
         opt.run(self.fmax, self.steps)
-        return IMolecule.from_ase_atoms(atoms), self.get_properties(atoms)
+        return Molecule.from_ase_atoms(atoms), self.get_properties(atoms)

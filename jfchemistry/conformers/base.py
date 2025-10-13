@@ -1,41 +1,21 @@
 """Base class for conformer generation."""
 
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Optional
 
-from jobflow.core.job import Response, job
-from jobflow.core.maker import Maker
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import SiteCollection
 
-from jfchemistry.utils.bulk_jobs import handle_structures
+from jfchemistry import SingleStructureMaker
 
 
 @dataclass
-class ConformerGeneration(Maker):
+class ConformerGeneration(SingleStructureMaker):
     """Maker for generating a structure."""
 
     name: str = "Conformer Generation"
 
-    def generate_conformers(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
-        """Generate a structure."""
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+        """Generate conformers."""
         raise NotImplementedError
-
-    @job(files="files", properties="properties")
-    def make(self, molecule: IMolecule | list[IMolecule]) -> Response[dict[str, Any]]:
-        """Make the job."""
-        resp = handle_structures(self, molecule)
-        if resp is not None:
-            return resp
-        else:  # If the structure is not a list, generate a single structure
-            conformers, properties = self.generate_conformers(cast("IMolecule", molecule))
-            if conformers is None:
-                return Response(stop_children=True)
-
-            files = [conformer.to(fmt="xyz") for conformer in conformers]
-            return Response(
-                output={
-                    "structure": conformers,
-                    "files": files,
-                    "properties": properties,
-                }
-            )

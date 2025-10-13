@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, Optional, cast
 
 import tomli_w
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
 from jfchemistry.modification.base import StructureModification
@@ -48,11 +48,11 @@ class CRESTProtonation(StructureModification):
             d[k] = v
         return d
 
-    def modify_structure(
-        self, structure: IMolecule
-    ) -> tuple[Optional[list[IMolecule] | IMolecule], Optional[dict[str, Any]]]:
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
         """Modify the structure."""
-        structure.to("input.sdf", fmt="sdf")
+        structure.to("input.xyz", fmt="xyz")
 
         # Write the input file
         self.inputfile = "input.xyz"
@@ -69,7 +69,7 @@ class CRESTProtonation(StructureModification):
         # Create temporary directory and run crest there
         with tempfile.TemporaryDirectory() as tmp_dir:
             # Copy input files to temp directory
-            shutil.copy("input.sdf", tmp_dir)
+            shutil.copy("input.xyz", tmp_dir)
             shutil.copy("crest.toml", tmp_dir)
 
             # Change to temp directory
@@ -91,6 +91,6 @@ class CRESTProtonation(StructureModification):
             # Change back to original directory
             os.chdir(original_dir)
 
-        structures = XYZ.from_file("deprotonated.xyz").all_molecules
-        structures = cast("list[IMolecule]", structures)
+        structures = XYZ.from_file("protonated.xyz").all_molecules
+        structures = cast("list[SiteCollection]", structures)
         return structures, None

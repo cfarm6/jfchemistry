@@ -1,9 +1,9 @@
 """RDKit generation."""
 
 from dataclasses import dataclass
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional
 
-from pymatgen.core.structure import Molecule
+from pymatgen.core.structure import Molecule, SiteCollection
 
 from jfchemistry.generation.base import StructureGeneration
 from jfchemistry.jfchemistry import RDMolMolecule
@@ -46,7 +46,9 @@ class RDKitGeneration(StructureGeneration):
     use_symmetry_for_pruning: Optional[bool] = None
     num_conformers: Annotated[int, "positive"] = 1
 
-    def generate_structure(self, mol: RDMolMolecule) -> Union[Molecule, list[Molecule], None]:
+    def operation(
+        self, mol: RDMolMolecule
+    ) -> tuple[SiteCollection | list[SiteCollection], dict[str, Any]]:
         """Generate a structure using RDKit."""
         import inspect
 
@@ -65,14 +67,15 @@ class RDKitGeneration(StructureGeneration):
                 continue
             setattr(params, camel_key, value)
         rdDistGeom.EmbedMultipleConfs(mol, self.num_conformers, params)
-        molecules = []
+        molecules: list[SiteCollection] = []
         for confId in range(mol.GetNumConformers()):
-            molecule = Molecule.from_str(
+            molecule: Molecule = Molecule.from_str(
                 rdmolfiles.MolToV3KMolBlock(mol, confId=int(confId)),
                 fmt="sdf",  # type: ignore[arg-type]
             )
-            molecules.append(molecule)
             charge = rdmolops.GetFormalCharge(mol)
             spin = int(2 * (abs(charge) // 2) + 1)
             molecule.set_charge_and_spin(charge, spin)
-        return molecules
+            molecules.append(molecule)
+
+        return molecules, {}

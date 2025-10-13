@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, cast
 
 import tomli_w
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
 from jfchemistry.modification.base import StructureModification
@@ -31,9 +31,9 @@ class CRESTDeprotonation(StructureModification):
     name: str = "CREST Deprotonation"
     ewin: Optional[float] = None
 
-    def modify_structure(
-        self, structure: IMolecule
-    ) -> tuple[Optional[list[IMolecule] | IMolecule], Optional[dict[str, Any]]]:
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
         """Modify the structure."""
         structure.to("input.sdf", fmt="sdf")
 
@@ -73,5 +73,5 @@ class CRESTDeprotonation(StructureModification):
             os.chdir(original_dir)
 
         structures = XYZ.from_file("deprotonated.xyz").all_molecules
-        structures = cast("list[IMolecule]", structures)
+        structures = cast("list[SiteCollection]", structures)
         return structures, None

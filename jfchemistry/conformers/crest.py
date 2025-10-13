@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, Optional, cast
 
 import tomli_w
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
 from jfchemistry.conformers.base import ConformerGeneration
@@ -113,9 +113,9 @@ class CRESTConformers(ConformerGeneration):
     calculation_dynamics_gradtype: Optional[Literal["engrad"]] = None
     dynamics_dump: float = 100.0
 
-    def generate_conformers(
-        self, structure: IMolecule
-    ) -> tuple[Optional[list[IMolecule]], Optional[dict[str, Any]]]:
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
         """Generate conformers using CREST."""
         # Write structures to sdf file
         structure.to("input.sdf", fmt="sdf")
@@ -193,5 +193,7 @@ class CRESTConformers(ConformerGeneration):
             # Change back to original directory
             os.chdir(original_dir)
 
-        conformers = cast("list[IMolecule]", XYZ.from_file("crest_conformers.xyz").all_molecules)
+        conformers = cast(
+            "list[SiteCollection]", XYZ.from_file("crest_conformers.xyz").all_molecules
+        )
         return conformers, None

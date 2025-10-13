@@ -8,6 +8,6 @@ from jfchemistry.optimizers.ase_optimizer import ASEOptimizer
 
 @dataclass
 class TBLiteOptimizer(TBLiteCalculator, ASEOptimizer):
-    """Geometry Optimization using AimNet2."""
+    """Geometry Optimization using TBLite."""
 
     name: str = "TBLite Optimizer"

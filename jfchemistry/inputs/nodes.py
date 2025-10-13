@@ -7,7 +7,7 @@ from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
 from rdkit.Chem import SaltRemover, rdchem, rdmolfiles, rdmolops
 
-from jfchemistry.jfchemistry import RDMolMolecule
+from jfchemistry import RDMolMolecule
 
 
 @dataclass

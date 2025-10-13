@@ -1,44 +1,63 @@
-"""Base class for structure generation."""
+"""Base class for structure generation.
+
+This module provides the base Maker class for geometry optimization workflows
+in jfchemistry.
+"""
 
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Optional
 
-from jobflow.core.job import Response, job
-from jobflow.core.maker import Maker
-from pymatgen.core.structure import IMolecule
+from pymatgen.core.structure import SiteCollection
 
-from jfchemistry.utils.bulk_jobs import handle_structures
+from jfchemistry import SingleStructureMaker
 
 
 @dataclass
-class GeometryOptimization(Maker):
-    """Maker for generating a structure."""
+class GeometryOptimization(SingleStructureMaker):
+    """Base Maker for optimizing a structure.
+
+    This class serves as the base interface for all geometry optimization
+    implementations in jfchemistry. Subclasses should implement the
+    optimize_structure and get_properties methods.
+
+    Attributes
+    ----------
+        name: The name of the geometry optimization job.
+    """
 
     name: str = "Geometry Optimization"
 
-    def optimize_structure(self, structure: IMolecule) -> tuple[IMolecule, dict[str, Any]]:
-        """Generate a structure."""
+    def operation(
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+        """Optimize a structure.
+
+        Args:
+            structure: The molecular structure to optimize.
+
+        Returns
+        -------
+            A tuple containing the optimized molecular structure and a dictionary
+            of properties from the optimization.
+
+        Raises
+        ------
+            NotImplementedError: This method must be implemented by subclasses.
+        """
         raise NotImplementedError
 
-    def get_properties(self, structure: Any) -> dict[str, Any]:
-        """Get the properties of the structure."""
+    def get_properties(self, structure: SiteCollection) -> dict[str, Any]:
+        """Get the properties of the structure.
+
+        Args:
+            structure: The molecular structure to extract properties from.
+
+        Returns
+        -------
+            A dictionary containing the properties of the structure.
+
+        Raises
+        ------
+            NotImplementedError: This method must be implemented by subclasses.
+        """
         raise NotImplementedError
-
-    @job(files="files", properties="properties")
-    def make(self, molecule: IMolecule | list[IMolecule]) -> Response[dict[str, Any]]:
-        """Make the job."""
-        resp = handle_structures(self, molecule)
-        if resp is not None:
-            return resp
-        else:  # If the structure is not a list, generate a single structure
-            structure, properties = self.optimize_structure(cast("IMolecule", molecule))
-            if structure is None:
-                return Response(stop_children=True)
-
-            return Response(
-                output={
-                    "structure": structure,
-                    "files": structure.to(fmt="mol"),
-                    "properties": properties,
-                }
-            )
