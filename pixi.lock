@@ -4225,7 +4225,7 @@ packages:
 - pypi: ./
   name: jfchemistry
   version: 0.0.1
-  sha256: d92f8e5452e160995282afbbefdfd0dac2055e28959ae167da5a79e5448a02f8
+  sha256: 90a308ff79b6b7e6b5651f78c0c3a4ecee1d5bc761707b76e4193ffb5a57522a
   requires_python: '>=3.12'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
