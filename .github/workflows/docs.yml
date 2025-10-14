@@ -26,7 +26,7 @@ jobs:
           pixi-version: v0.48.0
           cache: true
           environments: docs
-      - run: pixi run mkdocs gh-deploy --config-file ./mkdocs.yml --force
+      - run: pixi run -e docs build_docs
 
   deploy_mkdocs:
     needs: build_mkdocs
