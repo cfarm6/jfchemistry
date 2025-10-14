@@ -1,0 +1,27 @@
+runtype = "imtd-gc"
+preopt = true
+multilevelopt = true
+topo = true
+parallel = 4
+input = "input.sdf"
+
+[calculation]
+opt_engine = "ancopt"
+hess_update = "bfgs"
+optlev = "normal"
+level = [
+    { method = "gfn2", chrg = 0, rdwbo = false, rddip = false, dipgrad = false },
+    { method = "gfn2", chrg = 0, rdwbo = false, rddip = false, dipgrad = false },
+]
+
+[cregen]
+ewin = 6.0
+ethr = 0.05
+rthr = 0.125
+bthr = 0.01
+
+[dynamics]
+active = [
+    2,
+]
+dump = 100.0

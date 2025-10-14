@@ -1,0 +1,73 @@
+/* Custom styles for JFChemistry documentation */
+
+/* Improve code block styling */
+.highlight {
+    border-radius: 0.2rem;
+}
+
+/* Add some spacing to admonitions */
+.admonition {
+    margin: 1.5625em 0;
+}
+
+/* Better table styling */
+table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Make inline code stand out a bit more */
+code {
+    padding: 0.1em 0.3em;
+    border-radius: 0.2em;
+}
+
+/* Better signature formatting */
+.doc-signature {
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+/* Improve parameter tables */
+.doc-parameters table {
+    width: 100%;
+}
+
+.doc-parameters td {
+    vertical-align: top;
+}
+
+/* Better spacing for class documentation */
+.doc-class > .doc-contents {
+    padding-left: 0;
+}
+
+/* Highlight important notes */
+.admonition.tip {
+    border-left-color: #00c853;
+}
+
+.admonition.warning {
+    border-left-color: #ff9100;
+}
+
+/* Code annotation styling */
+.md-annotation {
+    font-size: 0.85em;
+}
+
+/* Better mobile responsiveness for tables */
+@media screen and (max-width: 76.1875em) {
+    table {
+        font-size: 0.9em;
+    }
+}
+
+/* Improve nested list spacing */
+.doc-contents ul ul,
+.doc-contents ul ol,
+.doc-contents ol ul,
+.doc-contents ol ol {
+    margin: 0.5em 0;
+}
