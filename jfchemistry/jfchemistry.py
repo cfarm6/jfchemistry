@@ -26,7 +26,10 @@ class RDMolMolecule(rdchem.Mol):
     dictionary representations compatible with MongoDB and other document stores.
 
     Attributes:
-        Inherits all attributes from rdkit.Chem.rdchem.Mol.
+        None
+
+    Raises:
+        None
 
     Examples:
         >>> from rdkit import Chem
@@ -149,20 +152,20 @@ def handle_list_of_structures(
 ) -> Response[dict[str, Any]]:
     """Distribute workflow jobs for a list of RDKit molecules.
 
-        Processes a list of RDMolMolecule structures by creating individual jobs
-        for each molecule. If any molecule contains multiple conformers, those
-        conformers are handled separately using handle_conformers.
+    Processes a list of RDMolMolecule structures by creating individual jobs for each molecule.
+    If any molecule contains multiple conformers, those conformers are handled
+    separately using handle_conformers.
 
     Args:
-            maker: A Maker instance that will process each structure.
-            structures: List of RDMolMolecule structures to process.
+        maker: A Maker instance that will process each structure.
+        structures: List of RDMolMolecule structures to process.
 
     Returns:
-            Response containing:
-                - structures: List of processed structures from all jobs
-                - files: List of output files from all jobs
-                - properties: List of computed properties from all jobs
-                - detour: List of jobs to be executed
+        Response containing:
+            - structures: List of processed structures from all jobs
+            - files: List of output files from all jobs
+            - properties: List of computed properties from all jobs
+            - detour: List of jobs to be executed
 
     Examples:
         >>> from jfchemistry.optimizers import TBLiteOptimizer  # doctest: +SKIP

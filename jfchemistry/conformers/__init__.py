@@ -24,6 +24,7 @@ Examples:
 
 """
 
+from .base import ConformerGeneration
 from .crest import CRESTConformers
 
-__all__ = ["CRESTConformers"]
+__all__ = ["CRESTConformers", "ConformerGeneration"]

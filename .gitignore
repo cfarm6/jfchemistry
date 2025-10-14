@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/python
-# Edit at https://www.toptal.com/developers/gitignore?templates=python
+# Documentation build output
+site/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -28,7 +28,6 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -53,6 +52,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+.coverage
+htmlcov/
 cover/
 
 # Translations
@@ -136,8 +137,9 @@ venv.bak/
 .spyderproject
 .spyproject
 
-# Rope project settings
-.ropeproject
+# OS
+.DS_Store
+Thumbs.db
 
 # mkdocs documentation
 /site

@@ -1,12 +1,43 @@
-title: Geometry Optimizers # title
-summary: Geometry Optimizers are used to optimize the geometry of a structure.
+---
+title: Geometry Optimizers
+summary: Optimize molecular geometries using various methods
+---
 
 # Geometry Optimizers
 
-::: jfchemistry.optimizers.base.GeometryOptimization
-handler: python
+Geometry optimizers perform structure relaxation to find local minima on the potential energy surface using various computational methods.
+
+::: jfchemistry.optimizers
 options:
-members: - optimize_structure - get_properties
-show_root_heading: false
+show_root_heading: true
 show_source: true
-:::
+show_root_toc_entry: true
+members: true
+show_bases: true
+show_inheritance_diagram: true
+
+## Example Usage
+
+### Optimizing a Molecule
+
+```python
+from jfchemistry.optimizers import TBLiteOptimizer
+from jfchemistry.inputs import Smiles
+
+smiles = Smiles()
+smiles_job = smiles.make("CCO")
+opt = TBLiteOptimizer(
+    method="GFN2-xTB",
+    optimizer="LBFGS",
+    fmax=0.05,
+    accuracy=1.0
+)
+job = opt.make(smiles_job.output["structure"])
+optimized = job.output["structure"]
+```
+
+## Key Parameters
+
+-   **optimizer**: Optimizer to use for optimization
+-   **fmax**: Maximum force for optimization
+-   **accuracy**: Accuracy for optimization

@@ -1,17 +1,100 @@
-# Welcome to MkDocs
+# JFChemistry
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+[![License](https://img.shields.io/github/license/cfarm6/jfchemistry)](https://github.com/cfarm6/jfchemistry/blob/master/LICENSE)
+[![Powered by: Pixi](https://img.shields.io/badge/Powered_by-Pixi-facc15)](https://pixi.sh)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/cfarm6/jfchemistry/test.yml?branch=master&logo=github-actions)](https://github.com/cfarm6/jfchemistry/actions/)
+[![Codecov](https://img.shields.io/codecov/c/github/cfarm6/jfchemistry)](https://codecov.io/gh/cfarm6/jfchemistry)
 
-## Commands
+A comprehensive computational chemistry workflow package built on [jobflow](https://github.com/materialsproject/jobflow).
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+## Overview
 
-## Project layout
+JFChemistry provides a flexible framework for building computational chemistry workflows using various methods ranging from force fields to machine learning potentials. It seamlessly integrates with popular chemistry libraries like RDKit, ASE, and Pymatgen.
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Key Features
+
+-   **Structure Generation**: Create 3D molecular structures from SMILES strings or PubChem database
+-   **Conformer Search**: Generate and optimize multiple conformers using RDKit and CREST
+-   **Geometry Optimization**: Optimize structures with multiple methods (GFN-xTB, AimNet2, ORB models)
+-   **Structure Modification**: Perform protonation/deprotonation using CREST
+-   **Workflow Management**: Build complex, parallelizable workflows with jobflow
+-   **Multiple Calculators**: Support for ASE, TBLite, AimNet2, and ORB machine learning potentials
+
+## Installation
+
+The package uses [Pixi](https://pixi.sh) for dependency management:
+
+```bash
+# Clone the repository
+git clone https://github.com/cfarm6/jfchemistry.git
+cd jfchemistry
+
+# Install with pixi
+pixi install
+
+# For development
+pixi install -e dev
+
+# For AimNet2 support
+pixi install -e aimnet2
+
+# For ORB model support
+pixi install -e orb
+
+# For documentation
+pixi install -e docs
+```
+
+## Quick Start
+
+Here's a simple workflow to create a molecule from SMILES, generate conformers, and optimize:
+
+```python
+from jfchemistry.inputs import Smiles
+from jfchemistry.generation import RDKitGeneration
+from jfchemistry.optimizers import TBLiteOptimizer
+
+# Create molecule from SMILES
+smiles_maker = Smiles(add_hydrogens=True)
+smiles_job = smiles_maker.make("CCO")  # Ethanol
+
+# Generate 3D conformers
+generator = RDKitGeneration(num_conformers=10, method="ETKDGv3")
+gen_job = generator.make(smiles_job.output["structure"])
+
+# Optimize with GFN2-xTB
+optimizer = TBLiteOptimizer(method="GFN2-xTB", fmax=0.01)
+opt_job = optimizer.make(gen_job.output["structure"])
+
+# Access results
+optimized_structures = opt_job.output["structure"]
+properties = opt_job.output["properties"]
+```
+
+## Architecture
+
+JFChemistry is built around two main base classes:
+
+-   **SingleMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
+-   **SingleStructureMaker**: For operations on structures with 3D coordinates (Pymatgen structures)
+
+These base classes automatically handle:
+
+-   Job distribution for lists of structures
+-   Parallel processing of multiple conformers
+-   Consistent output formats across different methods
+
+## Modules
+
+-   **[Inputs](inputs.md)**: Create molecules from SMILES, PubChem CID
+-   **[Generation](generation.md)**: Generate 3D structures from molecular graphs
+-   **[Conformers](conformers.md)**: Search conformational space with CREST
+-   **[Optimizers](geometry_optimizers.md)**: Optimize geometries with various methods
+-   **[Calculators](calculators.md)**: Set up and run energy/property calculations
+-   **[Modification](modification.md)**: Modify structures (protonation, deprotonation)
+-   **[Base Classes](base_nodes.md)**: Core framework classes
+
+## Credits
+
+This package was created with [Cookiecutter](https://github.com/audreyr/cookiecutter) and the [jevandezande/pixi-cookiecutter](https://github.com/jevandezande/pixi-cookiecutter) project template.
