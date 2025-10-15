@@ -7,9 +7,11 @@ Environment) calculators into jfchemistry workflows.
 from ase import Atoms
 from pydantic.dataclasses import dataclass
 
+from .base import Calculator
+
 
 @dataclass
-class ASECalculator:
+class ASECalculator(Calculator):
     """Base class for ASE calculator integration.
 
     This class provides the interface for setting up ASE calculators on

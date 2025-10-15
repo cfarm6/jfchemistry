@@ -5,7 +5,7 @@ performing GFN-xTB semi-empirical quantum chemistry calculations.
 """
 
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from ase import Atoms
 from ase.units import Bohr, Hartree
@@ -65,8 +65,6 @@ class TBLiteCalculator(ASECalculator):
 
     name: str = "TBLite Calculator"
     method: Literal["GFN1-xTB", "GFN2-xTB", "IPEA1-xTB"] = "GFN2-xTB"
-    charge: Optional[int] = None
-    multiplicity: Optional[int] = None
     accuracy: float = 1.0
     electronic_temperature: float = 300.0
     max_iterations: int = 250
@@ -113,8 +111,8 @@ class TBLiteCalculator(ASECalculator):
             ) from e
         if self.charge is not None:
             charge = self.charge
-        if self.multiplicity is not None:
-            spin_multiplicity = self.multiplicity
+        if self.spin_multiplicity is not None:
+            spin_multiplicity = self.spin_multiplicity
         atoms.calc = TBLite(
             method=self.method,
             charge=charge,

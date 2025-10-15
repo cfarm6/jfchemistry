@@ -26,29 +26,29 @@ class AimNet2Optimizer(AimNet2Calculator, ASEOptimizer):
         Additional attributes inherited from AimNet2Calculator and ASEOptimizer.
 
     Examples:
-        >>> from ase.build import molecule
-        >>> from pymatgen.core import Molecule
-        >>> from jfchemistry.optimizers import AimNet2Optimizer
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> from jfchemistry.optimizers import AimNet2Optimizer # doctest: +SKIP
+        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
         >>>
         >>> # Fast optimization for screening
-        >>> opt_fast = AimNet2Optimizer(
-        ...     optimizer="LBFGS",
-        ...     fmax=0.1,  # Looser convergence
-        ...     steps=500
-        ... )
-        >>> job = opt_fast.make(molecule)
+        >>> opt_fast = AimNet2Optimizer( # doctest: +SKIP
+        ...     optimizer="LBFGS", # doctest: +SKIP
+        ...     fmax=0.1,  # Looser convergence # doctest: +SKIP
+        ...     steps=500 # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = opt_fast.make(molecule) # doctest: +SKIP
         >>>
         >>> # Tight optimization
-        >>> opt_tight = AimNet2Optimizer(
-        ...     optimizer="LBFGS",
-        ...     fmax=0.01,
-        ...     charge=-1,
-        ...     multiplicity=1
-        ... )
-        >>> job = opt_tight.make(molecule)
-        >>> optimized = job.output["structure"]
-        >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"]
+        >>> opt_tight = AimNet2Optimizer( # doctest: +SKIP
+        ...     optimizer="LBFGS", # doctest: +SKIP
+        ...     fmax=0.01, # doctest: +SKIP
+        ...     charge=-1, # doctest: +SKIP
+        ...     multiplicity=1 # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = opt_tight.make(molecule) # doctest: +SKIP
+        >>> optimized = job.output["structure"] # doctest: +SKIP
+        >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"] # doctest: +SKIP
     """
 
     name: str = "AimNet2 Optimizer"

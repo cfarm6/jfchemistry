@@ -5,7 +5,7 @@ for fast and accurate calculation of molecular energies and partial charges.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from ase import Atoms
 
@@ -48,8 +48,6 @@ class AimNet2Calculator(ASECalculator):
 
     name: str = "AimNet2 Calculator"
     model: str = "aimnet2"
-    charge: Optional[int] = None
-    multiplicity: Optional[int] = None
 
     def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the AimNet2 calculator on the atoms object.
@@ -86,8 +84,8 @@ class AimNet2Calculator(ASECalculator):
             ) from e
         if self.charge is not None:
             charge = self.charge
-        if self.multiplicity is not None:
-            spin_multiplicity = self.multiplicity
+        if self.spin_multiplicity is not None:
+            spin_multiplicity = self.spin_multiplicity
         atoms.calc = AIMNet2ASE(self.model, charge, spin_multiplicity)
 
         aimnet2_atomtypes = [1, 6, 7, 8, 9, 17, 16, 5, 14, 15, 33, 34, 35, 53]

@@ -5,7 +5,7 @@ force field models for molecular energy calculations.
 """
 
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from ase import Atoms
 
@@ -58,8 +58,6 @@ class ORBModelCalculator(ASECalculator):
 
     name: str = "ORB Model Calculator"
     model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = "orb-v3-conservative-omol"
-    charge: Optional[int] = None
-    multiplicity: Optional[int] = None
     device: Literal["cpu", "cuda"] = "cpu"
     precision: Literal["float32-high", "float32-highest", "float64"] = "float32-high"
     compile: bool = False
@@ -100,8 +98,8 @@ class ORBModelCalculator(ASECalculator):
             ) from e
         if self.charge is not None:
             charge = self.charge
-        if self.multiplicity is not None:
-            spin_multiplicity = self.multiplicity
+        if self.spin_multiplicity is not None:
+            spin_multiplicity = self.spin_multiplicity
 
         orbff = getattr(pretrained, self.model.replace("-", "_"))(
             device=self.device,

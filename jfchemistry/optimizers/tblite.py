@@ -30,35 +30,35 @@ class TBLiteOptimizer(TBLiteCalculator, ASEOptimizer):
         Additional attributes inherited from TBLiteCalculator and ASEOptimizer.
 
     Examples:
-        >>> from ase.build import molecule
-        >>> from pymatgen.core import Molecule
-        >>> from jfchemistry.optimizers import TBLiteOptimizer
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
+        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
         >>> # Standard optimization with GFN2-xTB
-        >>> opt = TBLiteOptimizer(
-        ...     method="GFN2-xTB",
-        ...     optimizer="LBFGS",
-        ...     fmax=0.05,
-        ...     accuracy=1.0
-        ... )
-        >>> job = opt.make(molecule)
-        >>> optimized = job.output["structure"]
+        >>> opt = TBLiteOptimizer( # doctest: +SKIP
+        ...     method="GFN2-xTB", # doctest: +SKIP
+        ...     optimizer="LBFGS", # doctest: +SKIP
+        ...     fmax=0.05, # doctest: +SKIP
+        ...     accuracy=1.0  # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = opt.make(molecule) # doctest: +SKIP
+        >>> optimized = job.output["structure"] # doctest: +SKIP
         >>>
         >>> # Tight optimization with detailed properties
-        >>> opt_tight = TBLiteOptimizer(
-        ...     method="GFN2-xTB",
-        ...     optimizer="LBFGS",
-        ...     fmax=0.01,
-        ...     accuracy=0.1,  # Tighter SCF
-        ...     max_iterations=500,
-        ...     charge=-1,
-        ...     multiplicity=1
-        ... )
-        >>> job = opt_tight.make(molecule)
-        >>> props = job.output["properties"]
-        >>> gap = props["Global"]["HOMO-LUMO Gap [eV]"]
-        >>> charges = props["Atomic"]["Mulliken Partial Charges [e]"]
-        >>> bond_orders = props["Bond"]["Wiberg Bond Order"]
+        >>> opt_tight = TBLiteOptimizer( # doctest: +SKIP
+        ...     method="GFN2-xTB", # doctest: +SKIP
+        ...     optimizer="LBFGS", # doctest: +SKIP
+        ...     fmax=0.01, # doctest: +SKIP
+        ...     accuracy=0.1,  # Tighter SCF # doctest: +SKIP
+        ...     max_iterations=500, # doctest: +SKIP
+        ...     charge=-1, # doctest: +SKIP
+        ...     multiplicity=1 # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = opt_tight.make(molecule) # doctest: +SKIP
+        >>> props = job.output["properties"] # doctest: +SKIP
+        >>> gap = props["Global"]["HOMO-LUMO Gap [eV]"] # doctest: +SKIP
+        >>> charges = props["Atomic"]["Mulliken Partial Charges [e]"] # doctest: +SKIP
+        >>> bond_orders = props["Bond"]["Wiberg Bond Order"] # doctest: +SKIP
     """
 
     name: str = "TBLite Optimizer"

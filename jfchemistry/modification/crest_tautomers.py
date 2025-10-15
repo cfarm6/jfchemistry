@@ -10,9 +10,8 @@ import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, Union, cast
+from typing import Any, Literal, Optional, cast
 
-import tomli_w
 from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
@@ -20,44 +19,39 @@ from jfchemistry.modification.base import StructureModification
 
 
 @dataclass
-class CRESTProtonation(StructureModification):
-    """Generate protonated structures using CREST.
+class CRESTTautomers(StructureModification):
+    """Generate tautomers using CREST.
 
-    Uses CREST's automated protonation workflow to identify basic sites
-    and generate low-energy protonated structures. The method systematically
-    explores different protonation sites and optimizes the resulting structures.
+    Uses CREST's automated tautomerization workflow to identify basic sites
+    and generate low-energy tautomers. The method systematically
+    explores different tautomer sites and optimizes the resulting structures.
 
     Attributes:
-        name: Name of the job (default: "CREST Protonation").
-        runtype: Workflow type (default: "protonate").
-        ion: Ion to add for protonation (default: None, uses H+).
-        ion_charge: Charge of the ion (default: 1).
-        ewin: Energy window in kcal/mol for selecting protonated structures
+        name: Name of the job (default: "CREST Tautomers").
+        runtype: Workflow type (default: "tautomerize").
+        ewin: Energy window in kcal/mol for selecting tautomers
             (default: None, uses CREST default).
         ffopt: Perform force field pre-optimization (default: True).
         freezeopt: Freeze constraint string for optimization (default: None).
         finalopt: Perform final optimization (default: True).
         threads: Number of parallel threads (default: 1).
-        solvation: Implicit solvation model as (model, solvent) tuple.
-            Either ("alpb", "water") or ("gbsa", "water"). Only one can be set
-            (default: None).
 
     References:
         - CREST Documentation: https://crest-lab.github.io/crest-docs/
 
     Examples:
-        >>> from jfchemistry.modification import CRESTProtonation
+        >>> from jfchemistry.modification import CRESTTautomers
         >>> from pymatgen.core import Molecule
         >>> from ase.build import molecule
         >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
         >>>
         >>> # Protonate an amine
-        >>> prot = CRESTProtonation(ewin=6.0, threads=4)
+        >>> prot = CRESTTautomers(ewin=6.0, threads=4)
         >>> job = prot.make(molecule)
         >>> protonated_structures = job.output["structure"]
         >>>
         >>> # Protonate with custom settings
-        >>> prot_custom = CRESTProtonation(
+        >>> prot_custom = CRESTTautomers(
         ...     ewin=8.0,
         ...     ffopt=True,
         ...     finalopt=True,
@@ -65,85 +59,15 @@ class CRESTProtonation(StructureModification):
         ... )
         >>> job = prot_custom.make(molecule)
         >>> protonated_structures = job.output["structure"]
-        >>>
-        >>> # Protonate with implicit solvation (ALPB)
-        >>> prot_solv = CRESTProtonation(
-        ...     ewin=6.0,
-        ...     solvation=("alpb", "water")  # ALPB with water
-        ... )
-        >>> job = prot_solv.make(molecule)
-        >>> protonated_structures = job.output["structure"]
-        >>>
-        >>> # Protonate with GBSA solvation
-        >>> prot_gbsa = CRESTProtonation(
-        ...     ewin=6.0,
-        ...     solvation=("gbsa", "DMSO")  # GBSA with DMSO
-        ... )
-        >>> job = prot_gbsa.make(molecule)
-        >>> protonated_structures = job.output["structure"]
     """
 
-    name: str = "CREST Protonation"
-    runtype: Literal["protonate"] = "protonate"
-    ion: Optional[str] = None
-    ion_charge: int = 1
+    name: str = "CREST Tautomers"
+    runtype: Literal["tautomerize"] = "tautomerize"
     ewin: Optional[float] = None
     ffopt: bool = True
     freezeopt: Optional[str] = None
     finalopt: bool = True
     threads: int = 1
-    solvation: Optional[
-        Union[
-            tuple[
-                Literal["alpb"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "aniline",
-                    "benzaldehyde",
-                    "benzene",
-                    "ch2cl2",
-                    "chcl3",
-                    "cs2",
-                    "dioxane",
-                    "dmf",
-                    "dmso",
-                    "ether",
-                    "ethylacetate",
-                    "furane",
-                    "hexandecane",
-                    "hexane",
-                    "methanol",
-                    "nitromethane",
-                    "octanol",
-                    "woctanol",
-                    "phenol",
-                    "toluene",
-                    "thf",
-                    "water",
-                ],
-            ],
-            tuple[
-                Literal["gbsa"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "benzene",
-                    "CH2Cl2",
-                    "CHCl3",
-                    "CS2",
-                    "DMF",
-                    "DMSO",
-                    "ether",
-                    "H2O",
-                    "methanol",
-                    "n-hexane",
-                    "THF",
-                    "toluene",
-                ],
-            ],
-        ]
-    ] = None
 
     def make_dict(self):
         """Create parameter dictionary for CREST configuration.
@@ -155,7 +79,8 @@ class CRESTProtonation(StructureModification):
             Dictionary of non-None protonation parameters.
 
         Examples:
-            >>> prot = CRESTProtonation(ewin=6.0, ffopt=True)
+            >>> from jfchemistry.modification import CRESTTautomers
+            >>> prot = CRESTTautomers(ewin=6.0, ffopt=True)
             >>> params = prot.make_dict()
             >>> print(params)
             {'ewin': 6.0, 'ffopt': True, 'finalopt': True}
@@ -188,43 +113,31 @@ class CRESTProtonation(StructureModification):
         Examples:
             >>> from pymatgen.core import Molecule # doctest: +SKIP
             >>> from ase.build import molecule # doctest: +SKIP
+            >>> from jfchemistry.modification import CRESTTautomers # doctest: +SKIP
             >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> prot = CRESTProtonation(ewin=6.0, threads=4) # doctest: +SKIP
+            >>> prot = CRESTTautomers(ewin=6.0, threads=4) # doctest: +SKIP
             >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
         """
         structure.to("input.xyz", fmt="xyz")
 
         # Write the input file
         self.inputfile = "input.xyz"
-        d = {"threads": self.threads, "runtype": self.runtype, "input": "input.xyz"}
-        d["protonation"] = self.make_dict()
-        with open("crest.toml", "wb") as f:
-            tomli_w.dump(d, f)
-
         charge = structure.charge
 
         # Save current working directory
         original_dir = os.getcwd()
 
-        commands = ["crest", "--input", "crest.toml", "--chrg", str(charge), "--newversion"]
-
-        if self.solvation is not None:
-            solvation_model, solvent = self.solvation
-            commands.append(f"--{solvation_model}")
-            commands.append(solvent)
-
         # Create temporary directory and run crest there
         with tempfile.TemporaryDirectory() as tmp_dir:
             # Copy input files to temp directory
             shutil.copy("input.xyz", tmp_dir)
-            shutil.copy("crest.toml", tmp_dir)
 
             # Change to temp directory
             os.chdir(tmp_dir)
 
             # Run crest command
             subprocess.call(
-                f"{' '.join(commands)} > log.out",
+                f"crest input.xyz --chrg {charge} --tautomerize --newversion > log.out",
                 shell=True,
             )
             # Copy log.out back to original directory
@@ -232,12 +145,12 @@ class CRESTProtonation(StructureModification):
                 shutil.copy("log.out", original_dir)
 
             # Copy all crest_conformers.* files back to original directory
-            for file in glob.glob("protonated.xyz"):
+            for file in glob.glob("tautomers.xyz"):
                 shutil.copy(file, original_dir)
 
             # Change back to original directory
             os.chdir(original_dir)
 
-        structures = XYZ.from_file("protonated.xyz").all_molecules
+        structures = XYZ.from_file("tautomers.xyz").all_molecules
         structures = cast("list[SiteCollection]", structures)
         return structures, None

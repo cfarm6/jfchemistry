@@ -3,27 +3,27 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.conformers.crest import CRESTConformers
-from jfchemistry.generation.rdkit_generation import RDKitGeneration
+from jfchemistry.conformers import CRESTConformers
+from jfchemistry.generation import RDKitGeneration
 from jfchemistry.inputs import PubChemCID
-from jfchemistry.modification.crest_deprotonation import CRESTDeprotonation
-from jfchemistry.modification.crest_protonation import CRESTProtonation
+from jfchemistry.modification import CRESTDeprotonation, CRESTTautomers
 from jfchemistry.optimizers.aimnet2 import AimNet2Optimizer
 
-pubchem_cid = PubChemCID().make(21688863)
+pubchem_cid = PubChemCID().make(8003)
 
-generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output["structure"])
+generate_structure = RDKitGeneration(num_conformers=1).make(pubchem_cid.output["structure"])
 
 optimize_structure = AimNet2Optimizer(optimizer="QuasiNewton").make(
     generate_structure.output["structure"]
 )
 
 crest_conformers = CRESTConformers(
-    calculation_dynamics_method="gfnff", calculation_energy_method="gfnff"
+    calculation_dynamics_method="gfnff",
+    calculation_energy_method="gfnff",
 ).make(generate_structure.output["structure"])
 
 deprotonation = CRESTDeprotonation().make(crest_conformers.output["structure"])
-protonation = CRESTProtonation(ion="Na+").make(generate_structure.output["structure"])
+protonation = CRESTTautomers().make(deprotonation.output["structure"])
 flow = Flow(
     [
         pubchem_cid,
