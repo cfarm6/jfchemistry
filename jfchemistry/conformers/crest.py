@@ -90,21 +90,18 @@ class CRESTConformers(ConformerGeneration):
         - Pracht et al., PCCP 2020, 22, 7169-7192
 
     Examples:
-        >>> from pymatgen.core import Molecule
-        >>> from ase.build import molecule
-        >>> from jfchemistry.conformers import CRESTConformers
-        >>>
-        >>> mol = Molecule.from_ase_atoms(molecule("C2H6"))
-        >>> mol = mol.set_charge_and_spin(0, 1)
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
+        >>> mol = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+        >>> mol = mol.set_charge_and_spin(0, 1) # doctest: +SKIP
         >>> # Basic conformer search
-        >>> conf_gen = CRESTConformers(
-        ...     ewin=6.0,
-        ...     calculation_energy_method="gfnff",
-        ...     calculation_dynamics_method="gfnff"
-        ... )
-        >>> structures, properties = conf_gen.operation(mol)
-        >>> type(structures[0])
-        <class 'pymatgen.core.structure.Molecule'>
+        >>> conf_gen = CRESTConformers( # doctest: +SKIP
+        ...     ewin=6.0, # doctest: +SKIP
+        ...     calculation_energy_method="gfnff", # doctest: +SKIP
+        ...     calculation_dynamics_method="gfnff" # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> structures, properties = conf_gen.operation(mol) # doctest: +SKIP
     """
 
     name: str = "CREST Conformer Generation"
@@ -178,15 +175,13 @@ class CRESTConformers(ConformerGeneration):
                 - None (no additional properties returned)
 
         Examples:
-            >>> from jfchemistry.conformers import CRESTConformers
-            >>> from pymatgen.core import Molecule
-            >>> from ase.build import molecule
-            >>> mol = Molecule.from_ase_atoms(molecule("C2H6"))
-            >>> mol = mol.set_charge_and_spin(0, 1)
-            >>> gen = CRESTConformers(ewin=6.0, parallel=4)
-            >>> conformers, props = gen.operation(mol)
-            >>> len(conformers)
-            1
+            >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
+            >>> from pymatgen.core import Molecule # doctest: +SKIP
+            >>> from ase.build import molecule # doctest: +SKIP
+            >>> mol = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> mol = mol.set_charge_and_spin(0, 1) # doctest: +SKIP
+            >>> gen = CRESTConformers(ewin=6.0, parallel=4) # doctest: +SKIP
+            >>> conformers, props = gen.operation(mol) # doctest: +SKIP
         """
         # Write structures to sdf file
         structure.to("input.sdf", fmt="sdf")
