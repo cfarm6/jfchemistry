@@ -28,7 +28,14 @@ Examples:
 
 from .aimnet2_calculator import AimNet2Calculator
 from .ase_calculator import ASECalculator
+from .crest import CRESTCalculator
 from .orb_calculator import ORBModelCalculator
 from .tblite_calculator import TBLiteCalculator
 
-__all__ = ["ASECalculator", "AimNet2Calculator", "ORBModelCalculator", "TBLiteCalculator"]
+__all__ = [
+    "ASECalculator",
+    "AimNet2Calculator",
+    "CRESTCalculator",
+    "ORBModelCalculator",
+    "TBLiteCalculator",
+]

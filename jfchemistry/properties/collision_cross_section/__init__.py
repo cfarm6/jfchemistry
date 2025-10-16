@@ -1,0 +1,1 @@
+"""Collision cross section properties."""
