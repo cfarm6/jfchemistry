@@ -4,8 +4,6 @@ authors:
 - family-names: "Farmer"
   given-names: "Carson
   orcid: "https://orcid.org/0000-0002-0456-8301"
-- family-names: "Medina"
-  given-names: "Hector"
 title: "JFChemistry"
 version: 1.0.0
 date-released: 2025-01-01
