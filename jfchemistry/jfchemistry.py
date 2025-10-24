@@ -11,8 +11,56 @@ from typing import Any, Optional, cast
 
 from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
+from pydantic import BaseModel
 from pymatgen.core.structure import SiteCollection
 from rdkit.Chem import rdchem
+
+
+class Property(BaseModel):
+    """A calculated property."""
+
+    name: str
+    value: float | list[float]
+    units: str
+    uncertainty: Optional[float | list[float]] = None
+    description: Optional[str] = None
+
+    def as_dict(self) -> dict[str, Any]:
+        """Convert the property to a dictionary representation."""
+        return self.model_dump()
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "Property":
+        """Reconstruct a property from a dictionary representation."""
+        return cls(**d)
+
+
+class AtomicProperty(Property):
+    """An atomic property."""
+
+    value: list[float]
+
+
+class BondProperty(Property):
+    """A bond property."""
+
+    value: list[float]
+    atoms1: list[int]
+    atoms2: list[int]
+
+
+class SystemProperty(Property):
+    """A system property."""
+
+    value: float
+
+
+class Properties(BaseModel):
+    """Properties of a structure."""
+
+    atomic: Optional[list[AtomicProperty]] = None
+    bond: Optional[list[BondProperty]] = None
+    system: Optional[list[SystemProperty]] = None
 
 
 class RDMolMolecule(rdchem.Mol):
@@ -225,52 +273,6 @@ def handle_molecules(
         return None
 
 
-def handle_structures(
-    maker: Maker, structures: list[SiteCollection] | SiteCollection
-) -> Response[dict[str, Any]] | None:
-    """Distribute workflow jobs for Pymatgen structures.
-
-    Creates individual jobs for each structure in a list. If a single structure
-    is provided, returns None to indicate it should be processed directly.
-
-    Args:
-        maker: A Maker instance that will process each structure.
-        structures: Either a list of SiteCollection (Molecule/Structure) objects
-            or a single SiteCollection.
-
-    Returns:
-        Response containing distributed jobs if structures is a list, None if
-        structures is a single SiteCollection to be processed directly.
-
-    Examples:
-        >>> from jfchemistry.optimizers import ORBModelOptimizer # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from ase.build import molecule # doctest: +SKIP
-        >>> mol1 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-        >>> mol2 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-        >>> mol3 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-        >>> structures = [mol1, mol2, mol3]  # doctest: +SKIP
-        >>> opt = ORBModelOptimizer() # doctest: +SKIP
-        >>> # Processes each structure in parallel
-        >>> result = handle_structures(opt, structures) # doctest: +SKIP
-    """
-    jobs: list[Response[dict[str, Any]]] = []
-    if isinstance(structures, list):
-        for structure in structures:
-            jobs.append(maker.make(structure))  # type: ignore
-    else:
-        return None
-
-    return Response(
-        output={
-            "structure": [job.output["structure"] for job in jobs],
-            "files": [job.output["files"] for job in jobs],
-            "properties": [job.output["properties"] for job in jobs],
-        },
-        detour=jobs,  # type: ignore
-    )
-
-
 @dataclass
 class SingleStructureMaker(Maker):
     """Base class for operations on structures with 3D geometry.
@@ -312,9 +314,57 @@ class SingleStructureMaker(Maker):
 
     name: str = "Single Structure Maker"
 
+    class Properties(BaseModel):
+        """Properties of the structure."""
+
+    def handle_structures(
+        self, structures: list[SiteCollection] | SiteCollection
+    ) -> Response[dict[str, Any]] | None:
+        """Distribute workflow jobs for Pymatgen structures.
+
+        Creates individual jobs for each structure in a list. If a single structure
+        is provided, returns None to indicate it should be processed directly.
+
+        Args:
+            maker: A Maker instance that will process each structure.
+            structures: Either a list of SiteCollection (Molecule/Structure) objects
+                or a single SiteCollection.
+
+        Returns:
+            Response containing distributed jobs if structures is a list, None if
+            structures is a single SiteCollection to be processed directly.
+
+        Examples:
+            >>> from jfchemistry.optimizers import ORBModelOptimizer # doctest: +SKIP
+            >>> from pymatgen.core import Molecule # doctest: +SKIP
+            >>> from ase.build import molecule # doctest: +SKIP
+            >>> mol1 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> mol2 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> mol3 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
+            >>> structures = [mol1, mol2, mol3]  # doctest: +SKIP
+            >>> opt = ORBModelOptimizer() # doctest: +SKIP
+            >>> # Processes each structure in parallel
+            >>> result = handle_structures(opt, structures) # doctest: +SKIP
+        """
+        jobs: list[Response[dict[str, Any]]] = []
+        if isinstance(structures, list):
+            for structure in structures:
+                jobs.append(self.make(structure))  # type: ignore
+        else:
+            return None
+
+        return Response(
+            output={
+                "structure": [job.output["structure"] for job in jobs],
+                "files": [job.output["files"] for job in jobs],
+                "properties": [job.output["properties"] for job in jobs],
+            },
+            detour=jobs,  # type: ignore
+        )
+
     def operation(
         self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+    ) -> tuple[SiteCollection | list[SiteCollection], Properties]:
         """Perform the computational operation on a structure.
 
         This method must be implemented by subclasses to define the specific
@@ -354,13 +404,13 @@ class SingleStructureMaker(Maker):
 
         Examples:
             >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # doctest: +SKIP
+            >>> from pymatgen.core import Molecule # dokctest: +SKIP
             >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
             >>> # Generate conformers
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        resp = handle_structures(self, structure)
+        resp = self.handle_structures(structure)
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure
@@ -372,9 +422,9 @@ class SingleStructureMaker(Maker):
             return Response(
                 output={
                     "structure": structures,
-                    "files": files,
+                    "files": files,  # strings
                     "properties": properties,
-                }
+                },
             )
 
 

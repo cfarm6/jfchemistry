@@ -150,3 +150,6 @@ class CRESTCalculator(Calculator):
 
             # Change back to original directory
             os.chdir(original_dir)
+
+            # Remove the temporary directory
+            shutil.rmtree(tmp_dir)

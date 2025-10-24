@@ -5,9 +5,12 @@ force field models for molecular energy calculations.
 """
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
 
 from ase import Atoms
+from pydantic import BaseModel
+
+from jfchemistry import Properties, SystemProperty
 
 from .ase_calculator import ASECalculator
 
@@ -62,6 +65,11 @@ class ORBModelCalculator(ASECalculator):
     precision: Literal["float32-high", "float32-highest", "float64"] = "float32-high"
     compile: bool = False
 
+    class OrbSystemProperties(BaseModel):
+        """Properties of the ORB model calculation."""
+
+        total_energy: SystemProperty
+
     def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the ORB model calculator on the atoms object.
 
@@ -112,7 +120,7 @@ class ORBModelCalculator(ASECalculator):
         atoms.info["spin"] = spin_multiplicity
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> dict[str, Any]:
+    def get_properties(self, atoms: Atoms) -> Properties:
         """Extract computed properties from the ORB calculation.
 
         Retrieves the total energy from the ORB model calculation.
@@ -134,8 +142,14 @@ class ORBModelCalculator(ASECalculator):
             -234.567
         """
         energy = atoms.get_total_energy()  # type: ignore
-        properties = {
-            "Global": {"Total Energy [eV]": energy},
-        }
+        system_properties = SystemProperty(
+            name="Total Energy",
+            value=energy,
+            units="eV",
+            description=f"Total energy prediction from {self.model} model",
+        )
 
+        properties = Properties(
+            system=[system_properties],
+        )
         return properties

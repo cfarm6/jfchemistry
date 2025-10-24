@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from pymatgen.core import SiteCollection
+
 
 @dataclass
 class Calculator:
@@ -10,3 +12,6 @@ class Calculator:
 
     charge: Optional[int] = None
     spin_multiplicity: Optional[int] = None
+
+    def set_properties(self, structure: SiteCollection) -> None:
+        """Set the properties for the structure."""

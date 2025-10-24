@@ -218,7 +218,7 @@ class TBLiteCalculator(ASECalculator):
                 "Mulliken Partial Charges [e]": charges,
             },
             "Bond": {"Wiberg Bond Order": wbo},
-            "Orbital": {
+            "Orbitals": {
                 "Orbital Energies [eV]": orbital_energies,
                 "Orbital Occupations": orbital_occupations,
                 "Orbital Coefficients": orbital_coefficients,

@@ -31,10 +31,24 @@ Examples:
     >>> opt_job = optimizer.make(gen_job.output["structure"])
 """
 
-from .jfchemistry import RDMolMolecule, SingleMoleculeMaker, SingleStructureMaker
+from .jfchemistry import (
+    AtomicProperty,
+    BondProperty,
+    Properties,
+    Property,
+    RDMolMolecule,
+    SingleMoleculeMaker,
+    SingleStructureMaker,
+    SystemProperty,
+)
 
 __all__ = [
+    "AtomicProperty",
+    "BondProperty",
+    "Properties",
+    "Property",
     "RDMolMolecule",
     "SingleMoleculeMaker",
     "SingleStructureMaker",
+    "SystemProperty",
 ]

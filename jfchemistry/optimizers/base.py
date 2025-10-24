@@ -43,7 +43,7 @@ class GeometryOptimization(SingleStructureMaker):
         """
         raise NotImplementedError
 
-    def get_properties(self, structure: SiteCollection) -> dict[str, Any]:
+    def get_properties(self, structure: SiteCollection):
         """Get the properties of the structure.
 
         Args:

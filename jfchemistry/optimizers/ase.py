@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 import ase.optimize
-from pymatgen.core.structure import Molecule, SiteCollection
+from pymatgen.core.structure import SiteCollection
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
 from jfchemistry.optimizers.base import GeometryOptimization
@@ -94,4 +94,6 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
         opt = getattr(ase.optimize, self.optimizer)(atoms, logfile=None)
         opt.run(self.fmax, self.steps)
-        return Molecule.from_ase_atoms(atoms), self.get_properties(atoms)
+        opt_structure = type(structure).from_ase_atoms(atoms)
+        properties = self.get_properties(atoms)
+        return opt_structure, properties

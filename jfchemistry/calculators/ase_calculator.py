@@ -63,3 +63,7 @@ class ASECalculator(Calculator):
             ...     return atoms
         """
         raise NotImplementedError
+
+    def get_properties(self, atoms: Atoms):
+        """Get the properties for the atoms."""
+        raise NotImplementedError

@@ -5,9 +5,10 @@ for fast and accurate calculation of molecular energies and partial charges.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 from ase import Atoms
+
+from jfchemistry import AtomicProperty, Properties, SystemProperty
 
 from .ase_calculator import ASECalculator
 
@@ -97,7 +98,7 @@ class AimNet2Calculator(ASECalculator):
 
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> dict[str, Any]:
+    def get_properties(self, atoms: Atoms) -> Properties:
         """Extract computed properties from the AimNet2 calculation.
 
         Retrieves the total energy and atomic partial charges from the AimNet2
@@ -118,11 +119,25 @@ class AimNet2Calculator(ASECalculator):
             >>> atoms.get_potential_energy()  # Trigger calculation # doctest: +SKIP
             >>> props = calc.get_properties(atoms) # doctest: +SKIP
         """
-        energy = atoms.get_total_energy()  # type: ignore
-        charge = atoms.get_charges()  # type: ignore
-        properties = {
-            "Global": {"Total Energy [eV]": energy},
-            "Atomic": {"AimNet2 Partial Charges [e]": charge},
-        }
+        energy = atoms.get_total_energy()
+        system_property = SystemProperty(
+            name="Total Energy",
+            value=energy,
+            units="eV",
+            description=f"Total energy prediction from {self.model} model",
+        )
+
+        charge = atoms.get_charges()
+        atomic_property = AtomicProperty(
+            name="AimNet2 Partial Charges",
+            value=charge,
+            units="e",
+            description=f"Partial charges predicted by {self.model} model",
+        )
+
+        properties = Properties(
+            atomic=[atomic_property],
+            system=[system_property],
+        )
 
         return properties
