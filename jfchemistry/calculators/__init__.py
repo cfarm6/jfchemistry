@@ -30,12 +30,28 @@ from .aimnet2_calculator import AimNet2Calculator
 from .ase_calculator import ASECalculator
 from .crest import CRESTCalculator
 from .orb_calculator import ORBModelCalculator
+from .orca_calculator import (
+    BasisSetType,
+    ECPType,
+    ORCACalculator,
+    SolvationModelType,
+    SolvationType,
+    SolventType,
+    XCFunctionalType,
+)
 from .tblite_calculator import TBLiteCalculator
 
 __all__ = [
     "ASECalculator",
     "AimNet2Calculator",
+    "BasisSetType",
     "CRESTCalculator",
+    "ECPType",
     "ORBModelCalculator",
+    "ORCACalculator",
+    "SolvationModelType",
+    "SolvationType",
+    "SolventType",
     "TBLiteCalculator",
+    "XCFunctionalType",
 ]

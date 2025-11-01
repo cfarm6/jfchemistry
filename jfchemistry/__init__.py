@@ -14,38 +14,20 @@ Main Features:
     - Geometry optimization using ASE, AimNet2, ORB models, and TBLite
     - Structure modifications (protonation, deprotonation)
     - Property calculations with various quantum chemistry methods
-
-Examples:
-    >>> from jfchemistry.inputs import Smiles
-    >>> from jfchemistry.generation import RDKitGeneration
-    >>> from jfchemistry.optimizers import AimNet2Optimizer
-    >>>
-    >>> # Create a molecular structure workflow
-    >>> smiles_input = Smiles()
-    >>> generator = RDKitGeneration(num_conformers=10)
-    >>> optimizer = AimNet2Optimizer()
-    >>>
-    >>> # Build workflow
-    >>> smiles_job = smiles_input.make("CCO")
-    >>> gen_job = generator.make(smiles_job.output["structure"])
-    >>> opt_job = optimizer.make(gen_job.output["structure"])
 """
 
-from .jfchemistry import (
+from .base_classes import (
     AtomicProperty,
     BondProperty,
-    Properties,
     Property,
     RDMolMolecule,
-    SingleMoleculeMaker,
-    SingleStructureMaker,
     SystemProperty,
 )
+from .base_jobs import SingleMoleculeMaker, SingleStructureMaker
 
 __all__ = [
     "AtomicProperty",
     "BondProperty",
-    "Properties",
     "Property",
     "RDMolMolecule",
     "SingleMoleculeMaker",

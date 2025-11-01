@@ -7,7 +7,6 @@ readme = "README.md"
 keywords = []
 authors = [{ name = "Carson Farmer" }]
 requires-python = ">=3.12"
-dependencies = []
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
@@ -28,10 +27,15 @@ cuda = ">=13.0.2,<14"
 cuda-nvrtc = ">=13.0.88,<14"
 crest = ">=3.0.2,<4"
 fastmcp = ">=2.12.5,<3"
+icecream = "*"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
 tomli-w = ">=1.2.0,<2"
+icecream = ">=2.1.8,<3"
+censo = { git = "https://github.com/grimme-lab/CENSO.git" }
+orca-pi = ">=1.0.1,<2"
+fireworks = "*"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }

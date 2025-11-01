@@ -84,7 +84,7 @@ class CRESTCalculator(Calculator):
 
     # INTERNAL
     _input_dict: dict[str, Any] = field(default_factory=dict)
-    _commands: list[str | int | float | bool] = field(default_factory=list)
+    _commands: list[str | int | float] = field(default_factory=list)
     _toml_filename: str = "crest.toml"
     _xyz_filename: str = "input.xyz"
 
@@ -140,7 +140,7 @@ class CRESTCalculator(Calculator):
 
             # Run crest command
             subprocess.call(
-                f"{' '.join(self._commands)} > log.out",
+                " ".join(str(cmd) for cmd in self._commands) + " > log.out",
                 shell=True,
             )
 

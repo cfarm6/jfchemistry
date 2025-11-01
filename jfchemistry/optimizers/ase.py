@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 import ase.optimize
+from ase import Atoms
 from pymatgen.core.structure import SiteCollection
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
@@ -59,6 +60,10 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
     )
     fmax: float = 0.05
     steps: int = 250000
+
+    def get_properties(self, structure: Atoms):
+        """Get the properties for an ASE Atoms object."""
+        raise NotImplementedError
 
     def operation(
         self, structure: SiteCollection

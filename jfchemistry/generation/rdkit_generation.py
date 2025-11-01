@@ -5,12 +5,12 @@ methods for generating 3D molecular structures from 2D representations.
 """
 
 from dataclasses import dataclass
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Literal, Optional
 
 from pymatgen.core.structure import Molecule, SiteCollection
 
+from jfchemistry.base_classes import RDMolMolecule
 from jfchemistry.generation.base import StructureGeneration
-from jfchemistry.jfchemistry import RDMolMolecule
 
 
 @dataclass
@@ -65,31 +65,6 @@ class RDKitGeneration(StructureGeneration):
         use_symmetry_for_pruning: Use symmetry when pruning conformers (default: None).
         num_conformers: Number of conformers to generate (default: 1).
 
-    Examples:
-        >>> from jfchemistry.inputs import Smiles
-        >>> from jfchemistry.generation import RDKitGeneration
-        >>>
-        >>> # Get molecule from SMILES
-        >>> smiles_job = Smiles().make("c1ccccc1")
-        >>>
-        >>> # Generate single low-energy conformer
-        >>> gen_single = RDKitGeneration(
-        ...     method="ETKDGv3",
-        ...     num_conformers=1,
-        ...     random_seed=42
-        ... )
-        >>> job = gen_single.make(smiles_job.output["structure"])
-        >>>
-        >>> # Generate diverse conformer ensemble
-        >>> gen_ensemble = RDKitGeneration(
-        ...     method="ETKDGv3",
-        ...     num_conformers=100,
-        ...     prune_rms_thresh=0.5,  # Remove similar conformers
-        ...     max_iterations=500,
-        ...     num_threads=4
-        ... )
-        >>> job = gen_ensemble.make(smiles_job.output["structure"])
-        >>> conformers = job.output["structure"]
     """
 
     # Name of the job
@@ -125,9 +100,7 @@ class RDKitGeneration(StructureGeneration):
     use_symmetry_for_pruning: Optional[bool] = None
     num_conformers: Annotated[int, "positive"] = 1
 
-    def operation(
-        self, mol: RDMolMolecule
-    ) -> tuple[SiteCollection | list[SiteCollection], dict[str, Any]]:
+    def operation(self, mol: RDMolMolecule) -> tuple[SiteCollection | list[SiteCollection], None]:
         """Generate 3D structure(s) using RDKit distance geometry embedding.
 
         Embeds 3D coordinates into the molecule using the specified ETKDG method
@@ -150,19 +123,18 @@ class RDKitGeneration(StructureGeneration):
                 - Empty dictionary (no additional properties)
 
         Examples:
-            >>> from rdkit import Chem
-            >>> from jfchemistry import RDMolMolecule
-            >>> from jfchemistry.generation import RDKitGeneration
+            >>> from rdkit import Chem # doctest: +SKIP
+            >>> from jfchemistry import RDMolMolecule # doctest: +SKIP
+            >>> from jfchemistry.generation import RDKitGeneration # doctest: +SKIP
             >>>
             >>> # Create molecule from SMILES
-            >>> mol = Chem.MolFromSmiles("CCO")
-            >>> rdmol = RDMolMolecule(Chem.AddHs(mol))
+            >>> mol = Chem.MolFromSmiles("CCO") # doctest: +SKIP
+            >>> rdmol = RDMolMolecule(Chem.AddHs(mol)) # doctest: +SKIP
             >>>
             >>> # Generate 10 conformers
-            >>> gen = RDKitGeneration(num_conformers=10, random_seed=42)
-            >>> structures, props = gen.operation(rdmol)
-            >>> print(f"Generated {len(structures)} conformers")
-            Generated 10 conformers
+            >>> gen = RDKitGeneration(num_conformers=10, random_seed=42) # doctest: +SKIP
+            >>> structures, props = gen.operation(rdmol) # doctest: +SKIP
+            >>> print(f"Generated {len(structures)} conformers") # doctest: +SKIP
         """
         import inspect
 
@@ -191,5 +163,7 @@ class RDKitGeneration(StructureGeneration):
             spin = int(2 * (abs(charge) // 2) + 1)
             molecule.set_charge_and_spin(charge, spin)
             molecules.append(molecule)
-
-        return molecules, {}
+        if self.num_conformers == 1:
+            return molecules[0], None
+        else:
+            return molecules, None

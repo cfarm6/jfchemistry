@@ -31,6 +31,13 @@ Examples:
 from .aimnet2 import AimNet2Optimizer
 from .ase import ASEOptimizer
 from .orb import ORBModelOptimizer
+from .orca import ORCAOptimizer
 from .tblite import TBLiteOptimizer
 
-__all__ = ["ASEOptimizer", "AimNet2Optimizer", "ORBModelOptimizer", "TBLiteOptimizer"]
+__all__ = [
+    "ASEOptimizer",
+    "AimNet2Optimizer",
+    "ORBModelOptimizer",
+    "ORCAOptimizer",
+    "TBLiteOptimizer",
+]

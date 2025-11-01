@@ -10,7 +10,7 @@ from pymatgen.core import SiteCollection
 class Calculator:
     """Base class for calculators."""
 
-    charge: Optional[int] = None
+    charge: Optional[int | float] = None
     spin_multiplicity: Optional[int] = None
 
     def set_properties(self, structure: SiteCollection) -> None:

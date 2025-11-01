@@ -5,13 +5,35 @@ chemical identifier formats including SMILES and PubChem compound IDs.
 """
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Annotated, Any, Optional
 
 from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
+from pydantic import BaseModel, ConfigDict, Field, create_model
 from rdkit.Chem import SaltRemover, rdchem, rdmolfiles, rdmolops
 
+if TYPE_CHECKING:
+    from pydantic.fields import _FieldInfoAsDict
+
 from jfchemistry import RDMolMolecule
+
+
+class Properties(BaseModel):
+    """Properties of the structure."""
+
+    atomic: Optional[Any] = None
+    bond: Optional[Any] = None
+    system: Optional[Any] = None
+    orbital: Optional[Any] = None
+
+
+class Output(BaseModel):
+    """Output of the job."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    structure: Optional[Any] = None
+    properties: Optional[Any] = None
+    files: Optional[Any] = None
 
 
 @dataclass
@@ -51,8 +73,38 @@ class MoleculeInput(Maker):
     remove_salts: bool = field(default=True)
     # Add hydrogen atoms to the structure
     add_hydrogens: bool = field(default=True)
+    _output_model: type[Output] = Output
+    _properties_model: type[Properties] = Properties
 
-    def get_structure(self, input: int | str) -> rdchem.Mol:
+    def make_output_model(self, properties_model: type[BaseModel]):
+        """Make a properties model for the job."""
+        fields = {}
+        for f_name, f_info in self._output_model.model_fields.items():
+            f_dict: "_FieldInfoAsDict" = f_info.asdict()
+            annotation = f_dict["annotation"]
+            if f_name == "properties":
+                annotation = properties_model | list[properties_model]  # type: ignore
+
+            fields[f_name] = (
+                Annotated[
+                    annotation | None,  # type: ignore
+                    *f_dict["metadata"],  # type: ignore
+                    Field(**f_dict["attributes"]),
+                ],  # type: ignore
+                None,
+            )
+
+        self._output_model = create_model(
+            f"{self._output_model.__name__}",
+            __base__=self._output_model,
+            **fields,
+        )
+
+    def __post_init__(self):
+        """Post-initialization hook to make the output model."""
+        self.make_output_model(self._properties_model)
+
+    def get_structure(self, input: int | str) -> RDMolMolecule:
         """Retrieve or parse structure from the input identifier.
 
         This method must be implemented by subclasses to convert specific
@@ -102,7 +154,7 @@ class MoleculeInput(Maker):
 
         return input
 
-    def _make(self, input: int | str) -> Response[dict[str, Any]]:
+    def _make(self, input: int | str) -> Response[_output_model]:
         """Create the internal workflow job.
 
         Internal method that handles the complete workflow: retrieve structure,
@@ -123,12 +175,13 @@ class MoleculeInput(Maker):
         """
         mol = self.get_structure(input)
         mol = self.clean_structure(mol)
-        return Response(
-            output={
-                "structure": RDMolMolecule(mol),
-                "files": rdmolfiles.MolToV3KMolBlock(mol),
-            },
+        resp = Response(
+            output=self._output_model(
+                structure=RDMolMolecule(mol),
+                files=rdmolfiles.MolToV3KMolBlock(mol),
+            ),
         )
+        return resp
 
 
 @dataclass

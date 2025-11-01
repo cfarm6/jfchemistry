@@ -10,9 +10,28 @@ from typing import Literal
 from ase import Atoms
 from pydantic import BaseModel
 
-from jfchemistry import Properties, SystemProperty
+from jfchemistry.base_classes import AtomicProperty, SystemProperty
 
 from .ase_calculator import ASECalculator
+
+
+class OrbAtomicProperties(BaseModel):
+    """Properties of the ORB model calculation."""
+
+    orb_forces: AtomicProperty
+
+
+class OrbSystemProperties(BaseModel):
+    """System properties of the ORB model calculation."""
+
+    total_energy: SystemProperty
+
+
+class OrbProperties(BaseModel):
+    """Properties of the ORB model calculation."""
+
+    atomic: OrbAtomicProperties
+    system: OrbSystemProperties
 
 
 @dataclass
@@ -65,12 +84,9 @@ class ORBModelCalculator(ASECalculator):
     precision: Literal["float32-high", "float32-highest", "float64"] = "float32-high"
     compile: bool = False
 
-    class OrbSystemProperties(BaseModel):
-        """Properties of the ORB model calculation."""
+    _properties_model: type[OrbProperties] = OrbProperties
 
-        total_energy: SystemProperty
-
-    def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
+    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the ORB model calculator on the atoms object.
 
         Loads the specified ORB model and attaches it as an ASE calculator to the
@@ -120,7 +136,7 @@ class ORBModelCalculator(ASECalculator):
         atoms.info["spin"] = spin_multiplicity
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> Properties:
+    def get_properties(self, atoms: Atoms) -> OrbProperties:
         """Extract computed properties from the ORB calculation.
 
         Retrieves the total energy from the ORB model calculation.
@@ -142,14 +158,24 @@ class ORBModelCalculator(ASECalculator):
             -234.567
         """
         energy = atoms.get_total_energy()  # type: ignore
-        system_properties = SystemProperty(
-            name="Total Energy",
-            value=energy,
-            units="eV",
-            description=f"Total energy prediction from {self.model} model",
+        forces = atoms.get_forces()  # type: ignore
+        atomic_properties = OrbAtomicProperties(
+            orb_forces=AtomicProperty(
+                name="ORB Forces",
+                value=forces,
+                units="eV/Å",
+                description=f"Forces predicted by {self.model} model",
+            ),
         )
-
-        properties = Properties(
-            system=[system_properties],
+        system_properties = OrbSystemProperties(
+            total_energy=SystemProperty(
+                name="Total Energy",
+                value=energy,
+                units="eV",
+                description=f"Total energy prediction from {self.model} model",
+            ),
         )
-        return properties
+        return OrbProperties(
+            atomic=atomic_properties,
+            system=system_properties,
+        )

@@ -5,19 +5,20 @@ Sampling Tool) for comprehensive conformational searching using metadynamics
 and GFN-xTB methods.
 """
 
-import glob
-import os
-import shutil
 import subprocess
-import tempfile
-from dataclasses import dataclass
-from typing import Any, Literal, Optional, cast
+from dataclasses import dataclass, field
+from typing import Any, Literal, Optional, Union, cast
 
 import tomli_w
+from pydantic import BaseModel
 from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
 from jfchemistry.conformers.base import ConformerGeneration
+
+
+class CRESTProperties(BaseModel):
+    """Properties of the CREST conformer generation."""
 
 
 @dataclass
@@ -46,6 +47,7 @@ class CRESTConformers(ConformerGeneration):
         opt_engine: Optimization algorithm:
             - "ancopt": Approximate normal coordinate optimizer (default)
             - "rfo": Rational function optimizer
+
             - "gd": Gradient descent
         hess_update: Hessian update method:
             - "bfgs": BFGS update (default)
@@ -105,23 +107,73 @@ class CRESTConformers(ConformerGeneration):
     """
 
     name: str = "CREST Conformer Generation"
+    executable: str = "crest"
+    # Command line options
+    solvation: Optional[
+        Union[
+            tuple[
+                Literal["alpb"],
+                Literal[
+                    "acetone",
+                    "acetonitrile",
+                    "aniline",
+                    "benzaldehyde",
+                    "benzene",
+                    "ch2cl2",
+                    "chcl3",
+                    "cs2",
+                    "dioxane",
+                    "dmf",
+                    "dmso",
+                    "ether",
+                    "ethylacetate",
+                    "furane",
+                    "hexandecane",
+                    "hexane",
+                    "methanol",
+                    "nitromethane",
+                    "octanol",
+                    "woctanol",
+                    "phenol",
+                    "toluene",
+                    "thf",
+                    "water",
+                ],
+            ],
+            tuple[
+                Literal["gbsa"],
+                Literal[
+                    "acetone",
+                    "acetonitrile",
+                    "benzene",
+                    "CH2Cl2",
+                    "CHCl3",
+                    "CS2",
+                    "DMF",
+                    "DMSO",
+                    "ether",
+                    "H2O",
+                    "methanol",
+                    "n-hexane",
+                    "THF",
+                    "toluene",
+                ],
+            ],
+        ]
+    ] = None
+    charge: Optional[int] = None
+    spin_multiplicity: Optional[int] = None
+    # General Settings Block
+    threads: int = 1
     runtype: Literal["imtd-gc", "nci-mtd", "imtd-smtd"] = "imtd-gc"
     preopt: bool = True
-    multilevelopt: bool = True
     topo: bool = True
-    parallel: int = 1
+
+    # Calculation Main Block
     opt_engine: Literal["ancopt", "rfo", "gd"] = "ancopt"
     hess_update: Literal["bfgs", "powell", "sd1", "bofill", "schlegel"] = "bfgs"
-    maxcycle: Optional[int] = None
     optlev: Literal["crude", "vloose", "loose", "normal", "tight", "vtight", "extreme"] = "normal"
-    converge_e: Optional[float] = None
-    converge_g: Optional[float] = None
-    freeze: Optional[str] = None
-    # CREGEN Block
-    ewin: float = 6.0
-    ethr: float = 0.05
-    rthr: float = 0.125
-    bthr: float = 0.01
+
     # Optimization Calculation Block
     calculation_energy_method: Literal[
         "gfn2",
@@ -129,35 +181,119 @@ class CRESTConformers(ConformerGeneration):
         "gfn0",
         "gfnff",
     ] = "gfn2"
-    calculation_energy_calcspace: Optional[str] = None
-    calculation_energy_chrg: Optional[int] = None
-    calculation_energy_uhf: Optional[int] = None
-    calculation_energy_rdwbo: bool = False
-    calculation_energy_rddip: bool = False
-    calculation_energy_dipgrad: bool = False
-    calculation_energy_gradfile: Optional[str] = None
-    calculation_energy_gradtype: Optional[Literal["engrad"]] = None
 
-    # Metadynamics Block
+    # Metadynamics Calculation Block
     calculation_dynamics_method: Literal[
         "gfn2",
         "gfn1",
         "gfn0",
         "gfnff",
     ] = "gfn2"
-    calculation_dynamics_calcspace: Optional[str] = None
-    calculation_dynamics_chrg: Optional[int] = None
-    calculation_dynamics_uhf: Optional[int] = None
-    calculation_dynamics_rdwbo: bool = False
-    calculation_dynamics_rddip: bool = False
-    calculation_dynamics_dipgrad: bool = False
-    calculation_dynamics_gradfile: Optional[str] = None
-    calculation_dynamics_gradtype: Optional[Literal["engrad"]] = None
+
+    # Dynamics Block
     dynamics_dump: float = 100.0
+    dynamics_dump_frequency: Optional[float] = 100
+
+    # CREGEN Block
+    ewin: float = 6.0
+    ethr: float = 0.05
+    rthr: float = 0.125
+    bthr: float = 0.01
+
+    # INTERNAL
+    _input_dict: dict[str, Any] = field(default_factory=dict)
+    _commands: list[str | int | float] = field(default_factory=list)
+    _toml_filename: str = "crest.toml"
+    _xyz_filename: str = "input.xyz"
+    _properties_model: type[CRESTProperties] = CRESTProperties
+
+    def make_dict(self):
+        """Make the dictionary for the CREST input."""
+        self._input_dict["threads"] = self.threads
+        self._input_dict["runtype"] = self.runtype
+        self._input_dict["preopt"] = self.preopt
+        self._input_dict["topo"] = self.topo
+        self._input_dict["input"] = self._xyz_filename
+        self._input_dict["calculation"] = {
+            "opt_engine": self.opt_engine,
+            "hess_update": self.hess_update,
+            "optlev": self.optlev,
+            "level": [
+                {
+                    "method": self.calculation_energy_method,
+                },
+                {
+                    "method": self.calculation_dynamics_method,
+                },
+            ],
+        }
+
+        self._input_dict["cregen"] = {
+            "ewin": self.ewin,
+            "ethr": self.ethr,
+            "rthr": self.rthr,
+            "bthr": self.bthr,
+        }
+
+        self._input_dict["dynamics"] = {
+            "active": [2],
+            "dump": self.dynamics_dump_frequency,
+        }
+
+    def write_toml(self):
+        """Write the TOML file for the CREST input."""
+        # Create a copy of the input nested dictionary without an key-value pairs with None values
+        with open(self._toml_filename, "wb") as f:
+            tomli_w.dump(self._input_dict, f)
+
+    def make_commands(self):
+        """Make the CLI for the CREST input."""
+        self._commands.append(self.executable)
+        self._commands.append("--input")
+        self._commands.append(self._toml_filename)
+        if self.solvation is not None:
+            self._commands.append(f"--{self.solvation[0]}")
+            self._commands.append(self.solvation[1])
+        if self.charge is not None:
+            self._commands.append("--chrg")
+            self._commands.append(str(self.charge))
+        if self.spin_multiplicity is not None:
+            self._commands.append("--uhf")
+            self._commands.append(str(self.spin_multiplicity))
+
+    def run(self):
+        """Run the CREST calculation."""
+        # Save current working directory
+        # original_dir = os.getcwd()
+        subprocess.call(
+            args=" ".join(str(x) for x in self._commands) + " > log.out",
+            shell=True,
+        )
+
+        # # Create temporary directory and run crest there
+        # with tempfile.TemporaryDirectory() as tmp_dir:
+        #     # Copy input files to temp directory
+        #     shutil.copy(self._xyz_filename, tmp_dir)
+        #     shutil.copy(self._toml_filename, tmp_dir)
+
+        #     # Change to temp directory
+        #     os.chdir(tmp_dir)
+
+        #     # Run crest command
+
+        #     # Copy all files back to original directory
+        #     for file in glob.glob("*"):
+        #         shutil.copy(file, original_dir)
+
+        #     # Change back to original directory
+        #     os.chdir(original_dir)
+
+        #     # Remove the temporary directory
+        #     shutil.rmtree(tmp_dir)
 
     def operation(
         self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+    ) -> tuple[SiteCollection | list[SiteCollection], None]:
         """Generate conformers using CREST metadynamics search.
 
         Performs a conformational search using CREST with the configured
@@ -166,7 +302,7 @@ class CRESTConformers(ConformerGeneration):
 
         Args:
             structure: Input molecular structure with 3D coordinates. The
-                structure's charge property is used if calculation charges
+         1       structure's charge property is used if calculation charges
                 are not explicitly set.
 
         Returns:
@@ -184,82 +320,17 @@ class CRESTConformers(ConformerGeneration):
             >>> conformers, props = gen.operation(mol) # doctest: +SKIP
         """
         # Write structures to sdf file
-        structure.to("input.sdf", fmt="sdf")
+        structure.to(self._xyz_filename, fmt="xyz")
 
-        if self.calculation_energy_chrg is None:
-            self.calculation_energy_chrg = structure.charge
-        if self.calculation_dynamics_chrg is None:
-            self.calculation_dynamics_chrg = structure.charge
-        self.input = "input.sdf"
-        # Empty strucutres
-        d = {"calculation": {}, "cregen": {}, "dynamics": {"active": [2]}}
-        calculation_blocks = {"energy": {}, "dynamics": {}}
-        # Fill in dictionaries for toml
-        for k, v in vars(self).items():
-            if v is None:
-                continue
-            if k == "name":
-                continue
-            if k.split("_")[0] == "calculation":
-                if k.split("_")[1] == "energy" or k.split("_")[1] == "dynamics":
-                    calculation_blocks[k.split("_")[1]][k.split("_")[2]] = v
-            elif k.split("_")[0] == "dynamics":
-                d["dynamics"][k.split("_")[1]] = v
-            elif k in ["ewin", "ethr", "rthr", "bthr"]:
-                d["cregen"][k] = v
-            elif k in [
-                "type",
-                "elog",
-                "eprint",
-                "opt_engine",
-                "hess_update",
-                "maxcycle",
-                "optlev",
-                "converge_e",
-                "converge_g",
-                "freeze",
-            ]:
-                d["calculation"][k] = v
-            else:
-                d[k] = v
-        d["calculation"]["level"] = [
-            calculation_blocks["energy"],
-            calculation_blocks["dynamics"],
-        ]
-        # Check for charges
-        if self.calculation_energy_chrg is None or self.calculation_dynamics_chrg is None:
-            self.calculation_energy_chrg = self.calculation_dynamics_chrg = structure.charge
+        self.input = self._xyz_filename
 
-        with open("crest.toml", "wb") as f:
-            tomli_w.dump(d, f)
-
-        # Save current working directory
-        original_dir = os.getcwd()
-
-        # Create temporary directory and run crest there
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            # Copy input files to temp directory
-            shutil.copy("input.sdf", tmp_dir)
-            shutil.copy("crest.toml", tmp_dir)
-
-            # Change to temp directory
-            os.chdir(tmp_dir)
-
-            # Run crest command
-            subprocess.call("crest --input crest.toml --noreftopo --mquick > log.out", shell=True)
-
-            # Copy log.out back to original directory
-            if os.path.exists("log.out"):
-                shutil.copy("log.out", original_dir)
-
-            # Copy all crest_conformers.* files back to original directory
-            for file in glob.glob("crest_conformers.xyz"):
-                shutil.copy(file, original_dir)
-
-            # Change back to original directory
-            os.chdir(original_dir)
+        self.make_dict()
+        self.write_toml()
+        self.make_commands()
+        self.run()
 
         conformers = cast(
             "list[SiteCollection]", XYZ.from_file("crest_conformers.xyz").all_molecules
         )
-        return conformers, {}
+
+        return (conformers, None)
