@@ -12,75 +12,92 @@ import tomli_w
 
 from jfchemistry.calculators.base import Calculator
 
+type SolvationType = Union[
+    tuple[
+        Literal["alpb"],
+        Literal[
+            "acetone",
+            "acetonitrile",
+            "aniline",
+            "benzaldehyde",
+            "benzene",
+            "ch2cl2",
+            "chcl3",
+            "cs2",
+            "dioxane",
+            "dmf",
+            "dmso",
+            "ether",
+            "ethylacetate",
+            "furane",
+            "hexandecane",
+            "hexane",
+            "methanol",
+            "nitromethane",
+            "octanol",
+            "woctanol",
+            "phenol",
+            "toluene",
+            "thf",
+            "water",
+        ],
+    ],
+    tuple[
+        Literal["gbsa"],
+        Literal[
+            "acetone",
+            "acetonitrile",
+            "benzene",
+            "CH2Cl2",
+            "CHCl3",
+            "CS2",
+            "DMF",
+            "DMSO",
+            "ether",
+            "H2O",
+            "methanol",
+            "n-hexane",
+            "THF",
+            "toluene",
+        ],
+    ],
+]
+
 
 @dataclass
 class CRESTCalculator(Calculator):
     """Base class for CREST Applications."""
 
     name: str = "CREST"
-    executable: str = "crest"
-    threads: int = 1  # TOML
-    solvation: Optional[
-        Union[
-            tuple[
-                Literal["alpb"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "aniline",
-                    "benzaldehyde",
-                    "benzene",
-                    "ch2cl2",
-                    "chcl3",
-                    "cs2",
-                    "dioxane",
-                    "dmf",
-                    "dmso",
-                    "ether",
-                    "ethylacetate",
-                    "furane",
-                    "hexandecane",
-                    "hexane",
-                    "methanol",
-                    "nitromethane",
-                    "octanol",
-                    "woctanol",
-                    "phenol",
-                    "toluene",
-                    "thf",
-                    "water",
-                ],
-            ],
-            tuple[
-                Literal["gbsa"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "benzene",
-                    "CH2Cl2",
-                    "CHCl3",
-                    "CS2",
-                    "DMF",
-                    "DMSO",
-                    "ether",
-                    "H2O",
-                    "methanol",
-                    "n-hexane",
-                    "THF",
-                    "toluene",
-                ],
-            ],
-        ]
-    ] = None  # CLI
+    executable: str = field(default="crest", metadata={"description": "The CREST executable"})
+    threads: int = field(default=1, metadata={"description": "The number of threads to use"})
+    solvation: Optional[SolvationType] = field(
+        default=None, metadata={"description": "The solvation type and solvent selection"}
+    )  # CLI
     # CREGEN PARAMETERS
     # ------- TOML ------
-    energy_window: Optional[float] = 6.0
-    cartesian_rmsd_threshold: Optional[float] = 0.125
-    energy_threshold: Optional[float] = 0.05
-    rotational_rms_threshold: Optional[float] = 0.01
-    preoptimization: Optional[bool] = True
+    energy_window: Optional[float] = field(
+        default=6.0, metadata={"description": "The energy window to use [kcal/mol]"}
+    )
+    cartesian_rmsd_threshold: Optional[float] = field(
+        default=0.125,
+        metadata={"description": "The Cartesian RMSD threshold for geometry optimization [Å]"},
+    )
+    energy_threshold: Optional[float] = field(
+        default=0.05,
+        metadata={"description": "The energy threshold for geometry optimization [kcal/mol]"},
+    )
+    rotational_rms_threshold: Optional[float] = field(
+        default=0.01,
+        metadata={"description": "The rotational RMSD threshold for geometry optimization [°]"},
+    )
+    preoptimization: Optional[bool] = field(
+        default=True, metadata={"description": "Whether to perform preoptimization"}
+    )
     # ------ CLI ------
-    z_matrix_sorting: bool = False
+    z_matrix_sorting: bool = field(
+        default=False, metadata={"description": "Whether to sort the Z-matrix"}
+    )
 
     # INTERNAL
     _input_dict: dict[str, Any] = field(default_factory=dict)

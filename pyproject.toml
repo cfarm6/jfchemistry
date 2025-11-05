@@ -13,12 +13,12 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.dependencies]
-python = ">=3.12.11,<3.13"
+python = ">=3.12,<3.14"
 jobflow = ">=0.2.0,<0.3"
 rdkit = "*"
 ase = ">=3.26.0,<4"
+
 pymatgen = ">=2025.10.7,<2026"
-openbabel = ">=3.1.1,<4"
 pip = ">=25.2,<26"
 tblite = ">=0.4.0,<0.5"
 tblite-python = ">=0.4.0,<0.5"
@@ -26,14 +26,13 @@ rich = "<14"
 cuda = ">=13.0.2,<14"
 cuda-nvrtc = ">=13.0.88,<14"
 crest = ">=3.0.2,<4"
-fastmcp = ">=2.12.5,<3"
 icecream = "*"
+openbabel = ">=3.1.1,<4"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
 tomli-w = ">=1.2.0,<2"
 icecream = ">=2.1.8,<3"
-censo = { git = "https://github.com/grimme-lab/CENSO.git" }
 orca-pi = ">=1.0.1,<2"
 fireworks = "*"
 

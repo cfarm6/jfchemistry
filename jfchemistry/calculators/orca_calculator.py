@@ -1,6 +1,6 @@
 """Base Class for ORCA DFT Calculations."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from opi.input.simple_keywords.base import SimpleKeyword
@@ -92,13 +92,33 @@ class ORCACalculator(Calculator):
     """
 
     name: str = "ORCA"
-    cores: int = 1
-    basis_set: Optional[BasisSetType] = None
-    xc_functional: Optional[XCFunctionalType] = None
-    ecp: Optional[ECPType] = None
-    solvation: Optional[SolvationType] = None
-    solvent: Optional[SolventType] = None
-    solvation_model: Optional[SolvationModelType] = None
+    cores: int = field(
+        default=1,
+        metadata={"description": "The number of CPU cores to use for parallel calculations"},
+    )
+    basis_set: Optional[BasisSetType] = field(
+        default=None, metadata={"description": "The basis set to use for the calculation"}
+    )
+    xc_functional: Optional[XCFunctionalType] = field(
+        default=None,
+        metadata={"description": "The exchange-correlation functional to use for the calculation"},
+    )
+    ecp: Optional[ECPType] = field(
+        default=None,
+        metadata={"description": "The effective core potential to use for heavy atoms"},
+    )
+    solvation: Optional[SolvationType] = field(
+        default=None, metadata={"description": "The solvation model to use for the calculation"}
+    )
+    solvent: Optional[SolventType] = field(
+        default=None, metadata={"description": "The solvent to use for the calculation"}
+    )
+    solvation_model: Optional[SolvationModelType] = field(
+        default=None,
+        metadata={
+            "description": "The specific solvation model implementation to use for the calculation"
+        },
+    )
     _properties_model: type[ORCAProperties] = ORCAProperties
 
     def set_keywords(self) -> list[SimpleKeyword]:
@@ -134,15 +154,13 @@ class ORCACalculator(Calculator):
                 keywords.append(keyword_obj)
 
         # Add complex solvation keyword: model(solvent)
-        if (
-            self.solvation_model is not None
-            and self.solvent is not None
-            and self.solvation is not None
-        ):
+        if self.solvation_model is not None and self.solvent is not None:
             model_class = getattr(SolvationModel, self.solvation_model)
             solvent_obj = getattr(Solvent, self.solvent)
             keywords.append(model_class(solvent_obj))
-
+            if self.solvation is not None:
+                solvation_obj = getattr(Solvation, self.solvation)
+                keywords.append(solvation_obj)
         return keywords
 
     def parse_output(self, output: Output) -> ORCAProperties:

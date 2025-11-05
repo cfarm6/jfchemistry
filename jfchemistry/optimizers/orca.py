@@ -30,7 +30,10 @@ class ORCAOptimizer(ORCACalculator, GeometryOptimization):
     """
 
     name: str = "Orca Optimizer"
-    opt: Optional[list[OptModelType]] = field(default_factory=lambda: ["OPT"])
+    opt: Optional[list[OptModelType]] = field(
+        default_factory=lambda: ["OPT"],
+        metadata={"description": "the ORCA optimizer to use for the calculation"},
+    )
     _basename: str = "orca_optimizer"
 
     def operation(self, molecule: Molecule) -> tuple[Molecule, ORCAProperties]:

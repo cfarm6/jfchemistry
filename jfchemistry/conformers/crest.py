@@ -21,6 +21,58 @@ class CRESTProperties(BaseModel):
     """Properties of the CREST conformer generation."""
 
 
+type SolvationType = Union[
+    tuple[
+        Literal["alpb"],
+        Literal[
+            "acetone",
+            "acetonitrile",
+            "aniline",
+            "benzaldehyde",
+            "benzene",
+            "ch2cl2",
+            "chcl3",
+            "cs2",
+            "dioxane",
+            "dmf",
+            "dmso",
+            "ether",
+            "ethylacetate",
+            "furane",
+            "hexandecane",
+            "hexane",
+            "methanol",
+            "nitromethane",
+            "octanol",
+            "woctanol",
+            "phenol",
+            "toluene",
+            "thf",
+            "water",
+        ],
+    ],
+    tuple[
+        Literal["gbsa"],
+        Literal[
+            "acetone",
+            "acetonitrile",
+            "benzene",
+            "CH2Cl2",
+            "CHCl3",
+            "CS2",
+            "DMF",
+            "DMSO",
+            "ether",
+            "H2O",
+            "methanol",
+            "n-hexane",
+            "THF",
+            "toluene",
+        ],
+    ],
+]
+
+
 @dataclass
 class CRESTConformers(ConformerGeneration):
     """CREST conformer generation using metadynamics sampling.
@@ -85,7 +137,7 @@ class CRESTConformers(ConformerGeneration):
         calculation_dynamics_dipgrad: Compute dipole gradients in dynamics (default: False).
         calculation_dynamics_gradfile: External gradient file for dynamics (default: None).
         calculation_dynamics_gradtype: Gradient file type for dynamics (default: None).
-        dynamics_dump: Dynamics trajectory dump frequency (default: 100.0).
+        dynamics_dump_frequency: Dynamics trajectory dump frequency (default: 100.0).
 
     References:
         - CREST Documentation: https://crest-lab.github.io/crest-docs/
@@ -107,72 +159,47 @@ class CRESTConformers(ConformerGeneration):
     """
 
     name: str = "CREST Conformer Generation"
-    executable: str = "crest"
+    executable: str = field(default="crest", metadata={"description": "The CREST executable"})
     # Command line options
-    solvation: Optional[
-        Union[
-            tuple[
-                Literal["alpb"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "aniline",
-                    "benzaldehyde",
-                    "benzene",
-                    "ch2cl2",
-                    "chcl3",
-                    "cs2",
-                    "dioxane",
-                    "dmf",
-                    "dmso",
-                    "ether",
-                    "ethylacetate",
-                    "furane",
-                    "hexandecane",
-                    "hexane",
-                    "methanol",
-                    "nitromethane",
-                    "octanol",
-                    "woctanol",
-                    "phenol",
-                    "toluene",
-                    "thf",
-                    "water",
-                ],
-            ],
-            tuple[
-                Literal["gbsa"],
-                Literal[
-                    "acetone",
-                    "acetonitrile",
-                    "benzene",
-                    "CH2Cl2",
-                    "CHCl3",
-                    "CS2",
-                    "DMF",
-                    "DMSO",
-                    "ether",
-                    "H2O",
-                    "methanol",
-                    "n-hexane",
-                    "THF",
-                    "toluene",
-                ],
-            ],
-        ]
-    ] = None
-    charge: Optional[int] = None
-    spin_multiplicity: Optional[int] = None
+    solvation: Optional[SolvationType] = field(
+        default=None, metadata={"description": "The solvation model to use for the calculation"}
+    )
+    charge: Optional[int] = field(
+        default=None, metadata={"description": "The charge to use for the calculation"}
+    )
+    spin_multiplicity: Optional[int] = field(
+        default=None, metadata={"description": "The spin multiplicity to use for the calculation"}
+    )
     # General Settings Block
-    threads: int = 1
-    runtype: Literal["imtd-gc", "nci-mtd", "imtd-smtd"] = "imtd-gc"
-    preopt: bool = True
-    topo: bool = True
+    threads: int = field(
+        default=1, metadata={"description": "The number of threads to use for the calculation"}
+    )
+    runtype: Literal["imtd-gc", "nci-mtd", "imtd-smtd"] = field(
+        default="imtd-gc", metadata={"description": "The run type to use for the calculation"}
+    )
+    preopt: bool = field(
+        default=True,
+        metadata={
+            "description": "Whether to pre-optimize the structure before the conformer search"
+        },
+    )
+    topo: bool = field(
+        default=True, metadata={"description": "Whether to enable topology-based filtering"}
+    )
 
     # Calculation Main Block
-    opt_engine: Literal["ancopt", "rfo", "gd"] = "ancopt"
-    hess_update: Literal["bfgs", "powell", "sd1", "bofill", "schlegel"] = "bfgs"
-    optlev: Literal["crude", "vloose", "loose", "normal", "tight", "vtight", "extreme"] = "normal"
+    opt_engine: Literal["ancopt", "rfo", "gd"] = field(
+        default="ancopt",
+        metadata={"description": "The optimization engine to use for the calculation"},
+    )
+    hess_update: Literal["bfgs", "powell", "sd1", "bofill", "schlegel"] = field(
+        default="bfgs",
+        metadata={"description": "The Hessian update method to use for the calculation"},
+    )
+    optlev: Literal["crude", "vloose", "loose", "normal", "tight", "vtight", "extreme"] = field(
+        default="normal",
+        metadata={"description": "The optimization convergence level to use for the calculation"},
+    )
 
     # Optimization Calculation Block
     calculation_energy_method: Literal[
@@ -180,7 +207,10 @@ class CRESTConformers(ConformerGeneration):
         "gfn1",
         "gfn0",
         "gfnff",
-    ] = "gfn2"
+    ] = field(
+        default="gfn2",
+        metadata={"description": "The energy calculation method to use for the calculation"},
+    )
 
     # Metadynamics Calculation Block
     calculation_dynamics_method: Literal[
@@ -188,17 +218,33 @@ class CRESTConformers(ConformerGeneration):
         "gfn1",
         "gfn0",
         "gfnff",
-    ] = "gfn2"
+    ] = field(
+        default="gfn2",
+        metadata={"description": "The metadynamics calculation method to use for the calculation"},
+    )
 
     # Dynamics Block
-    dynamics_dump: float = 100.0
-    dynamics_dump_frequency: Optional[float] = 100
+    dynamics_dump_frequency: Optional[float] = field(
+        default=100.0,
+        metadata={
+            "description": "The dynamics trajectory dump frequency to use for the calculation"
+        },
+    )
 
     # CREGEN Block
-    ewin: float = 6.0
-    ethr: float = 0.05
-    rthr: float = 0.125
-    bthr: float = 0.01
+    ewin: float = field(
+        default=6.0, metadata={"description": "The energy window to use for the calculation"}
+    )
+    ethr: float = field(
+        default=0.05, metadata={"description": "The energy threshold to use for the calculation"}
+    )
+    rthr: float = field(
+        default=0.125, metadata={"description": "The RMSD threshold to use for the calculation"}
+    )
+    bthr: float = field(
+        default=0.01,
+        metadata={"description": "The rotational constant threshold to use for the calculation"},
+    )
 
     # INTERNAL
     _input_dict: dict[str, Any] = field(default_factory=dict)

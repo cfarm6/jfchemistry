@@ -4,7 +4,7 @@ This module provides integration with the AimNet2 neural network potential
 for fast and accurate calculation of molecular energies and partial charges.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ase import Atoms
 from pydantic import BaseModel
@@ -83,7 +83,7 @@ class AimNet2Calculator(ASECalculator):
     """
 
     name: str = "AimNet2 Calculator"
-    model: str = "aimnet2"
+    model: str = field(default="aimnet2", metadata={"description": "AimNet2 model to use"})
     _properties_model: type[AimNet2Properties] = AimNet2Properties
 
     def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:

@@ -70,9 +70,15 @@ class MoleculeInput(Maker):
     # Input parameters
     name: str = "Molecule Input"
     # Remove salts from the structure
-    remove_salts: bool = field(default=True)
+    remove_salts: bool = field(
+        default=True,
+        metadata={"description": "Remove salts from the structure"},
+    )
     # Add hydrogen atoms to the structure
-    add_hydrogens: bool = field(default=True)
+    add_hydrogens: bool = field(
+        default=True,
+        metadata={"description": "Add hydrogen atoms to the structure"},
+    )
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 

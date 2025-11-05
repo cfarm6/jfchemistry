@@ -1,8 +1,6 @@
 """Example of using the PubChemCID node to get a molecule from PubChem."""
 
-from fireworks.core.launchpad import LaunchPad
 from jobflow.core.flow import Flow
-from jobflow.managers.fireworks import flow_to_workflow
 from jobflow.managers.local import run_locally
 
 from jfchemistry.generation import RDKitGeneration
@@ -11,7 +9,11 @@ from jfchemistry.inputs import PubChemCID
 # from jfchemistry.modification import CRESTDeprotonation, CRESTProtonation, CRESTTautomers
 from jfchemistry.optimizers import AimNet2Optimizer, TBLiteOptimizer
 
-pubchem_cid = PubChemCID().make(8003)
+pubchem_cid = PubChemCID(
+    remove_salts=True,
+    add_hydrogens=True,
+    name="PubChem CID",
+).make(8003)
 
 generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output.structure)
 
@@ -51,7 +53,3 @@ flow = Flow(
 )
 
 response = run_locally(flow)
-print(response[optimize_structure.uuid])
-wf = flow_to_workflow(flow)
-lp = LaunchPad.from_file("my_launchpad.local.yaml")
-lp.add_wf(wf)

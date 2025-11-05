@@ -4,7 +4,7 @@ This module provides integration with Orbital Materials' ORB machine learning
 force field models for molecular energy calculations.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from ase import Atoms
@@ -79,10 +79,16 @@ class ORBModelCalculator(ASECalculator):
     """
 
     name: str = "ORB Model Calculator"
-    model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = "orb-v3-conservative-omol"
-    device: Literal["cpu", "cuda"] = "cpu"
-    precision: Literal["float32-high", "float32-highest", "float64"] = "float32-high"
-    compile: bool = False
+    model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = field(
+        default="orb-v3-conservative-omol", metadata={"description": "The ORB model to use"}
+    )
+    device: Literal["cpu", "cuda"] = field(
+        default="cpu", metadata={"description": "The device to use"}
+    )
+    precision: Literal["float32-high", "float32-highest", "float64"] = field(
+        default="float32-high", metadata={"description": "The precision to use"}
+    )
+    compile: bool = field(default=False, metadata={"description": "Whether to compile the model"})
 
     _properties_model: type[OrbProperties] = OrbProperties
 

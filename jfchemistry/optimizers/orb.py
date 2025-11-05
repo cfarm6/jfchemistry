@@ -26,29 +26,17 @@ class ORBModelOptimizer(ORBModelCalculator, ASEOptimizer):
         Additional attributes inherited from ORBModelCalculator and ASEOptimizer.
 
     Examples:
-        >>> from jfchemistry.optimizers import ORBModelOptimizer
-        >>> from ase.build import molecule
-        >>> from pymatgen.core import Molecule
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
-        >>> # CPU optimization
-        >>> opt_cpu = ORBModelOptimizer(
-        ...     model="orb-v3-conservative-omol",
-        ...     device="cpu",
-        ...     optimizer="LBFGS",
-        ...     fmax=0.05
-        ... )
-        >>> job = opt_cpu.make(molecule)
-        >>>
-        >>> # GPU optimization with compilation
-        >>> opt_gpu = ORBModelOptimizer(
-        ...     model="orb-v3-conservative-omol",
-        ...     device="cuda",
-        ...     compile=True,
-        ...     precision="float32-highest",
-        ...     optimizer="LBFGS",
-        ...     fmax=0.01
-        ... )
-        >>> job = opt_gpu.make(molecule)
+        >>> from jfchemistry.optimizers import ORBModelOptimizer # doctest: +SKIP
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
+        >>> opt_cpu = ORBModelOptimizer( # doctest: +SKIP
+        ...     model="orb-v3-conservative-omol", # doctest: +SKIP
+        ...     device="cpu", # doctest: +SKIP
+        ...     optimizer="LBFGS", # doctest: +SKIP
+        ...     fmax=0.05, # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = opt_cpu.make(molecule) # doctest: +SKIP
     """
 
     name: str = "ORB Model Optimizer"

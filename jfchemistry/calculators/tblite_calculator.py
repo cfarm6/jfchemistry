@@ -4,14 +4,19 @@ This module provides integration with TBLite (Tight-Binding Library) for
 performing GFN-xTB semi-empirical quantum chemistry calculations.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from ase import Atoms
 from ase.units import Bohr, Hartree
 from pydantic import BaseModel
 
-from jfchemistry.base_classes import AtomicProperty, BondProperty, OrbitalProperty, SystemProperty
+from jfchemistry.base_classes import (
+    AtomicProperty,
+    BondProperty,
+    OrbitalProperty,
+    SystemProperty,
+)
 
 from .ase_calculator import ASECalculator
 
@@ -111,13 +116,21 @@ class TBLiteCalculator(ASECalculator):
     """
 
     name: str = "TBLite Calculator"
-    method: Literal["GFN1-xTB", "GFN2-xTB", "IPEA1-xTB"] = "GFN2-xTB"
-    accuracy: float = 1.0
-    electronic_temperature: float = 300.0
-    max_iterations: int = 250
-    initial_guess: Literal["sad", "eeq"] = "sad"
-    mixer_damping: float = 0.4
-    verbosity: int = 0
+    method: Literal["GFN1-xTB", "GFN2-xTB", "IPEA1-xTB"] = field(
+        default="GFN2-xTB", metadata={"description": "The method to use"}
+    )
+    accuracy: float = field(default=1.0, metadata={"description": "The accuracy to use"})
+    electronic_temperature: float = field(
+        default=300.0, metadata={"description": "The electronic temperature to use"}
+    )
+    max_iterations: int = field(
+        default=250, metadata={"description": "The maximum number of iterations to use"}
+    )
+    initial_guess: Literal["sad", "eeq"] = field(
+        default="sad", metadata={"description": "The initial guess to use"}
+    )
+    mixer_damping: float = field(default=0.4, metadata={"description": "The mixer damping to use"})
+    verbosity: int = field(default=0, metadata={"description": "The verbosity to use"})
     _properties_model: type[TBLiteProperties] = TBLiteProperties
 
     def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
@@ -151,7 +164,7 @@ class TBLiteCalculator(ASECalculator):
             >>> energy = props["Global"]["Total Energy [eV]"] # doctest: +SKIP
         """
         try:
-            from tblite.ase import TBLite
+            from tblite.ase import TBLite  # doctest: +SKIP
         except ImportError as e:
             raise ImportError(
                 "The 'tblite' package is required to use TBLiteCalculator but is not available. "

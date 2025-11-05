@@ -8,7 +8,6 @@ Available Methods:
     - RDKitGeneration: Generate 3D structures using RDKit's embedding methods
 """
 
-from .base import StructureGeneration
 from .rdkit_generation import RDKitGeneration
 
-__all__ = ["RDKitGeneration", "StructureGeneration"]
+__all__ = ["RDKitGeneration"]

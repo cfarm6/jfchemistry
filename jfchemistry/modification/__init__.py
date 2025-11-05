@@ -20,7 +20,6 @@ Examples:
     >>> protonated_structures = job.output["structure"] # doctest: +SKIP
 """
 
-from .base import StructureModification
 from .crest_deprotonation import CRESTDeprotonation
 from .crest_protonation import CRESTProtonation
 from .crest_tautomers import CRESTTautomers
@@ -29,5 +28,4 @@ __all__ = [
     "CRESTDeprotonation",
     "CRESTProtonation",
     "CRESTTautomers",
-    "StructureModification",
 ]

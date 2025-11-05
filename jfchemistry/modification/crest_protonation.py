@@ -4,7 +4,7 @@ This module provides integration with CREST's automated protonation workflow
 for generating low-energy protonated structures at different sites.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal, Optional, cast
 
 from pymatgen.core.structure import Molecule
@@ -62,8 +62,16 @@ class CRESTProtonation(StructureModification, CRESTCalculator):
     """
 
     name: str = "CREST Protonation"
-    ion: Optional[str] = None
-    ion_charge: int = 1
+    ion: Optional[str] = field(
+        default=None,
+        metadata={"description": "the ion to add for protonation. Default is none for H+"},
+    )
+    ion_charge: int = field(
+        default=1,
+        metadata={
+            "description": "the charge of the ion to add for protonation. Default is 1 for H+"
+        },
+    )
     # INTERNAL
     _runtype: Literal["protonate"] = "protonate"
 

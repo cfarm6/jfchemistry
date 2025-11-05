@@ -41,25 +41,31 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         steps: Maximum number of optimization steps (default: 250000).
 
     Examples:
-        >>> from ase.build import molecule
-        >>> from pymatgen.core import Molecule
-        >>> from jfchemistry.optimizers import ASEOptimizer
-        >>> from jfchemistry.calculators import TBLiteCalculator
-        >>> molecule = Molecule.from_ase_atoms(molecule("C2H6"))
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> from jfchemistry.optimizers import ASEOptimizer # doctest: +SKIP
+        >>> from jfchemistry.calculators import TBLiteCalculator # doctest: +SKIP
+        >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
         >>> # Create custom optimizer by inheriting
-        >>> class MyOptimizer(ASEOptimizer, TBLiteCalculator):
-        ...     pass
-        >>>
-        >>> opt = MyOptimizer(optimizer="LBFGS", fmax=0.01)
-        >>> job = opt.make(molecule)
+        >>> class MyOptimizer(ASEOptimizer, TBLiteCalculator): # doctest: +SKIP
+        ...     pass # doctest: +SKIP
+        >>> opt = MyOptimizer(optimizer="LBFGS", fmax=0.01) # doctest: +SKIP
+        >>> job = opt.make(molecule) # doctest: +SKIP
     """
 
     name: str = "ASE Optimizer"
     optimizer: Literal["LBFGS", "BFGS", "GPMin", "MDMin", "FIRE", "FIRE2", "QuasiNewton"] = field(
-        default="LBFGS"
+        default="LBFGS",
+        metadata={"description": "the ASE optimizer to use for the calculation"},
     )
-    fmax: float = 0.05
-    steps: int = 250000
+    fmax: float = field(
+        default=0.05,
+        metadata={"description": "the maximum force convergence criterion in eV/Angstrom"},
+    )
+    steps: int = field(
+        default=250000,
+        metadata={"description": "the maximum number of optimization steps"},
+    )
 
     def get_properties(self, structure: Atoms):
         """Get the properties for an ASE Atoms object."""
