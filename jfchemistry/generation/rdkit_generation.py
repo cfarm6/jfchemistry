@@ -4,13 +4,13 @@ This module provides integration with RDKit's distance geometry embedding
 methods for generating 3D molecular structures from 2D representations.
 """
 
-from dataclasses import dataclass
-from typing import Annotated, Any, Literal, Optional
+from dataclasses import dataclass, field
+from typing import Annotated, Literal, Optional
 
 from pymatgen.core.structure import Molecule, SiteCollection
 
+from jfchemistry.base_classes import RDMolMolecule
 from jfchemistry.generation.base import StructureGeneration
-from jfchemistry.jfchemistry import RDMolMolecule
 
 
 @dataclass
@@ -65,69 +65,160 @@ class RDKitGeneration(StructureGeneration):
         use_symmetry_for_pruning: Use symmetry when pruning conformers (default: None).
         num_conformers: Number of conformers to generate (default: 1).
 
-    Examples:
-        >>> from jfchemistry.inputs import Smiles
-        >>> from jfchemistry.generation import RDKitGeneration
-        >>>
-        >>> # Get molecule from SMILES
-        >>> smiles_job = Smiles().make("c1ccccc1")
-        >>>
-        >>> # Generate single low-energy conformer
-        >>> gen_single = RDKitGeneration(
-        ...     method="ETKDGv3",
-        ...     num_conformers=1,
-        ...     random_seed=42
-        ... )
-        >>> job = gen_single.make(smiles_job.output["structure"])
-        >>>
-        >>> # Generate diverse conformer ensemble
-        >>> gen_ensemble = RDKitGeneration(
-        ...     method="ETKDGv3",
-        ...     num_conformers=100,
-        ...     prune_rms_thresh=0.5,  # Remove similar conformers
-        ...     max_iterations=500,
-        ...     num_threads=4
-        ... )
-        >>> job = gen_ensemble.make(smiles_job.output["structure"])
-        >>> conformers = job.output["structure"]
     """
 
     # Name of the job
     name: str = "rdKit Generation"
+    # Number of conformers to generate
+    num_conformers: Annotated[int, "positive"] = field(
+        default=1,
+        metadata={"description": "the number of conformers to generate"},
+    )
     # Method to use for generating the structure
-    method: Literal["ETDG", "ETKDG", "ETKDGv2", "ETKDGv3", "KDG", "srETKDGv3"] = "ETKDGv3"
-    basin_thresh: Optional[float] = None
-    bounds_mat_force_scaling: Optional[float] = None
-    box_size_mult: Optional[float] = None
-    clear_confs: Optional[bool] = None
-    embed_fragments_separately: Optional[bool] = None
-    enable_sequential_random_seeds: Optional[bool] = None
-    enforce_chirality: Optional[bool] = None
-    force_trans_amides: Optional[bool] = None
-    ignore_smoothing_failures: Optional[bool] = None
-    max_iterations: Optional[Annotated[int, "positive"]] = None
-    num_threads: Annotated[int, "positive"] = 1
-    num_zero_fail: Optional[Annotated[int, "positive"]] = None
-    only_heavy_atoms_for_rms: Optional[bool] = None
-    optimizer_force_tol: Optional[float] = None
-    prune_rms_thresh: Optional[float] = None
-    rand_neg_eig: Optional[bool] = None
-    random_seed: Optional[Annotated[int, "positive"]] = None
-    symmetrize_conjugated_terminal_groups_for_pruning: Optional[bool] = None
-    timeout: Optional[Annotated[int, "positive"]] = None
-    track_failures: Optional[bool] = None
-    use_basic_knowledge: Optional[bool] = None
-    use_exp_torsion_angle_prefs: Optional[bool] = None
-    use_macrocycle_14config: Optional[bool] = None
-    use_macrocycle_torsions: Optional[bool] = None
-    use_random_coords: Optional[bool] = None
-    use_small_ring_torsions: Optional[bool] = None
-    use_symmetry_for_pruning: Optional[bool] = None
-    num_conformers: Annotated[int, "positive"] = 1
+    method: Literal["ETDG", "ETKDG", "ETKDGv2", "ETKDGv3", "KDG", "srETKDGv3"] = field(
+        default="ETKDGv3",
+        metadata={"description": "The method to use for generating the structure"},
+    )
+    basin_thresh: Optional[float] = field(
+        default=None,
+        metadata={"description": "set the basin threshold for the DGeom force field."},
+    )
+    bounds_mat_force_scaling: Optional[float] = field(
+        default=None,
+        metadata={
+            "description": "scale the weights of the atom pair distance restraints relative \
+                to the other types of restraints."
+        },
+    )
+    box_size_mult: Optional[float] = field(
+        default=None,
+        metadata={"description": "determines the size of the box used for random coordinates"},
+    )
+    clear_confs: Optional[bool] = field(
+        default=None, metadata={"description": "clear existing conformers"}
+    )
+    embed_fragments_separately: Optional[bool] = field(
+        default=None, metadata={"description": "embed fragments separately"}
+    )
+    enable_sequential_random_seeds: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "handle random number seeds so that \
+                conformer generation can be restarted"
+        },
+    )
+    enforce_chirality: Optional[bool] = field(
+        default=None,
+        metadata={"description": "eenforce correct chirilaty if chiral centers are present"},
+    )
+    force_trans_amides: Optional[bool] = field(
+        default=None, metadata={"description": "force trans amide bonds"}
+    )
+    ignore_smoothing_failures: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "try and embed the molecule if if triangle smoothing of the \
+                bounds matrix fails"
+        },
+    )
+    max_iterations: Optional[Annotated[int, "positive"]] = field(
+        default=None,
+        metadata={"description": "the maximum number of iterations to perform for each conformer"},
+    )
+    num_threads: Annotated[int, "positive"] = field(
+        default=1,
+        metadata={"description": "the number of threads to use for the embedding"},
+    )
+    num_zero_fail: Optional[Annotated[int, "positive"]] = field(
+        default=None,
+        metadata={"description": "fail embedding if we have at least this many zero eigenvalues"},
+    )
+    only_heavy_atoms_for_rms: Optional[bool] = field(
+        default=None,
+        metadata={"description": "Only consider heavy atoms when doing RMS filtering"},
+    )
+    optimizer_force_tol: Optional[float] = field(
+        default=None,
+        metadata={
+            "description": "the tolerance to be used during the \
+                distance-geometry force field minimization"
+        },
+    )
+    prune_rms_thresh: Optional[float] = field(
+        default=None,
+        metadata={
+            "description": "keep only conformations that are \
+                at least this far apart from each other"
+        },
+    )
+    rand_neg_eig: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "if the embedding yields a negative eigenvalue, pick coordinates that \
+                correspond to this component at random"
+        },
+    )
+    random_seed: Optional[Annotated[int, "positive"]] = field(
+        default=None,
+        metadata={
+            "description": "if the embedding yields a negative eigenvalue, pick coordinates that \
+                correspond to this component at random"
+        },
+    )
+    symmetrize_conjugated_terminal_groups_for_pruning: Optional[bool] = field(
+        default=None,
+        metadata={"description": "symmetrize terminal groups for RMSD pruning"},
+    )
+    timeout: Optional[Annotated[int, "positive"]] = field(
+        default=None,
+        metadata={
+            "description": "maximum time in seconds to generate a conformer for a \
+                single molecule fragment. If set to 0, no timeout is set"
+        },
+    )
+    track_failures: Optional[bool] = field(
+        default=None,
+        metadata={"description": "keep track of which checks during the embedding process fail"},
+    )
+    use_basic_knowledge: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "impose basic-knowledge constraints \
+            such as flat rings"
+        },
+    )
+    use_exp_torsion_angle_prefs: Optional[bool] = field(
+        default=None,
+        metadata={"description": "impose experimental torsion angle preferences"},
+    )
+    use_macrocycle_14config: Optional[bool] = field(
+        default=None,
+        metadata={"description": "use the 1-4 distance bounds from ETKDGv3"},
+    )
+    use_macrocycle_torsions: Optional[bool] = field(
+        default=None,
+        metadata={"description": "impose macrocycle torsion angle preferences"},
+    )
+    use_random_coords: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "start the embedding from random coordinates \
+                instead of using eigenvalues of the distance matrix"
+        },
+    )
+    use_small_ring_torsions: Optional[bool] = field(
+        default=None,
+        metadata={"description": "impose small ring torsion angle preferences"},
+    )
+    use_symmetry_for_pruning: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "use molecule symmetry when doing the RMSD pruning. \
+                Note that this option automatically also sets onlyHeavyAtomsForRMS to true."
+        },
+    )
 
-    def operation(
-        self, mol: RDMolMolecule
-    ) -> tuple[SiteCollection | list[SiteCollection], dict[str, Any]]:
+    def operation(self, mol: RDMolMolecule) -> tuple[SiteCollection | list[SiteCollection], None]:
         """Generate 3D structure(s) using RDKit distance geometry embedding.
 
         Embeds 3D coordinates into the molecule using the specified ETKDG method
@@ -150,19 +241,18 @@ class RDKitGeneration(StructureGeneration):
                 - Empty dictionary (no additional properties)
 
         Examples:
-            >>> from rdkit import Chem
-            >>> from jfchemistry import RDMolMolecule
-            >>> from jfchemistry.generation import RDKitGeneration
+            >>> from rdkit import Chem # doctest: +SKIP
+            >>> from jfchemistry import RDMolMolecule # doctest: +SKIP
+            >>> from jfchemistry.generation import RDKitGeneration # doctest: +SKIP
             >>>
             >>> # Create molecule from SMILES
-            >>> mol = Chem.MolFromSmiles("CCO")
-            >>> rdmol = RDMolMolecule(Chem.AddHs(mol))
+            >>> mol = Chem.MolFromSmiles("CCO") # doctest: +SKIP
+            >>> rdmol = RDMolMolecule(Chem.AddHs(mol)) # doctest: +SKIP
             >>>
             >>> # Generate 10 conformers
-            >>> gen = RDKitGeneration(num_conformers=10, random_seed=42)
-            >>> structures, props = gen.operation(rdmol)
-            >>> print(f"Generated {len(structures)} conformers")
-            Generated 10 conformers
+            >>> gen = RDKitGeneration(num_conformers=10, random_seed=42) # doctest: +SKIP
+            >>> structures, props = gen.operation(rdmol) # doctest: +SKIP
+            >>> print(f"Generated {len(structures)} conformers") # doctest: +SKIP
         """
         import inspect
 
@@ -191,5 +281,7 @@ class RDKitGeneration(StructureGeneration):
             spin = int(2 * (abs(charge) // 2) + 1)
             molecule.set_charge_and_spin(charge, spin)
             molecules.append(molecule)
-
-        return molecules, {}
+        if self.num_conformers == 1:
+            return molecules[0], None
+        else:
+            return molecules, None

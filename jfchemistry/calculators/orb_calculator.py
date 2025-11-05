@@ -4,12 +4,34 @@ This module provides integration with Orbital Materials' ORB machine learning
 force field models for molecular energy calculations.
 """
 
-from dataclasses import dataclass
-from typing import Any, Literal
+from dataclasses import dataclass, field
+from typing import Literal
 
 from ase import Atoms
+from pydantic import BaseModel
+
+from jfchemistry.base_classes import AtomicProperty, SystemProperty
 
 from .ase_calculator import ASECalculator
+
+
+class OrbAtomicProperties(BaseModel):
+    """Properties of the ORB model calculation."""
+
+    orb_forces: AtomicProperty
+
+
+class OrbSystemProperties(BaseModel):
+    """System properties of the ORB model calculation."""
+
+    total_energy: SystemProperty
+
+
+class OrbProperties(BaseModel):
+    """Properties of the ORB model calculation."""
+
+    atomic: OrbAtomicProperties
+    system: OrbSystemProperties
 
 
 @dataclass
@@ -57,12 +79,20 @@ class ORBModelCalculator(ASECalculator):
     """
 
     name: str = "ORB Model Calculator"
-    model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = "orb-v3-conservative-omol"
-    device: Literal["cpu", "cuda"] = "cpu"
-    precision: Literal["float32-high", "float32-highest", "float64"] = "float32-high"
-    compile: bool = False
+    model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = field(
+        default="orb-v3-conservative-omol", metadata={"description": "The ORB model to use"}
+    )
+    device: Literal["cpu", "cuda"] = field(
+        default="cpu", metadata={"description": "The device to use"}
+    )
+    precision: Literal["float32-high", "float32-highest", "float64"] = field(
+        default="float32-high", metadata={"description": "The precision to use"}
+    )
+    compile: bool = field(default=False, metadata={"description": "Whether to compile the model"})
 
-    def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
+    _properties_model: type[OrbProperties] = OrbProperties
+
+    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the ORB model calculator on the atoms object.
 
         Loads the specified ORB model and attaches it as an ASE calculator to the
@@ -112,7 +142,7 @@ class ORBModelCalculator(ASECalculator):
         atoms.info["spin"] = spin_multiplicity
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> dict[str, Any]:
+    def get_properties(self, atoms: Atoms) -> OrbProperties:
         """Extract computed properties from the ORB calculation.
 
         Retrieves the total energy from the ORB model calculation.
@@ -134,8 +164,24 @@ class ORBModelCalculator(ASECalculator):
             -234.567
         """
         energy = atoms.get_total_energy()  # type: ignore
-        properties = {
-            "Global": {"Total Energy [eV]": energy},
-        }
-
-        return properties
+        forces = atoms.get_forces()  # type: ignore
+        atomic_properties = OrbAtomicProperties(
+            orb_forces=AtomicProperty(
+                name="ORB Forces",
+                value=forces,
+                units="eV/Å",
+                description=f"Forces predicted by {self.model} model",
+            ),
+        )
+        system_properties = OrbSystemProperties(
+            total_energy=SystemProperty(
+                name="Total Energy",
+                value=energy,
+                units="eV",
+                description=f"Total energy prediction from {self.model} model",
+            ),
+        )
+        return OrbProperties(
+            atomic=atomic_properties,
+            system=system_properties,
+        )

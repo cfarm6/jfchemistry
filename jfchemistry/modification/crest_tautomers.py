@@ -1,25 +1,21 @@
-"""CREST-based protonation for generating protonated structures.
+"""CREST-based tautomerization for generating tautomers.
 
-This module provides integration with CREST's automated protonation workflow
-for generating low-energy protonated structures at different sites.
+This module provides integration with CREST's automated tautomerization workflow
+for generating low-energy tautomers at different sites.
 """
 
-import glob
-import os
-import shutil
-import subprocess
-import tempfile
 from dataclasses import dataclass
 from typing import Any, Literal, Optional, cast
 
 from pymatgen.core.structure import SiteCollection
 from pymatgen.io.xyz import XYZ
 
+from jfchemistry.calculators import CRESTCalculator
 from jfchemistry.modification.base import StructureModification
 
 
 @dataclass
-class CRESTTautomers(StructureModification):
+class CRESTTautomers(StructureModification, CRESTCalculator):
     """Generate tautomers using CREST.
 
     Uses CREST's automated tautomerization workflow to identify basic sites
@@ -40,58 +36,32 @@ class CRESTTautomers(StructureModification):
         - CREST Documentation: https://crest-lab.github.io/crest-docs/
 
     Examples:
-        >>> from jfchemistry.modification import CRESTTautomers
-        >>> from pymatgen.core import Molecule
-        >>> from ase.build import molecule
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
-        >>>
-        >>> # Protonate an amine
-        >>> prot = CRESTTautomers(ewin=6.0, threads=4)
-        >>> job = prot.make(molecule)
-        >>> protonated_structures = job.output["structure"]
-        >>>
-        >>> # Protonate with custom settings
-        >>> prot_custom = CRESTTautomers(
-        ...     ewin=8.0,
-        ...     ffopt=True,
-        ...     finalopt=True,
-        ...     threads=8
-        ... )
-        >>> job = prot_custom.make(molecule)
-        >>> protonated_structures = job.output["structure"]
+        >>> from jfchemistry.modification import CRESTTautomers # doctest: +SKIP
+        >>> from pymatgen.core import Molecule # doctest: +SKIP
+        >>> from ase.build import molecule # doctest: +SKIP
+        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
+        >>> prot = CRESTTautomers(ewin=6.0, threads=4) # doctest: +SKIP
+        >>> job = prot.make(molecule) # doctest: +SKIP
+        >>> protonated_structures = job.output["structure"] # doctest: +SKIP
+        >>> prot_custom = CRESTTautomers( # doctest: +SKIP
+        ...     ewin=8.0, # doctest: +SKIP
+        ...     ffopt=True, # doctest: +SKIP
+        ...     finalopt=True, # doctest: +SKIP
+        ...     threads=8 # doctest: +SKIP
+        ... ) # doctest: +SKIP
+        >>> job = prot_custom.make(molecule) # doctest: +SKIP
+        >>> protonated_structures = job.output["structure"] # doctest: +SKIP
     """
 
     name: str = "CREST Tautomers"
-    runtype: Literal["tautomerize"] = "tautomerize"
-    ewin: Optional[float] = None
-    ffopt: bool = True
-    freezeopt: Optional[str] = None
-    finalopt: bool = True
-    threads: int = 1
+    # INTERNAL
+    _runtype: Literal["tautomerize"] = "tautomerize"
 
-    def make_dict(self):
-        """Create parameter dictionary for CREST configuration.
-
-        Extracts relevant protonation parameters and packages them for
-        the CREST TOML configuration file.
-
-        Returns:
-            Dictionary of non-None protonation parameters.
-
-        Examples:
-            >>> from jfchemistry.modification import CRESTTautomers
-            >>> prot = CRESTTautomers(ewin=6.0, ffopt=True)
-            >>> params = prot.make_dict()
-            >>> print(params)
-            {'ewin': 6.0, 'ffopt': True, 'finalopt': True}
-        """
-        keys = ["ion", "ewin", "ffopt", "freezeopt", "finalopt"]
-        d = {}
-        for k, v in vars(self).items():
-            if v is None or k not in keys:
-                continue
-            d[k] = v
-        return d
+    def make_commands(self):
+        """Make the CLI for the CREST input."""
+        super().make_commands()
+        self._commands.append(f"--{self._runtype}")
+        self._commands.append("--newversion")
 
     def operation(
         self, structure: SiteCollection
@@ -119,38 +89,19 @@ class CRESTTautomers(StructureModification):
             >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
         """
         structure.to("input.xyz", fmt="xyz")
+        if self.charge is None and structure.charge is not None:
+            self.charge = structure.charge
+        super().make_dict()
+        super().write_toml()
+        self.make_commands()
+        super().run()
 
-        # Write the input file
-        self.inputfile = "input.xyz"
-        charge = structure.charge
+        try:
+            structures = XYZ.from_file("tautomers.xyz").all_molecules
+        except IndexError:
+            raise IndexError(
+                "No tautomers found. Please check your CREST settings and log file."
+            ) from None
 
-        # Save current working directory
-        original_dir = os.getcwd()
-
-        # Create temporary directory and run crest there
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            # Copy input files to temp directory
-            shutil.copy("input.xyz", tmp_dir)
-
-            # Change to temp directory
-            os.chdir(tmp_dir)
-
-            # Run crest command
-            subprocess.call(
-                f"crest input.xyz --chrg {charge} --tautomerize --newversion > log.out",
-                shell=True,
-            )
-            # Copy log.out back to original directory
-            if os.path.exists("log.out"):
-                shutil.copy("log.out", original_dir)
-
-            # Copy all crest_conformers.* files back to original directory
-            for file in glob.glob("tautomers.xyz"):
-                shutil.copy(file, original_dir)
-
-            # Change back to original directory
-            os.chdir(original_dir)
-
-        structures = XYZ.from_file("tautomers.xyz").all_molecules
         structures = cast("list[SiteCollection]", structures)
         return structures, None

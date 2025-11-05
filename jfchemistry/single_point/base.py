@@ -1,6 +1,6 @@
-"""Base class for structure generation.
+"""Base class for single point energy calculations.
 
-This module provides the base Maker class for geometry optimization workflows
+This module provides the base Maker class for single point energy calculations
 in jfchemistry.
 """
 
@@ -13,30 +13,30 @@ from jfchemistry import SingleStructureMaker
 
 
 @dataclass
-class GeometryOptimization(SingleStructureMaker):
-    """Base Maker for optimizing a structure.
+class SinglePointEnergyCalculator(SingleStructureMaker):
+    """Base Maker for calculating the single point energy of a structure.
 
-    This class serves as the base interface for all geometry optimization
+    This class serves as the base interface for all single point energy calculation
     implementations in jfchemistry. Subclasses should implement the
-    optimize_structure and get_properties methods.
+    operation and get_properties methods.
 
     Attributes:
         name: The name of the geometry optimization job.
     """
 
-    name: str = "Geometry Optimization"
+    name: str = "Single Point Energy Calculator"
 
     def operation(
         self, structure: SiteCollection
     ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Optimize a structure.
+        """Calculate the single point energy of a structure.
 
         Args:
-            structure: The molecular structure to optimize.
+            structure: The molecular structure to calculate the single point energy of a structure.
 
         Returns:
-            A tuple containing the optimized molecular structure and a dictionary
-            of properties from the optimization.
+            A tuple containing the molecular structure with the single point energy calculated
+            and a dictionary of properties from the single point energy calculation and the energy.
 
         Raises:
             NotImplementedError: This method must be implemented by subclasses.

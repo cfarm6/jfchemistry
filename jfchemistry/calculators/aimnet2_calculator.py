@@ -4,12 +4,48 @@ This module provides integration with the AimNet2 neural network potential
 for fast and accurate calculation of molecular energies and partial charges.
 """
 
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
 
 from ase import Atoms
+from pydantic import BaseModel
+
+from jfchemistry.base_classes import AtomicProperty, SystemProperty
 
 from .ase_calculator import ASECalculator
+
+
+class AimNet2AtomicProperties(BaseModel):
+    """Properties of the AimNet2 calculator.
+
+    Attributes:
+        aimnet2_partial_charges: Partial charges of the atoms.
+        aimnet2_forces: Forces of the atoms.
+    """
+
+    aimnet2_partial_charges: AtomicProperty
+    aimnet2_forces: AtomicProperty
+
+
+class AimNet2SystemProperties(BaseModel):
+    """System properties of the AimNet2 calculator.
+
+    Attributes:
+        total_energy: Total energy of the system.
+    """
+
+    total_energy: SystemProperty
+
+
+class AimNet2Properties(BaseModel):
+    """Properties of the AimNet2 calculator.
+
+    Attributes:
+        atomic: Atomic properties of the AimNet2 calculator.
+        system: System properties of the AimNet2 calculator.
+    """
+
+    atomic: AimNet2AtomicProperties
+    system: AimNet2SystemProperties
 
 
 @dataclass
@@ -47,9 +83,10 @@ class AimNet2Calculator(ASECalculator):
     """
 
     name: str = "AimNet2 Calculator"
-    model: str = "aimnet2"
+    model: str = field(default="aimnet2", metadata={"description": "AimNet2 model to use"})
+    _properties_model: type[AimNet2Properties] = AimNet2Properties
 
-    def set_calculator(self, atoms: Atoms, charge: int = 0, spin_multiplicity: int = 1) -> Atoms:
+    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the AimNet2 calculator on the atoms object.
 
         Attaches the AimNet2 ASE calculator to the atoms object with the specified
@@ -97,7 +134,7 @@ class AimNet2Calculator(ASECalculator):
 
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> dict[str, Any]:
+    def get_properties(self, atoms: Atoms) -> AimNet2Properties:
         """Extract computed properties from the AimNet2 calculation.
 
         Retrieves the total energy and atomic partial charges from the AimNet2
@@ -119,10 +156,32 @@ class AimNet2Calculator(ASECalculator):
             >>> props = calc.get_properties(atoms) # doctest: +SKIP
         """
         energy = atoms.get_total_energy()  # type: ignore
-        charge = atoms.get_charges()  # type: ignore
-        properties = {
-            "Global": {"Total Energy [eV]": energy},
-            "Atomic": {"AimNet2 Partial Charges [e]": charge},
-        }
+        system_property = AimNet2SystemProperties(
+            total_energy=SystemProperty(
+                name="Total Energy",
+                value=energy,
+                units="eV",
+                description=f"Total energy prediction from {self.model} model",
+            ),
+        )
 
-        return properties
+        charge = atoms.get_charges()  # type: ignore
+        atomic_property = AimNet2AtomicProperties(
+            aimnet2_partial_charges=AtomicProperty(
+                name="AimNet2 Partial Charges",
+                value=charge,
+                units="e",
+                description=f"Partial charges predicted by {self.model} model",
+            ),
+            aimnet2_forces=AtomicProperty(
+                name="AimNet2 Forces",
+                value=atoms.get_forces(),
+                units="eV/Å",
+                description=f"Forces predicted by {self.model} model",
+            ),
+        )
+
+        return AimNet2Properties(
+            atomic=atomic_property,
+            system=system_property,
+        )

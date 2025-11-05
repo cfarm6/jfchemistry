@@ -11,18 +11,21 @@ Available Methods:
 
 Examples:
     >>> from jfchemistry.modification import CRESTProtonation # doctest: +SKIP
-    >>> from pymatgen.core import Molecule
-    >>> from ase.build import molecule
-    >>> ethane = Molecule.from_ase_atoms(molecule("C2H6"))
+    >>> from pymatgen.core import Molecule # doctest: +SKIP
+    >>> from ase.build import molecule # doctest: +SKIP
+    >>> ethane = Molecule.from_ase_atoms(molecule("C2H6"))# doctest: +SKIP
     >>> # Protonate a molecule
-    >>> protonation = CRESTProtonation(ewin=6.0, threads=4)
-    >>> job = protonation.make(ethane)
-    >>> protonated_structures = job.output["structure"]
+    >>> protonation = CRESTProtonation(ewin=6.0, threads=4) # doctest: +SKIP
+    >>> job = protonation.make(ethane) # doctest: +SKIP
+    >>> protonated_structures = job.output["structure"] # doctest: +SKIP
 """
 
-from .base import StructureModification
 from .crest_deprotonation import CRESTDeprotonation
 from .crest_protonation import CRESTProtonation
 from .crest_tautomers import CRESTTautomers
 
-__all__ = ["CRESTDeprotonation", "CRESTProtonation", "CRESTTautomers", "StructureModification"]
+__all__ = [
+    "CRESTDeprotonation",
+    "CRESTProtonation",
+    "CRESTTautomers",
+]

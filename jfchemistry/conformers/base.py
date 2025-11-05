@@ -5,8 +5,9 @@ generation methods in jfchemistry workflows.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
+from pydantic import BaseModel
 from pymatgen.core.structure import SiteCollection
 
 from jfchemistry import SingleStructureMaker
@@ -46,7 +47,7 @@ class ConformerGeneration(SingleStructureMaker):
 
     def operation(
         self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+    ) -> tuple[SiteCollection | list[SiteCollection], Optional[BaseModel]]:
         """Generate conformers from the input structure.
 
         This method must be implemented by subclasses to perform the actual
