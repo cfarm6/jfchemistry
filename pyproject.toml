@@ -17,7 +17,6 @@ python = ">=3.12,<3.14"
 jobflow = ">=0.2.0,<0.3"
 rdkit = "*"
 ase = ">=3.26.0,<4"
-
 pymatgen = ">=2025.10.7,<2026"
 pip = ">=25.2,<26"
 tblite = ">=0.4.0,<0.5"
@@ -64,6 +63,7 @@ pytest-cov = ">=6.0"
 ruff = ">=0.11"
 pre-commit = ">=4.2"
 pytest-xdist = "*"
+
 
 [tool.pixi.feature.dev.pypi-dependencies]
 ty = "*"
@@ -125,3 +125,6 @@ doctest_optionflags = "NORMALIZE_WHITESPACE"
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
+[dependency-groups]
+dev = ["marimo[recommended]>=0.17.7,<0.18"]

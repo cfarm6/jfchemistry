@@ -7,7 +7,7 @@ from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import BaseModel, ConfigDict, Field, create_model
-from pymatgen.core.structure import SiteCollection
+from pymatgen.core.structure import SiteCollection, Structure
 from rdkit.Chem import rdchem
 
 from jfchemistry.base_classes import RDMolMolecule
@@ -60,6 +60,14 @@ def jfchem_job():
             setattr(owner, name, decorated_func)
 
     return DeferredJobDecorator
+
+
+def write_file(structure: SiteCollection) -> str | None:
+    """Write the structure to a file."""
+    if isinstance(structure, Structure):
+        return structure.to(fmt="cif")
+    else:
+        return structure.to(fmt="xyz")
 
 
 @dataclass
@@ -239,9 +247,9 @@ class SingleStructureMaker(Maker):
         else:  # If the structure is not a list, generate a single structure
             structures, properties = self.operation(cast("SiteCollection", structure))
             if type(structures) is list:
-                files = [s.to(fmt="xyz") for s in structures]
+                files = [write_file(s) for s in structures]
             else:
-                files = [structures.to(fmt="xyz")]
+                files = [write_file(structures)]
             return Response(
                 output=self._output_model(
                     structure=structures,

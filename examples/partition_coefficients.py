@@ -38,7 +38,7 @@ r2scan3c_optimizer_gas = ORCAOptimizer(
     xc_functional="R2SCAN_3C",
     ecp="DEFECP",
     name="TFA_R2SCAN_3C_GAS",
-).make(crest_conformers_gas.output.structure)
+).make(crest_conformers_gas.output.structure[0])
 
 wr2scan_d4_single_point_gas = ORCASinglePointEnergyCalculator(
     cores=16,
@@ -74,7 +74,7 @@ r2scan3c_optimizer_water = ORCAOptimizer(
     solvent="WATER",
     ecp="DEFECP",
     name="TFA_R2SCAN_3C_WATER",
-).make(crest_conformers_water.output.structure)
+).make(crest_conformers_water.output.structure[0])
 
 wr2scan_d4_single_point_water = ORCASinglePointEnergyCalculator(
     cores=16,
@@ -112,7 +112,7 @@ r2scan3c_optimizer_octanol = ORCAOptimizer(
     solvent="OCTANOL",
     ecp="DEFECP",
     name="TFA_R2SCAN_3C_OCTANOL",
-).make(crest_conformers_octanol.output.structure)
+).make(crest_conformers_octanol.output.structure[0])
 
 wr2scan_d4_single_point_octanol = ORCASinglePointEnergyCalculator(
     cores=16,
