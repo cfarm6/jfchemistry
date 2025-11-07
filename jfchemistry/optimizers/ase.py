@@ -128,7 +128,7 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         opt.run(self.fmax, self.steps)
         if type(structure) is Structure:
             if self.unit_cell_optimizer is not None:
-                opt_atoms: Atoms = opt_atoms.atoms
+                opt_atoms = opt_atoms.atoms
 
         properties = self.get_properties(opt_atoms)
         from ase import io
