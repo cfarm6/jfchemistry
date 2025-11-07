@@ -258,3 +258,9 @@ def chain_generator(  # noqa: PLR0913, PLR0915
         frac_coords=False,
     )
     return final_structure
+
+
+def attach_head_and_tail(chain: Structure, head: Molecule, tail: Molecule) -> Molecule:
+    """Attach the head and tail to the chain."""
+    # Find the connection point of the head and tail
+    return Molecule(species=[], coords=[])
