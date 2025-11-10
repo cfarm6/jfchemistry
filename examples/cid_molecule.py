@@ -3,48 +3,46 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
+from jfchemistry.conformers import CRESTConformers
+from jfchemistry.filters.structural.prism_filter import PrismPrunerFilter
 from jfchemistry.generation import RDKitGeneration
-from jfchemistry.inputs import PubChemCID
+from jfchemistry.inputs import Smiles
+from jfchemistry.single_point import TBLiteSinglePointCalculator
 
-# from jfchemistry.modification import CRESTDeprotonation, CRESTProtonation, CRESTTautomers
-from jfchemistry.optimizers import AimNet2Optimizer, TBLiteOptimizer
+pubchem_cid = Smiles().make("C(C=O)Cl")
 
-pubchem_cid = PubChemCID(
-    remove_salts=True,
-    add_hydrogens=True,
-    name="PubChem CID",
-).make(8003)
+generate_structure = RDKitGeneration(num_conformers=1).make(pubchem_cid.output.structure)
 
-generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output.structure)
+# optimize_structure = AimNet2Optimizer(optimizer="FIRE").make(generate_structure.output.structure)
 
-optimize_structure = AimNet2Optimizer(optimizer="FIRE").make(generate_structure.output.structure)
+# tautomers = CRESTTautomers(threads=16).make(optimize_structure.output.structure)
 
-optimize_structure2 = TBLiteOptimizer(method="GFN2-xTB", optimizer="FIRE").make(
-    optimize_structure.output.structure
-)
+# single_point = AimNet2SinglePointCalculator().make(tautomers.output.structure)
 
-# crest_conformers = CRESTConformers(
-#     calculation_dynamics_method="gfnff",
-#     calculation_energy_method="gfnff",
-# ).make(optimize_structure.output["structure"])
-
-# deprotonation = CRESTDeprotonation(threads=16, energy_window=2.0).make(
-#     crest_conformers.output["structure"]
+# filter_energy = EnergyFilter(threshold=12.0).make(
+#     single_point.output.structure, single_point.output.properties
 # )
 
-# protonation = CRESTProtonation(threads=16, energy_window=2.0).make(
-#     deprotonation.output["structure"]
-# )
+conformers = CRESTConformers(
+    threads=16, calculation_dynamics_method="gfnff", calculation_energy_method="gfnff"
+).make(generate_structure.output.structure)
 
-# tautomers = CRESTTautomers(threads=16, energy_window=2.0).make(protonation.output["structure"])
-
+energyies = TBLiteSinglePointCalculator(method="GFN2-xTB").make(conformers.output.structure)
+prism_filter = PrismPrunerFilter(
+    method="RMSD", structural_threshold=2.0, energy_threshold=1.0
+).make(energyies.output.structure, energyies.output.properties)
 
 flow = Flow(
     [
         pubchem_cid,
         generate_structure,
-        optimize_structure,
-        optimize_structure2,
+        energyies,
+        # optimize_structure,
+        # tautomers,
+        # single_point,
+        # filter_energy,
+        conformers,
+        prism_filter,
         # crest_conformers,
         # deprotonation,
         # protonation,

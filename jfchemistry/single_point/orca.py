@@ -15,18 +15,18 @@ from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 
 @dataclass
-class ORCASinglePointEnergyCalculator(ORCACalculator, SinglePointEnergyCalculator):
-    """Optimize molecular structures using ORCA DFT calculator.
+class ORCASinglePointCalculator(ORCACalculator, SinglePointEnergyCalculator):
+    """Calculate the single point energy of a structure using ORCA DFT calculator.
 
     Inherits all attributes from ORCACalculator.
 
     Attributes:
-        name: Name of the optimizer (default: "Orca Optimizer").
+        name: Name of the calculator (default: "ORCA Single Point Calculator").
         Additional attributes inherited from ORCACalculator.
 
     """
 
-    name: str = "ORCA Single Point Energy Calculator"
+    name: str = "ORCA Single Point Calculator"
     _basename: str = "orca_single_point"
 
     def operation(self, molecule: Molecule) -> tuple[Molecule, ORCAProperties]:
