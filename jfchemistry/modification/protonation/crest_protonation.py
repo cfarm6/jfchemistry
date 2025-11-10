@@ -4,18 +4,19 @@ This module provides integration with CREST's automated protonation workflow
 for generating low-energy protonated structures at different sites.
 """
 
+import os
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import Molecule
-from pymatgen.io.xyz import XYZ
 
 from jfchemistry.calculators import CRESTCalculator
-from jfchemistry.modification.base import StructureModification
+from jfchemistry.modification.molbar_screening import molbar_screening
+from jfchemistry.modification.protonation.base import ProtonationMaker
 
 
 @dataclass
-class CRESTProtonation(StructureModification, CRESTCalculator):
+class CRESTProtonation(ProtonationMaker, CRESTCalculator):
     """Generate protonated structures using CREST.
 
     Uses CREST's automated protonation workflow to identify basic sites
@@ -74,6 +75,7 @@ class CRESTProtonation(StructureModification, CRESTCalculator):
     )
     # INTERNAL
     _runtype: Literal["protonate"] = "protonate"
+    _output_filename: str = "protonated.xyz"
 
     def make_commands(self):
         """Make the CLI for the CREST input."""
@@ -114,16 +116,14 @@ class CRESTProtonation(StructureModification, CRESTCalculator):
         super().write_toml()
         self.make_commands()
         super().run()
-        try:
-            structures = XYZ.from_file("protonated.xyz").all_molecules
-        except IndexError:
-            raise IndexError(
-                "No protonated structures found. Please check your CREST settings and log file."
+        if not os.path.exists(self._output_filename):
+            raise FileNotFoundError(
+                "No tautomers found. Please check your CREST settings and log file."
             ) from None
-        structures = cast("list[Molecule]", structures)
-        for i in range(len(structures)):
-            structures[i].set_charge_and_spin(
-                charge=structures[i].charge + 1,
-                spin_multiplicity=int(structures[i].charge + 1) // 2 + 2,
+        molecules = molbar_screening(self._output_filename, self.threads)
+        for i in range(len(molecules)):
+            molecules[i].set_charge_and_spin(
+                charge=molecules[i].charge + 1,
+                spin_multiplicity=int(molecules[i].charge + 1) // 2 + 2,
             )
-        return structures, None
+        return molecules, None

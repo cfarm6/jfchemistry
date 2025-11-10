@@ -4,18 +4,19 @@ This module provides integration with CREST's automated deprotonation workflow
 for generating low-energy deprotonated structures and tautomers.
 """
 
+import os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import Molecule
-from pymatgen.io.xyz import XYZ
 
 from jfchemistry.calculators import CRESTCalculator
-from jfchemistry.modification.base import StructureModification
+from jfchemistry.modification.deprotonation.base import DeprotonationMaker
+from jfchemistry.modification.molbar_screening import molbar_screening
 
 
 @dataclass
-class CRESTDeprotonation(StructureModification, CRESTCalculator):
+class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
     """Generate deprotonated structures using CREST.
 
     Uses CREST's automated deprotonation workflow to identify acidic sites
@@ -50,6 +51,7 @@ class CRESTDeprotonation(StructureModification, CRESTCalculator):
 
     # INTERNAL
     _runtype: Literal["deprotonate"] = "deprotonate"
+    _output_filename: str = "deprotonated.xyz"
 
     def make_commands(self):
         """Make the CLI for the CREST input."""
@@ -90,17 +92,14 @@ class CRESTDeprotonation(StructureModification, CRESTCalculator):
         super().write_toml()
         self.make_commands()
         super().run()
-
-        try:
-            structures = XYZ.from_file("deprotonated.xyz").all_molecules
-        except IndexError:
-            raise IndexError(
+        if not os.path.exists(self._output_filename):
+            raise FileNotFoundError(
                 "No deprotonated structures found. Please check your CREST settings and log file."
             ) from None
-        structures = cast("list[Molecule]", structures)
-        for i, deprotonated_structure in enumerate(structures):
-            structures[i] = deprotonated_structure.set_charge_and_spin(
+        molecules = molbar_screening(self._output_filename, self.threads)
+        for i, deprotonated_structure in enumerate(molecules):
+            molecules[i] = deprotonated_structure.set_charge_and_spin(
                 charge=deprotonated_structure.charge - 1,
                 spin_multiplicity=int(deprotonated_structure.charge - 1) // 2 + 1,
             )
-        return structures, None
+        return molecules, None

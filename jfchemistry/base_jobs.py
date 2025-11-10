@@ -1,25 +1,58 @@
 """Base Job Classes for single molecules."""
 
+import importlib
 from dataclasses import dataclass
 from typing import Annotated, Any, Optional, cast
 
 from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
-from pydantic import BaseModel, ConfigDict, Field, create_model
-from pymatgen.core.structure import SiteCollection
+from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
+from pymatgen.core.structure import SiteCollection, Structure
 from rdkit.Chem import rdchem
 
-from jfchemistry.base_classes import RDMolMolecule
+from jfchemistry.base_classes import Property, RDMolMolecule
+
+
+class PropertyClass(BaseModel):
+    """Class for property classes."""
+
+    model_config = ConfigDict(extra="allow")
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_extra_fields(cls, data: Any) -> Property:
+        """Convert extra fields to Property objects."""
+        if not isinstance(data, dict):
+            return data
+
+        # Get known field names from the model
+        known_fields = cls.model_fields.keys()
+
+        # Convert only the extra fields
+        for key, value in data.items():
+            if key not in known_fields and isinstance(value, dict):
+                data[key] = Property(**value)
+
+        return data
 
 
 class Properties(BaseModel):
     """Properties of the structure."""
 
-    atomic: Optional[Any] = None
-    bond: Optional[Any] = None
-    system: Optional[Any] = None
-    orbital: Optional[Any] = None
+    atomic: Optional[PropertyClass] = None
+    bond: Optional[PropertyClass] = None
+    system: Optional[PropertyClass] = None
+    orbital: Optional[PropertyClass] = None
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Any:
+        """Create a Property from a dictionary."""
+        return cls.model_validate(d, extra="ignore", strict=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Property to a dictionary."""
+        return self.model_dump(mode="json")
 
 
 class Output(BaseModel):
@@ -29,6 +62,15 @@ class Output(BaseModel):
     structure: Optional[Any] = None
     properties: Optional[Any] = None
     files: Optional[Any] = None
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Any:
+        """Create an Output from a dictionary."""
+        return cls.model_validate(d, extra="allow", strict=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Output to a dictionary."""
+        return self.model_dump(mode="json")
 
 
 def jfchem_job():
@@ -108,6 +150,10 @@ class SingleStructureMaker(Maker):
     def make_output_model(self, properties_model: type[BaseModel]):
         """Make a properties model for the job."""
         fields = {}
+        if isinstance(self._output_model, dict):
+            module = self._output_model["@module"]
+            class_name = self._output_model["@callable"]
+            self._output_model = getattr(importlib.import_module(module), class_name)
         for f_name, f_info in self._output_model.model_fields.items():
             f_dict = f_info.asdict()  # type: ignore
             annotation = f_dict["annotation"]
@@ -205,6 +251,13 @@ class SingleStructureMaker(Maker):
         """
         raise NotImplementedError
 
+    def write_file(self, structure: SiteCollection) -> str | None:
+        """Write the structure to a file."""
+        if isinstance(structure, Structure):
+            return structure.to(fmt="cif")
+        else:
+            return structure.to(fmt="xyz")
+
     @jfchem_job()
     def make(
         self,
@@ -232,16 +285,18 @@ class SingleStructureMaker(Maker):
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        print(len(structure))
+        if isinstance(structure, list):
+            if len(structure) == 1:
+                structure = structure[0]
         resp = self.handle_structures(structure)
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure
             structures, properties = self.operation(cast("SiteCollection", structure))
             if type(structures) is list:
-                files = [s.to(fmt="xyz") for s in structures]
+                files = [self.write_file(s) for s in structures]
             else:
-                files = [structures.to(fmt="xyz")]
+                files = [self.write_file(structures)]
             return Response(
                 output=self._output_model(
                     structure=structures,
@@ -275,7 +330,6 @@ class SingleMoleculeMaker(Maker):
     def make_output_model(self, properties_model: type[BaseModel]):
         """Make a properties model for the job."""
         fields = {}
-        print(self._output_model)
         for f_name, f_info in self._output_model.model_fields.items():
             f_dict = f_info.asdict()  # type: ignore
             annotation = f_dict["annotation"]
