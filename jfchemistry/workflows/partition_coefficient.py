@@ -555,18 +555,6 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
             ),
         )
         queue_job(
-            isinstance(filters.conformer_energy, EnergyFilter)
-            and components.conformer_generator is not None,
-            lambda: cast("EnergyFilter", filters.conformer_energy).make(
-                structure_state, properties
-            ),
-            set_name=lambda: setattr(
-                cast("EnergyFilter", filters.conformer_energy),
-                "name",
-                "Conformer Energy Filter",
-            ),
-        )
-        queue_job(
             isinstance(filters.conformer_structural, StructuralFilter)
             and components.conformer_generator is not None,
             lambda: cast("StructuralFilter", filters.conformer_structural).make(
@@ -583,6 +571,18 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
             and components.conformer_generator is not None,
             lambda: cast("SinglePointEnergyCalculator", components.conformer_energy).make(
                 structure_state
+            ),
+        )
+        queue_job(
+            isinstance(filters.conformer_energy, EnergyFilter)
+            and components.conformer_generator is not None,
+            lambda: cast("EnergyFilter", filters.conformer_energy).make(
+                structure_state, properties
+            ),
+            set_name=lambda: setattr(
+                cast("EnergyFilter", filters.conformer_energy),
+                "name",
+                "Conformer Energy Filter",
             ),
         )
         queue_job(
