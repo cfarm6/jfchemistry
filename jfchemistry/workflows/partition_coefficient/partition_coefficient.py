@@ -28,6 +28,8 @@ if TYPE_CHECKING:
 
     from jfchemistry.conformers.crest import SolvationType
 
+    from .solvent_list import PartitionCoefficientSolventType
+
 # CONSTANTS
 R = 8.31446261815324 * 6.241509e18 / 6.02214076e23  # eV/K
 kb = 8.617333262e-5  # eV/K
@@ -100,10 +102,16 @@ class FilterSet:
     geometry_optimizer_structural: Optional[StructuralFilter | object]
 
 
-class PartitionCoefficientResults(PropertyClass):
+class PartitionCoefficientSystemProperty(PropertyClass):
     """Partition coefficient."""
 
     partition_coefficient: SystemProperty | OutputReference
+
+
+class PartitionCoefficientProperties(Properties):
+    """Properties for the partition coefficient calculation."""
+
+    system: PartitionCoefficientSystemProperty
 
 
 @dataclass
@@ -112,9 +120,13 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
 
     name: str = "Partition Coefficient Calculation"
     temperature: float = field(default=298.15, metadata={"description": "The temperature [K]."})
-    alpha_phase: str = field(default="octanol", metadata={"description": "The alpha phase."})
-    beta_phase: str = field(default="water", metadata={"description": "The beta phase."})
-    _properties_model: type[Properties] = Properties
+    alpha_phase: PartitionCoefficientSolventType = field(
+        default="octanol", metadata={"description": "The alpha phase."}
+    )
+    beta_phase: PartitionCoefficientSolventType = field(
+        default="water", metadata={"description": "The beta phase."}
+    )
+    _properties_model: type[PartitionCoefficientProperties] = PartitionCoefficientProperties
     _output_model: type[Output] = Output
 
     @jfchem_job()
@@ -159,11 +171,11 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
         partition_coefficient = (beta_weighted_energy - alpha_weighted_energy) / (
             self.temperature * R
         )
-
+        print(f"Partition Coefficient: {partition_coefficient}")
         return Response(
             output=Output(
                 properties=self._properties_model(
-                    system=PartitionCoefficientResults(
+                    system=PartitionCoefficientSystemProperty(
                         partition_coefficient=SystemProperty(
                             name=f"Partition Coefficient: {self.alpha_phase} - {self.beta_phase}",
                             value=partition_coefficient,
@@ -288,7 +300,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
         flow = Flow([*alpha_jobs, *beta_jobs, final_job], name="Partition Coefficient Workflow")
         partition_coefficient = final_job.output.properties.system.partition_coefficient
         properties = self._properties_model(
-            system=PartitionCoefficientResults(
+            system=PartitionCoefficientSystemProperty(
                 partition_coefficient=partition_coefficient,
             )
         )
@@ -330,7 +342,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 ecp="DEF2ECP",
                 dispersion_correction="D4",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase,
+                solvent=self.alpha_phase.upper(),
                 name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.alpha_phase}",
             )
         if alpha_conformer_generator is _DEFAULT_ALPHA_CONFORMER_GENERATOR:
@@ -346,7 +358,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase,
+                solvent=self.alpha_phase.upper(),
                 name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.alpha_phase}",
             )
         if alpha_geometry_optimizer is _DEFAULT_ALPHA_GEOMETRY_OPTIMIZER:
@@ -355,7 +367,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase,
+                solvent=self.alpha_phase.upper(),
                 name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.alpha_phase}",
             )
         if alpha_single_point_energy is _DEFAULT_ALPHA_SINGLE_POINT_ENERGY:
@@ -365,7 +377,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 basis_set="DEF2_TZVPPD",
                 ecp="DEF2ECP",
                 solvation_model="SMD",
-                solvent=self.alpha_phase,
+                solvent=self.alpha_phase.upper(),
                 name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.alpha_phase}",
             )
         return PhaseComponents(
@@ -401,7 +413,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 ecp="DEF2ECP",
                 dispersion_correction="D4",
                 solvation_model="CPCM",
-                solvent=self.beta_phase,
+                solvent=self.beta_phase.upper(),
                 name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.beta_phase}",
             )
         if beta_conformer_generator is _DEFAULT_BETA_CONFORMER_GENERATOR:
@@ -417,7 +429,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.beta_phase,
+                solvent=self.beta_phase.upper(),
                 name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.beta_phase}",
             )
         if beta_geometry_optimizer is _DEFAULT_BETA_GEOMETRY_OPTIMIZER:
@@ -426,7 +438,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.beta_phase,
+                solvent=self.beta_phase.upper(),
                 name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.beta_phase}",
             )
         if beta_single_point_energy is _DEFAULT_BETA_SINGLE_POINT_ENERGY:
@@ -436,7 +448,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 basis_set="DEF2_TZVPPD",
                 ecp="DEF2ECP",
                 solvation_model="SMD",
-                solvent=self.beta_phase,
+                solvent=self.beta_phase.upper(),
                 name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.beta_phase}",
             )
         return PhaseComponents(
