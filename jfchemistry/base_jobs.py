@@ -144,10 +144,10 @@ class SingleStructureMaker(Maker):
     """
 
     name: str = "Single Structure Maker"
-    _output_model: type[BaseModel] = Output
-    _properties_model: type[BaseModel] = Properties
+    _output_model: type[Output] = Output
+    _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[BaseModel]):
+    def make_output_model(self, properties_model: type[Properties]):
         """Make a properties model for the job."""
         fields = {}
         if isinstance(self._output_model, dict):
@@ -293,7 +293,7 @@ class SingleStructureMaker(Maker):
             return resp
         else:  # If the structure is not a list, generate a single structure
             structures, properties = self.operation(cast("SiteCollection", structure))
-            if type(structures) is list:
+            if isinstance(structures, list):
                 files = [self.write_file(s) for s in structures]
             else:
                 files = [self.write_file(structures)]
@@ -324,10 +324,10 @@ class SingleMoleculeMaker(Maker):
     """
 
     name: str = "Single RDMolMolecule Maker"
-    _output_model: type[BaseModel] = Output
-    _properties_model: type[BaseModel] = Properties
+    _output_model: type[Output] = Output
+    _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[BaseModel]):
+    def make_output_model(self, properties_model: type[Properties]):
         """Make a properties model for the job."""
         fields = {}
         for f_name, f_info in self._output_model.model_fields.items():
@@ -514,7 +514,7 @@ class SingleMoleculeMaker(Maker):
         if resp is not None:
             return resp
         molecule, properties = self.operation(cast("RDMolMolecule", molecule))
-        if type(molecule) is list:
+        if isinstance(molecule, list):
             files = [m.to(fmt="mol") for m in molecule]
         else:
             files = [molecule.to(fmt="mol")]

@@ -1,7 +1,7 @@
 """Base class for ensemble site collection filters."""
 
 from dataclasses import dataclass
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from jobflow.core.job import Response
 from jobflow.core.maker import Maker
@@ -115,7 +115,7 @@ class EnsembleFilter(Maker):
         self,
         ensemble: SiteCollection | EnsembleSiteCollection,
         properties: PropertyEnsembleCollection | None,
-    ) -> Response[type[_output_model]] | None:
+    ) -> Response[_output_model] | None:
         """Distribute workflow jobs for Pymatgen structures.
 
         Creates individual jobs for each structure in a list. If a single structure
@@ -236,12 +236,14 @@ class EnsembleFilter(Maker):
         resp = self.handle_structures(ensemble, properties)
         if resp is not None:
             return resp
-        else:  # If the structure is not a list, generate a single structure
-            ensemble, properties = self.operation(ensemble, properties)
-            if type(ensemble) is list:
+        else:
+            ensemble, properties = self.operation(
+                cast("Ensemble", ensemble), cast("PropertyEnsemble", properties)
+            )
+            if isinstance(ensemble, list) and len(ensemble) > 1:
                 files = [self.write_file(s) for s in ensemble]
             else:
-                files = [self.write_file(ensemble)]
+                files = [self.write_file(ensemble[0])]
             if properties is not None:
                 properties = [
                     Properties.model_validate(property, extra="allow", strict=False)

@@ -122,7 +122,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran-15.2.0-h834e499_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran_impl_linux-64-15.2.0-h1b0a18f_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py312h1289d80_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-15.2.0-h54ccb8d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-15.2.0-hfaa183a_12.conda
@@ -317,7 +317,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simple-dftd3-1.2.1-h3b12eaf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spglib-2.6.0-py312h2288509_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.44-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sshtunnel-0.4.0-pyhd8ed1ab_2.conda
@@ -544,7 +544,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran-15.2.0-h834e499_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran_impl_linux-64-15.2.0-h1b0a18f_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py312h1289d80_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-15.2.0-h54ccb8d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-15.2.0-hfaa183a_12.conda
@@ -739,7 +739,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simple-dftd3-1.2.1-h3b12eaf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spglib-2.6.0-py312h2288509_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.44-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sshtunnel-0.4.0-pyhd8ed1ab_2.conda
@@ -939,7 +939,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran-15.2.0-h834e499_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran_impl_linux-64-15.2.0-h1b0a18f_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py312h1289d80_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-15.2.0-h54ccb8d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-15.2.0-hfaa183a_12.conda
@@ -1143,7 +1143,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simple-dftd3-1.2.1-h3b12eaf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spglib-2.6.0-py312h2288509_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.44-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sshtunnel-0.4.0-pyhd8ed1ab_2.conda
@@ -1222,7 +1222,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
       - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#44625f1ded3d9f88721733fe4390ac269c10e4d4
       - pypi: https://files.pythonhosted.org/packages/ce/b1/5f49af514f76431ba4eea935b8ad3725cdeb397e9245ab919dbc1d1dc20f/psutil-7.1.3-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/78/91/82d6fb0d5dd6ba3ba3c67a4ae28d82bc9c0fa43ac970bb7dc8176d86070f/pymdown_extensions-10.17-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/40/b2d7b9fdccc63e48ae4dbd363b6b89eb7ac346ea49ed667bb71f92af3021/pymdown_extensions-10.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/d0/0c577d9325b05594fdd33aa970bf53fb673f051a45496842caee13cfd7fe/scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6a/23/8146aad7d88f4fcb3a6218f41a60f6c2d4e3a72de72da1825dc7c8f7877c/semantic_version-2.10.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/fd/42a1720542199ae6ff0f9c37bbd55dd3033ddd7bbe00d68cde09d6824887/sparse-0.17.0-py2.py3-none-any.whl
@@ -1352,7 +1352,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran-15.2.0-h834e499_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran_impl_linux-64-15.2.0-h1b0a18f_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py312h1289d80_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-15.2.0-h54ccb8d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-15.2.0-hfaa183a_12.conda
@@ -1547,7 +1547,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simple-dftd3-1.2.1-h3b12eaf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spglib-2.6.0-py312h2288509_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.44-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sshtunnel-0.4.0-pyhd8ed1ab_2.conda
@@ -1630,7 +1630,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
       - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#44625f1ded3d9f88721733fe4390ac269c10e4d4
-      - pypi: https://files.pythonhosted.org/packages/78/91/82d6fb0d5dd6ba3ba3c67a4ae28d82bc9c0fa43ac970bb7dc8176d86070f/pymdown_extensions-10.17-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/81/40/b2d7b9fdccc63e48ae4dbd363b6b89eb7ac346ea49ed667bb71f92af3021/pymdown_extensions-10.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/04/11/432f32f8097b03e3cd5fe57e88efb685d964e2e5178a48ed61e841f7fdce/pyyaml_env_tag-1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/d0/0c577d9325b05594fdd33aa970bf53fb673f051a45496842caee13cfd7fe/scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6a/23/8146aad7d88f4fcb3a6218f41a60f6c2d4e3a72de72da1825dc7c8f7877c/semantic_version-2.10.0-py2.py3-none-any.whl
@@ -1761,7 +1761,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran-15.2.0-h834e499_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gfortran_impl_linux-64-15.2.0-h1b0a18f_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py312h1289d80_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-15.2.0-h54ccb8d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-15.2.0-hfaa183a_12.conda
@@ -1956,7 +1956,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simple-dftd3-1.2.1-h3b12eaf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spglib-2.6.0-py312h2288509_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.44-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sshtunnel-0.4.0-pyhd8ed1ab_2.conda
@@ -3872,9 +3872,9 @@ packages:
   purls: []
   size: 460055
   timestamp: 1718980856608
-- conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_1.conda
-  sha256: ad036902a8355140598005515e6220d4b24ae7d116904e29ef67963cf1812f86
-  md5: 809ea2d9832d7ca8b81af324ca859968
+- conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py312hcaba1f9_2.conda
+  sha256: c9dfe9be6716d992b4ddd2e8219ad8afbe33dc04f69748ac4302954ba2e29e84
+  md5: dd6f5de6249439ab97a6e9e873741294
   depends:
   - __glibc >=2.17,<3.0.a0
   - gmp >=6.3.0,<7.0a0
@@ -3884,11 +3884,10 @@ packages:
   - python >=3.12,<3.13.0a0
   - python_abi 3.12.* *_cp312
   license: LGPL-3.0-or-later
-  license_family: LGPL
   purls:
   - pkg:pypi/gmpy2?source=hash-mapping
-  size: 214928
-  timestamp: 1756739690351
+  size: 214554
+  timestamp: 1762946924209
 - pypi: https://files.pythonhosted.org/packages/ed/d4/90197b416cb61cefd316964fd9e7bd8324bcbafabf40eef14a9f20b81974/google_api_core-2.28.1-py3-none-any.whl
   name: google-api-core
   version: 2.28.1
@@ -6979,10 +6978,10 @@ packages:
   - pkg:pypi/pymatgen?source=hash-mapping
   size: 5173450
   timestamp: 1759857440319
-- pypi: https://files.pythonhosted.org/packages/78/91/82d6fb0d5dd6ba3ba3c67a4ae28d82bc9c0fa43ac970bb7dc8176d86070f/pymdown_extensions-10.17-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/81/40/b2d7b9fdccc63e48ae4dbd363b6b89eb7ac346ea49ed667bb71f92af3021/pymdown_extensions-10.17.1-py3-none-any.whl
   name: pymdown-extensions
-  version: '10.17'
-  sha256: 04ea928c1b8673bd891d758cd6392c05b45fa49014e4821dbb4c9078dd8ecade
+  version: 10.17.1
+  sha256: 1f160209c82eecbb5d8a0d8f89a4d9bd6bdcbde9a8537761844cfc57ad5cd8a6
   requires_dist:
   - markdown>=3.6
   - pyyaml
@@ -7720,17 +7719,17 @@ packages:
   version: 5.0.2
   sha256: b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e
   requires_python: '>=3.7'
-- conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_1.conda
-  sha256: c2248418c310bdd1719b186796ae50a8a77ce555228b6acd32768e2543a15012
-  md5: bf7a226e58dfb8346c70df36065d86c9
+- conda: https://conda.anaconda.org/conda-forge/noarch/sniffio-1.3.1-pyhd8ed1ab_2.conda
+  sha256: dce518f45e24cd03f401cb0616917773159a210c19d601c5f2d4e0e5879d30ad
+  md5: 03fe290994c5e4ec17293cfb6bdce520
   depends:
-  - python >=3.9
+  - python >=3.10
   license: Apache-2.0
   license_family: Apache
   purls:
-  - pkg:pypi/sniffio?source=hash-mapping
-  size: 15019
-  timestamp: 1733244175724
+  - pkg:pypi/sniffio?source=compressed-mapping
+  size: 15698
+  timestamp: 1762941572482
 - pypi: https://files.pythonhosted.org/packages/8d/fd/42a1720542199ae6ff0f9c37bbd55dd3033ddd7bbe00d68cde09d6824887/sparse-0.17.0-py2.py3-none-any.whl
   name: sparse
   version: 0.17.0

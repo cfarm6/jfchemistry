@@ -247,7 +247,7 @@ class PubChemCID(MoleculeInput):
         return mol
 
     @job(files="files", properties="properties")
-    def make(self, input: int) -> Response[dict[str, Any]]:
+    def make(self, input: int) -> Response[Output]:
         """Create a workflow job to retrieve a molecule from PubChem.
 
         Args:
@@ -320,7 +320,7 @@ class Smiles(MoleculeInput):
         return mol
 
     @job(files="files", properties="properties")
-    def make(self, input: str) -> Response[dict[str, Any]]:
+    def make(self, input: str) -> Response[Output]:
         """Create a workflow job to generate a molecule from SMILES.
 
         Args:

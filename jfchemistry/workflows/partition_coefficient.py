@@ -24,7 +24,6 @@ from jfchemistry.single_point import ORCASinglePointCalculator
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 if TYPE_CHECKING:
-    from pydantic import BaseModel
     from pymatgen.core.structure import Molecule
 
     from jfchemistry.conformers.crest import SolvationType
@@ -81,24 +80,24 @@ GeometryOptimizerStructuralFilterArg = Optional[StructuralFilter] | object
 class PhaseComponents:
     """Container for phase-specific workflow components."""
 
-    tautomer_generator: Optional[TautomerMaker]
-    tautomer_energy: Optional[SinglePointEnergyCalculator]
-    conformer_generator: Optional[ConformerGeneration]
-    conformer_energy: Optional[SinglePointEnergyCalculator]
-    geometry_optimizer: Optional[GeometryOptimization]
-    single_point_energy: Optional[SinglePointEnergyCalculator]
+    tautomer_generator: Optional[TautomerMaker | object]
+    tautomer_energy: Optional[SinglePointEnergyCalculator | object]
+    conformer_generator: Optional[ConformerGeneration | object]
+    conformer_energy: Optional[SinglePointEnergyCalculator | object]
+    geometry_optimizer: Optional[GeometryOptimization | object]
+    single_point_energy: Optional[SinglePointEnergyCalculator | object]
 
 
 @dataclass
 class FilterSet:
     """Container for workflow filters."""
 
-    tautomer_energy: Optional[EnergyFilter]
-    tautomer_structural: Optional[StructuralFilter]
-    conformer_energy: Optional[EnergyFilter]
-    conformer_structural: Optional[StructuralFilter]
-    geometry_optimizer_energy: Optional[EnergyFilter]
-    geometry_optimizer_structural: Optional[StructuralFilter]
+    tautomer_energy: Optional[EnergyFilter | object]
+    tautomer_structural: Optional[StructuralFilter | object]
+    conformer_energy: Optional[EnergyFilter | object]
+    conformer_structural: Optional[StructuralFilter | object]
+    geometry_optimizer_energy: Optional[EnergyFilter | object]
+    geometry_optimizer_structural: Optional[StructuralFilter | object]
 
 
 class PartitionCoefficientResults(PropertyClass):
@@ -115,8 +114,8 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
     temperature: float = field(default=298.15, metadata={"description": "The temperature [K]."})
     alpha_phase: str = field(default="octanol", metadata={"description": "The alpha phase."})
     beta_phase: str = field(default="water", metadata={"description": "The beta phase."})
-    _properties_model: type[BaseModel] = Properties
-    _output_model: type[BaseModel] = Output
+    _properties_model: type[Properties] = Properties
+    _output_model: type[Output] = Output
 
     @jfchem_job()
     def make(
@@ -162,7 +161,7 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
         )
 
         return Response(
-            output=self._output_model(
+            output=Output(
                 properties=self._properties_model(
                     system=PartitionCoefficientResults(
                         partition_coefficient=SystemProperty(
@@ -206,8 +205,8 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
     beta_phase: str = "water"
     temperature: float = 298.15
     crest_executable: str = "crest"
-    _properties_model: type[BaseModel] = Properties
-    _output_model: type[BaseModel] = Output
+    _properties_model: type[Properties] = Properties
+    _output_model: type[Output] = Output
 
     @jfchem_job()
     def make(  # noqa: PLR0913
@@ -283,8 +282,8 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
         if final_alpha_job is None or final_beta_job is None:
             raise ValueError("No final jobs found")
         final_job = partition_coefficient_calculation.make(
-            final_alpha_job.output.properties,
-            final_beta_job.output.properties,
+            final_alpha_job.output.properties,  # type: ignore
+            final_beta_job.output.properties,  # type: ignore
         )
         flow = Flow([*alpha_jobs, *beta_jobs, final_job], name="Partition Coefficient Workflow")
         partition_coefficient = final_job.output.properties.system.partition_coefficient
@@ -293,10 +292,13 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 partition_coefficient=partition_coefficient,
             )
         )
-        output = self._output_model(
+        output = Output(
             properties=properties,
             structure=structure,
-            files=[final_alpha_job.output.files, final_beta_job.output.files],
+            files=[
+                final_alpha_job.output.files if final_alpha_job.output is not None else None,  # type: ignore
+                final_beta_job.output.files if final_beta_job.output is not None else None,  # type: ignore
+            ],
         )
         return Response(output=output, detour=flow)
 
@@ -555,6 +557,13 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
             ),
         )
         queue_job(
+            isinstance(components.conformer_energy, SinglePointEnergyCalculator)
+            and components.conformer_generator is not None,
+            lambda: cast("SinglePointEnergyCalculator", components.conformer_energy).make(
+                structure_state
+            ),
+        )
+        queue_job(
             isinstance(filters.conformer_structural, StructuralFilter)
             and components.conformer_generator is not None,
             lambda: cast("StructuralFilter", filters.conformer_structural).make(
@@ -564,13 +573,6 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 cast("StructuralFilter", filters.conformer_structural),
                 "name",
                 "Conformer Structural Filter",
-            ),
-        )
-        queue_job(
-            isinstance(components.conformer_energy, SinglePointEnergyCalculator)
-            and components.conformer_generator is not None,
-            lambda: cast("SinglePointEnergyCalculator", components.conformer_energy).make(
-                structure_state
             ),
         )
         queue_job(
