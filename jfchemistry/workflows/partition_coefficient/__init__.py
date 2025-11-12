@@ -1,5 +1,5 @@
 """Partition coefficient workflow."""
 
-from .partition_coefficient import PartitionCoefficientWorkflow
+from .workflow import PartitionCoefficientWorkflow
 
 __all__ = ["PartitionCoefficientWorkflow"]

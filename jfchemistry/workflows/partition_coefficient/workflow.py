@@ -473,25 +473,19 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
             tautomer_energy_filter = None
         if tautomer_structural_filter is _DEFAULT_TAUTOMER_STRUCTURAL_FILTER:
             tautomer_structural_filter = PrismPrunerFilter(
-                structural_threshold=0.01,
                 energy_threshold=12,
-                method="MOI",
             )
         if conformer_energy_filter is _DEFAULT_CONFORMER_ENERGY_FILTER:
             conformer_energy_filter = None
         if conformer_structural_filter is _DEFAULT_CONFORMER_STRUCTURAL_FILTER:
             conformer_structural_filter = PrismPrunerFilter(
-                structural_threshold=0.01,
                 energy_threshold=6,
-                method="MOI",
             )
         if geometry_optimizer_energy_filter is _DEFAULT_GEOMETRY_OPTIMIZER_ENERGY_FILTER:
             geometry_optimizer_energy_filter = None
         if geometry_optimizer_structural_filter is _DEFAULT_GEOMETRY_OPTIMIZER_STRUCTURAL_FILTER:
             geometry_optimizer_structural_filter = PrismPrunerFilter(
-                structural_threshold=0.01,
                 energy_threshold=4,
-                method="MOI",
             )
             tautomer_structural_filter = geometry_optimizer_structural_filter
         return FilterSet(

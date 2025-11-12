@@ -28,9 +28,9 @@ conformers = CRESTConformers(
 ).make(generate_structure.output.structure)
 
 energyies = TBLiteSinglePointCalculator(method="GFN2-xTB").make(conformers.output.structure)
-prism_filter = PrismPrunerFilter(
-    method="RMSD", structural_threshold=2.0, energy_threshold=1.0
-).make(energyies.output.structure, energyies.output.properties)
+prism_filter = PrismPrunerFilter(energy_threshold=1.0).make(
+    energyies.output.structure, energyies.output.properties
+)
 
 flow = Flow(
     [
