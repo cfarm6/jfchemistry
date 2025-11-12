@@ -4,13 +4,14 @@ from dataclasses import dataclass, field
 from typing import ClassVar, Literal
 
 import numpy as np
-from prism_pruner.conformer_ensemble import ConformerEnsemble
 
 from jfchemistry.base_jobs import Properties
 from jfchemistry.filters.base import Ensemble, PropertyEnsemble
 from jfchemistry.filters.structural.base import StructuralFilter
 
 EH_TO_KCAL = 627.5096080305927
+
+type PruningOptions = Literal["MOI", "RMSD", "RMSD_RC"]
 
 
 @dataclass
@@ -24,8 +25,9 @@ class PrismPrunerFilter(StructuralFilter):
     energy_threshold: float = field(
         default=0.0, metadata={"description": "The threshold for the energy filter [kcal/mol]."}
     )
-    method: Literal["MOI", "RMSD", "RMSD_RC"] = field(
-        default="MOI", metadata={"description": "The method for the prism pruner."}
+    methods: list[type[PruningOptions]] = field(
+        default_factory=lambda: ["MOI", "RMSD"],
+        metadata={"description": "The method for the prism pruner."},
     )
     _method_dict: ClassVar[dict[str, str]] = {
         "MOI": "prune_by_moment_of_inertia",
@@ -37,7 +39,7 @@ class PrismPrunerFilter(StructuralFilter):
         self, ensemble: Ensemble, properties: PropertyEnsemble | None
     ) -> tuple[Ensemble, PropertyEnsemble | None]:
         """Perform the energy filter operation on an ensemble."""
-        import prism_pruner.pruner
+        from prism_pruner.pruner import prune
 
         if properties is not None:
             parsed_properties = [
@@ -51,23 +53,21 @@ class PrismPrunerFilter(StructuralFilter):
             energies = None
         coords = np.array([molecule.cart_coords for molecule in ensemble])
         atoms = np.array([s.name for s in ensemble[0].species])
-        conformer_ensemble = ConformerEnsemble(coords, atoms)
-        prune_method = getattr(prism_pruner.pruner, self._method_dict[self.method])
-        args = [coords, atoms]
+
         kw_args = {
             "energies": energies,
             "max_dE": self.energy_threshold / EH_TO_KCAL,
+            "debug_function": None,
+            "logfunction": None,
         }
-        if self.method == "RMSD_RC":
-            from prism_pruner.graph_manipulations import graphize
+        if "RMSD_RC" in self.methods:
+            kw_args["rot_corr_rmsd_pruning"] = True
+        if "RMSD" in self.methods:
+            kw_args["rmsd_pruning"] = True
+        if "MOI" in self.methods:
+            kw_args["moi_pruning"] = True
 
-            graph = graphize(conformer_ensemble.atoms, conformer_ensemble.coords[0])
-            args.append(graph)
-        if "RMSD" in self.method:
-            kw_args["max_rmsd"] = self.structural_threshold
-        elif self.method == "MOI":
-            kw_args["max_deviation"] = self.structural_threshold
-        _, mask = prune_method(*args, **kw_args)
+        _, mask = prune(*[coords, atoms], **kw_args)
 
         filtered_ensemble = [item for item, keep in zip(ensemble, mask, strict=False) if keep]
         if properties is not None:
