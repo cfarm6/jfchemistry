@@ -5,7 +5,7 @@ performing GFN-xTB semi-empirical quantum chemistry calculations.
 """
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, Optional
 
 from ase import Atoms
 from ase.units import Bohr, Hartree
@@ -21,6 +21,35 @@ from jfchemistry.base_classes import (
 from .ase_calculator import ASECalculator
 
 BOND_ORDER_THRESHOLD = 0.1
+
+TBLiteSolvationType = Literal["alpb"]
+TBLiteSolventType = Literal[
+    "Acetone",
+    "Acetonitrile",
+    "Aniline",
+    "Benzaldehyde",
+    "Benzene",
+    "Dichloromethane",
+    "Chloroform",
+    "Carbon Disulfide",
+    "Dioxane",
+    "DMF",
+    "DMSO",
+    "Ethanol",
+    "Ether",
+    "Ethylacetate",
+    "Furane",
+    "Hexadecane",
+    "Hexane",
+    "Methanol",
+    "Nitromethane",
+    "Octanol",
+    "Wet Octanol",
+    "Phenol",
+    "Toluene",
+    "THF",
+    "Water",
+]
 
 
 class TBLiteAtomicProperties(BaseModel):
@@ -132,6 +161,12 @@ class TBLiteCalculator(ASECalculator):
     mixer_damping: float = field(default=0.4, metadata={"description": "The mixer damping to use"})
     verbosity: int = field(default=0, metadata={"description": "The verbosity to use"})
     _properties_model: type[TBLiteProperties] = TBLiteProperties
+    solvation: Optional[TBLiteSolvationType] = field(
+        default=None, metadata={"description": "The solvation model to use"}
+    )
+    solvent: Optional[TBLiteSolventType] = field(
+        default=None, metadata={"description": "The solvent to use"}
+    )
 
     def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the TBLite calculator on the atoms object.
@@ -184,6 +219,7 @@ class TBLiteCalculator(ASECalculator):
             initial_guess=self.initial_guess,
             mixer_damping=self.mixer_damping,
             verbosity=self.verbosity,
+            solvation=(self.solvation, self.solvent),
         )
 
         return atoms

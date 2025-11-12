@@ -17,6 +17,7 @@ generate_structure = RDKitGeneration(num_conformers=1).make(pubchem_cid.output.s
 
 pc_calculation = PartitionCoefficientWorkflow(
     threads=16,
+    alpha_phase="chloroform",
     crest_executable="/home/carson/Downloads/crest-gnu-12-ubuntu-latest/crest/crest",
 ).make(
     generate_structure.output.structure,
