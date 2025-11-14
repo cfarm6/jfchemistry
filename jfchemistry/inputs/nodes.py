@@ -127,14 +127,14 @@ class MoleculeInput(Maker):
         """
         raise NotImplementedError
 
-    def clean_structure(self, input: rdchem.Mol) -> rdchem.Mol:
+    def clean_structure(self, mol: rdchem.Mol) -> rdchem.Mol:
         """Clean and prepare the molecule structure.
 
         Performs post-processing on the molecule including salt removal and
         hydrogen addition based on the configured options.
 
         Args:
-            input: RDKit molecule to clean.
+            mol: RDKit molecule to clean.
 
         Returns:
             Cleaned RDKit molecule.
@@ -152,13 +152,12 @@ class MoleculeInput(Maker):
             '[H]OC([H])([H])C([H])([H])[H]'
         """
         if self.remove_salts:
-            input = SaltRemover.SaltRemover().StripMol(input)  # type: ignore[no-untyped-call]
-            if input is None:
+            mol = SaltRemover.SaltRemover().StripMol(mol)  # type: ignore[no-untyped-call]
+            if mol is None or mol.GetNumAtoms() == 0:
                 raise ValueError("No molecule returned after removing salts.")
         if self.add_hydrogens:
-            input = rdmolops.AddHs(input)
-
-        return input
+            mol = rdmolops.AddHs(mol)
+        return mol
 
     def _make(self, input: int | str) -> Response[_output_model]:
         """Create the internal workflow job.
@@ -181,9 +180,10 @@ class MoleculeInput(Maker):
         """
         mol = self.get_structure(input)
         mol = self.clean_structure(mol)
+        mol = RDMolMolecule(mol)
         resp = Response(
             output=self._output_model(
-                structure=RDMolMolecule(mol),
+                structure=mol,
                 files=rdmolfiles.MolToV3KMolBlock(mol),
             ),
         )
@@ -247,7 +247,7 @@ class PubChemCID(MoleculeInput):
         return mol
 
     @job(files="files", properties="properties")
-    def make(self, input: int) -> Response[dict[str, Any]]:
+    def make(self, input: int) -> Response[Output]:
         """Create a workflow job to retrieve a molecule from PubChem.
 
         Args:
@@ -314,10 +314,13 @@ class Smiles(MoleculeInput):
             >>> mol.GetNumAtoms()  # Without hydrogens
             3
         """
-        return rdmolfiles.MolFromSmiles(input)
+        mol = rdmolfiles.MolFromSmiles(input)
+        if mol is None:
+            raise ValueError(f"Failed to parse SMILES string: {input}")
+        return mol
 
     @job(files="files", properties="properties")
-    def make(self, input: str) -> Response[dict[str, Any]]:
+    def make(self, input: str) -> Response[Output]:
         """Create a workflow job to generate a molecule from SMILES.
 
         Args:
@@ -335,4 +338,5 @@ class Smiles(MoleculeInput):
             >>> mol = job.output["structure"]
             >>> mol_file = job.output["files"]
         """
-        return super()._make(input)
+        resp = super()._make(input)
+        return resp

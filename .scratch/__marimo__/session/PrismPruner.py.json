@@ -1,0 +1,244 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.17.7"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "b91b9423b13af3a3d854494c6ec5abe5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "362e8c24dbeadd7a63b910e0fe6489fa",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "[Errno 2] No such file or directory: '/home/carson/research/SoftwareDevelopment/jfchemistry/examples/crest_conformers.xyz'",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_250865/__marimo__cell_MJUe_.py&quot;</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">mols</span> <span class=\"o\">=</span> <span class=\"n\">XYZ</span><span class=\"o\">.</span><span class=\"n\">from_file</span><span class=\"p\">(</span><span class=\"s2\">&quot;/home/carson/research/SoftwareDevelopment/jfchemistry/examples/crest_conformers.xyz&quot;</span><span class=\"p\">)</span><span class=\"o\">.</span><span class=\"n\">all_molecules</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/carson/research/SoftwareDevelopment/jfchemistry/.pixi/envs/dev/lib/python3.12/site-packages/pymatgen/io/xyz.py&quot;</span>, line <span class=\"m\">114</span>, in <span class=\"n\">from_file</span>\n<span class=\"w\">    </span><span class=\"k\">with</span> <span class=\"n\">zopen</span><span class=\"p\">(</span><span class=\"n\">filename</span><span class=\"p\">,</span> <span class=\"n\">mode</span><span class=\"o\">=</span><span class=\"s2\">&quot;rt&quot;</span><span class=\"p\">,</span> <span class=\"n\">encoding</span><span class=\"o\">=</span><span class=\"s2\">&quot;utf-8&quot;</span><span class=\"p\">)</span> <span class=\"k\">as</span> <span class=\"n\">file</span><span class=\"p\">:</span>\n<span class=\"w\">         </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/carson/research/SoftwareDevelopment/jfchemistry/.pixi/envs/dev/lib/python3.12/site-packages/monty/io.py&quot;</span>, line <span class=\"m\">116</span>, in <span class=\"n\">zopen</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"nb\">open</span><span class=\"p\">(</span><span class=\"n\">filename</span><span class=\"p\">,</span> <span class=\"n\">mode</span><span class=\"p\">,</span> <span class=\"o\">**</span><span class=\"n\">kwargs</span><span class=\"p\">)</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n<span class=\"gr\">FileNotFoundError</span>: <span class=\"n\">[Errno 2] No such file or directory: &#39;/home/carson/research/SoftwareDevelopment/jfchemistry/examples/crest_conformers.xyz&#39;</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "vblA",
+      "code_hash": "8d05ece347b3f8017adad7fb4c6c0f62",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (FileNotFoundError): ",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_250865/__marimo__cell_vblA_.py&quot;</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">atoms</span> <span class=\"o\">=</span> <span class=\"n\">np</span><span class=\"o\">.</span><span class=\"n\">array</span><span class=\"p\">([</span><span class=\"n\">s</span><span class=\"o\">.</span><span class=\"n\">name</span> <span class=\"k\">for</span> <span class=\"n\">s</span> <span class=\"ow\">in</span> <span class=\"n\">mols</span><span class=\"p\">[</span><span class=\"mi\">0</span><span class=\"p\">]</span><span class=\"o\">.</span><span class=\"n\">species</span><span class=\"p\">])</span>\n<span class=\"w\">            </span><span class=\"pm\">^^</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name &#39;np&#39; is not defined</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "d703799529e12e21d6aa8a78fce410dd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "ac9ba655f260ae67769c1237fbd19951",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "fb0fd4a7d18ec33825906c80bbdd0489",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "DEBUG: MOIPrunerConfig - k=1, rejected 0 (keeping 2/2), in 0.0 s\nDEBUG: MOIPrunerConfig - keeping 2/2 (0.0 s)\nDEBUG: MOIPrunerConfig - Used cached data 0/1 times, 0.00% of total calls\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "Xref",
+      "code_hash": "f2ce11ebf110993621bedd8e747d7b1b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<pre style='font-size: 12px'>array([ True,  True])</pre>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "29866b3b57fe14b9226c4416a814d79f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<pre style='font-size: 12px'>Molecule Summary\nSite: C (0.0672, -0.9417, -0.1868)\nSite: C (-1.2227, -0.2983, -0.4675)\nSite: O (-1.7516, 0.4684, 0.2790)\nSite: Cl (1.2199, 0.3119, 0.1448)\nSite: H (0.4250, -1.5440, -1.0240)\nSite: H (-0.0106, -1.5821, 0.6928)\nSite: H (-1.7492, -0.5044, -1.3949)</pre>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "e0a616757efc23a4f9f13dd10d298529",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "only integer scalar arrays can be converted to a scalar index",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_761573/__marimo__cell_TnNW_.py&quot;</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">mols</span><span class=\"p\">[</span><span class=\"n\">mask</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"pm\">~~~~^^^^^^</span>\n<span class=\"gr\">TypeError</span>: <span class=\"n\">only integer scalar arrays can be converted to a scalar index</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "bcdf252e02e4891af553976087ba17d8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "dBYZ",
+      "code_hash": "8443edf83550d65d84655e27f6fade90",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MyJX",
+      "code_hash": "db25243862196784e12419e896a874cf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "IDSl",
+      "code_hash": "ec0e981a9b9ba4c94664e7f16e1fc4b8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFqZ",
+      "code_hash": "6ac37155fad91b1c5b0b3c14babddd7d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TzEc",
+      "code_hash": "4923365c29b0acae9f9c059b509e9fe1",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "EnsembleSplitter.get_ensemble_energies() missing 1 required positional argument: 'groups'",
+          "traceback": []
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_250865/__marimo__cell_TzEc_.py&quot;</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">ES</span><span class=\"o\">.</span><span class=\"n\">get_ensemble_energies</span><span class=\"p\">()</span>\n<span class=\"gr\">TypeError</span>: <span class=\"n\">EnsembleSplitter.get_ensemble_energies() missing 1 required positional argument: &#39;groups&#39;</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "apgK",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

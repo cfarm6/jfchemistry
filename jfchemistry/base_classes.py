@@ -15,10 +15,19 @@ class Property(BaseModel):
     """A calculated property."""
 
     name: str
-    value: float | list[float]
+    value: NestedFloatList
     units: str
-    uncertainty: Optional[float | list[float]] = None
+    uncertainty: Optional[NestedFloatList] = None
     description: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Any:
+        """Create a Property from a dictionary."""
+        return cls.model_validate(d, extra="ignore", strict=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Property to a dictionary."""
+        return self.model_dump(mode="json")
 
 
 class AtomicProperty(Property):

@@ -4,18 +4,19 @@ This module provides integration with CREST's automated tautomerization workflow
 for generating low-energy tautomers at different sites.
 """
 
+import os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import SiteCollection
-from pymatgen.io.xyz import XYZ
 
 from jfchemistry.calculators import CRESTCalculator
-from jfchemistry.modification.base import StructureModification
+from jfchemistry.modification.molbar_screening import molbar_screening
+from jfchemistry.modification.tautomers.base import TautomerMaker
 
 
 @dataclass
-class CRESTTautomers(StructureModification, CRESTCalculator):
+class CRESTTautomers(TautomerMaker, CRESTCalculator):
     """Generate tautomers using CREST.
 
     Uses CREST's automated tautomerization workflow to identify basic sites
@@ -56,6 +57,7 @@ class CRESTTautomers(StructureModification, CRESTCalculator):
     name: str = "CREST Tautomers"
     # INTERNAL
     _runtype: Literal["tautomerize"] = "tautomerize"
+    _output_filename: str = "tautomers.xyz"
 
     def make_commands(self):
         """Make the CLI for the CREST input."""
@@ -95,13 +97,10 @@ class CRESTTautomers(StructureModification, CRESTCalculator):
         super().write_toml()
         self.make_commands()
         super().run()
-
-        try:
-            structures = XYZ.from_file("tautomers.xyz").all_molecules
-        except IndexError:
-            raise IndexError(
+        if not os.path.exists(self._output_filename):
+            raise FileNotFoundError(
                 "No tautomers found. Please check your CREST settings and log file."
             ) from None
-
-        structures = cast("list[SiteCollection]", structures)
-        return structures, None
+        molecules = molbar_screening(self._output_filename, self.threads)
+        print("NUMBER OF TAUTOMERS: ", len(molecules))
+        return molecules, None

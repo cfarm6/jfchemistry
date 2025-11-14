@@ -7,15 +7,15 @@ for fast and accurate calculation of molecular energies and partial charges.
 from dataclasses import dataclass, field
 
 from ase import Atoms
-from pydantic import BaseModel
 
 from jfchemistry.base_classes import AtomicProperty, SystemProperty
+from jfchemistry.base_jobs import Properties, PropertyClass
 
 from .ase_calculator import ASECalculator
 from .base import MachineLearnedInteratomicPotentialCalculator
 
 
-class AimNet2AtomicProperties(BaseModel):
+class AimNet2AtomicProperties(PropertyClass):
     """Properties of the AimNet2 calculator.
 
     Attributes:
@@ -24,10 +24,10 @@ class AimNet2AtomicProperties(BaseModel):
     """
 
     aimnet2_partial_charges: AtomicProperty
-    aimnet2_forces: AtomicProperty
+    forces: AtomicProperty
 
 
-class AimNet2SystemProperties(BaseModel):
+class AimNet2SystemProperties(PropertyClass):
     """System properties of the AimNet2 calculator.
 
     Attributes:
@@ -37,7 +37,7 @@ class AimNet2SystemProperties(BaseModel):
     total_energy: SystemProperty
 
 
-class AimNet2Properties(BaseModel):
+class AimNet2Properties(Properties):
     """Properties of the AimNet2 calculator.
 
     Attributes:
@@ -174,7 +174,7 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
                 units="e",
                 description=f"Partial charges predicted by {self.model} model",
             ),
-            aimnet2_forces=AtomicProperty(
+            forces=AtomicProperty(
                 name="AimNet2 Forces",
                 value=atoms.get_forces(),
                 units="eV/Å",

@@ -6,6 +6,7 @@ from typing import Optional
 from opi.input.simple_keywords.base import SimpleKeyword
 from opi.input.simple_keywords.basis_set import BasisSet
 from opi.input.simple_keywords.dft import Dft
+from opi.input.simple_keywords.dispersion_correction import DispersionCorrection
 from opi.input.simple_keywords.ecp import Ecp
 from opi.input.simple_keywords.solvation import Solvation
 from opi.input.simple_keywords.solvation_model import SolvationModel
@@ -18,6 +19,7 @@ from jfchemistry.base_classes import SystemProperty
 # Import fully typed Literal definitions
 from jfchemistry.calculators.orca_keywords import (
     BasisSetType,
+    DispersionCorrectionType,
     ECPType,
     SolvationModelType,
     SolvationType,
@@ -30,6 +32,7 @@ from .base import WavefunctionCalculator
 # Re-export types for external use
 __all__ = [
     "BasisSetType",
+    "DispersionCorrectionType",
     "ECPType",
     "ORCACalculator",
     "SolvationModelType",
@@ -108,6 +111,10 @@ class ORCACalculator(WavefunctionCalculator):
         default=None,
         metadata={"description": "The effective core potential to use for heavy atoms"},
     )
+    dispersion_correction: Optional[DispersionCorrectionType] = field(
+        default=None,
+        metadata={"description": "The dispersion correction to use for the calculation"},
+    )
     solvation: Optional[SolvationType] = field(
         default=None, metadata={"description": "The solvation model to use for the calculation"}
     )
@@ -146,21 +153,22 @@ class ORCACalculator(WavefunctionCalculator):
             "xc_functional": Dft,
             "ecp": Ecp,
             "solvation": Solvation,
+            "dispersion_correction": DispersionCorrection,
         }
 
         for attr_name, keyword_class in simple_keyword_classes.items():
             keyword_value = getattr(self, attr_name)
             if keyword_value is not None:
-                keyword_obj = getattr(keyword_class, keyword_value)
+                keyword_obj = getattr(keyword_class, keyword_value.upper())
                 keywords.append(keyword_obj)
 
         # Add complex solvation keyword: model(solvent)
         if self.solvation_model is not None and self.solvent is not None:
-            model_class = getattr(SolvationModel, self.solvation_model)
-            solvent_obj = getattr(Solvent, self.solvent)
+            model_class = getattr(SolvationModel, self.solvation_model.upper())
+            solvent_obj = getattr(Solvent, self.solvent.upper())
             keywords.append(model_class(solvent_obj))
             if self.solvation is not None:
-                solvation_obj = getattr(Solvation, self.solvation)
+                solvation_obj = getattr(Solvation, self.solvation.upper())
                 keywords.append(solvation_obj)
         return keywords
 

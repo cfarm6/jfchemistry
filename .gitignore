@@ -1,6 +1,5 @@
 # Documentation build output
 site/
-# Scratch folder
 .scratch/
 ### Python ###
 # Byte-compiled / optimized / DLL files

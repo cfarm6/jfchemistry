@@ -991,3 +991,17 @@ OptModelType = Literal[
     "CI_OPT",
     "MECP_OPT",
 ]
+
+# Dispersion Corrections (10)
+DispersionCorrectionType = Literal[
+    "ABC",
+    "D2",
+    "D3",
+    "D3ZERO",
+    "D3BJ",
+    "D3TZ",
+    "D4",
+    "NL",
+    "POPDISP",
+    "SCNL",
+]
