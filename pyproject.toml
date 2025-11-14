@@ -7,7 +7,7 @@ readme = "README.md"
 keywords = []
 authors = [{ name = "Carson Farmer" }]
 requires-python = ">=3.12"
-dependencies = ["periodictable>=2.0.2,<3"]
+dependencies = []
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
@@ -40,6 +40,7 @@ orca-pi = ">=1.0.1,<2"
 fireworks = ">=2.0.6,<3"
 molbar = ">=1.1.3,<2"
 prism-pruner = { git = "https://github.com/ntampellini/prism_pruner.git", branch = "master" }
+periodictable = ">=2.0.2,<3"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
