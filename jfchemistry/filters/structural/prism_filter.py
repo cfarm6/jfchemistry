@@ -57,7 +57,7 @@ class PrismPrunerFilter(StructuralFilter):
         kw_args = {
             "energies": energies,
             "max_dE": self.energy_threshold / EH_TO_KCAL,
-            "debug_function": None,
+            "debugfunction": None,
             "logfunction": None,
         }
         if "RMSD_RC" in self.methods:

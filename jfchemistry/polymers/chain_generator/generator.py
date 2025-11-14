@@ -96,7 +96,7 @@ def infinite_chain_generator(  # noqa: PLR0913, PLR0915
     chain_length: int,
     rotation_angle: list[float],
     number_conformers: int,
-    intrachain_distance: float,
+    interchain_distance: float,
     remove_cap_sites: bool = True,
 ) -> Structure:
     """Generate a chain of monomers.
@@ -106,7 +106,7 @@ def infinite_chain_generator(  # noqa: PLR0913, PLR0915
         chain_length: The length of the chain.
         rotation_angle: The angle to rotate the chain by.
         number_conformers: The number of conformers to generate.
-        intrachain_distance: The distance between the chains.
+        interchain_distance: The distance between the chains.
         remove_cap_sites: Whether to remove the cap sites.
 
     Returns:
@@ -237,8 +237,8 @@ def infinite_chain_generator(  # noqa: PLR0913, PLR0915
     ].coords[2]
 
     # Build a,b,c lengths
-    a = x_max - x_min + intrachain_distance * 2
-    b = y_max - y_min + intrachain_distance * 2
+    a = x_max - x_min + interchain_distance * 2
+    b = y_max - y_min + interchain_distance * 2
     c = z_max
     lattice = Lattice.from_parameters(a=a, b=b, c=c, alpha=90, beta=90, gamma=90)
     structure = Structure(lattice=lattice, species=[], coords=[])
@@ -319,7 +319,6 @@ def finite_chain_generator(  # noqa: PLR0913, PLR0915
     head_angle: float,
     tail_angle: float,
     number_conformers: int,
-    intrachain_distance: float,
 ) -> Molecule:
     """Attach the head and tail to the chain."""
     monomer_no_H = rdmolops.RemoveHs(polymer.monomer)
@@ -435,8 +434,8 @@ def finite_chain_generator(  # noqa: PLR0913, PLR0915
         monomer_connection.connecting_points[1] + (chain_length - 1) * atoms_per_monomer
     ].coords[2]
     # Build a,b,c lengths
-    a = x_max - x_min + intrachain_distance * 2
-    b = y_max - y_min + intrachain_distance * 2
+    a = x_max - x_min + 0.001 * 2
+    b = y_max - y_min + 0.001 * 2
     c = z_max
     lattice = Lattice.from_parameters(a=a, b=b, c=c, alpha=90, beta=90, gamma=90)
     structure = Structure(lattice=lattice, species=[], coords=[])
