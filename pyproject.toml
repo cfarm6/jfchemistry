@@ -70,6 +70,7 @@ ruff = ">=0.11"
 pre-commit = ">=4.2"
 pytest-xdist = "*"
 
+
 [tool.pixi.feature.dev.pypi-dependencies]
 ty = "*"
 marimo = "*"
@@ -131,3 +132,6 @@ doctest_optionflags = "NORMALIZE_WHITESPACE"
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
+[dependency-groups]
+dev = ["marimo[recommended]>=0.17.7,<0.18"]

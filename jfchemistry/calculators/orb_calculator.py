@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from jfchemistry.base_classes import AtomicProperty, SystemProperty
 
 from .ase_calculator import ASECalculator
+from .base import MachineLearnedInteratomicPotentialCalculator
 
 
 class OrbAtomicProperties(BaseModel):
@@ -35,7 +36,7 @@ class OrbProperties(BaseModel):
 
 
 @dataclass
-class ORBModelCalculator(ASECalculator):
+class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator):
     """Orbital Materials ORB machine learning force field calculator.
 
     ORB models are graph neural network-based force fields developed by Orbital

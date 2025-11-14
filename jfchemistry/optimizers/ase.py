@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 import ase.optimize
-from ase import Atoms
-from pymatgen.core.structure import SiteCollection
+from ase import Atoms, filters
+from pymatgen.core.structure import Molecule, SiteCollection, Structure
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
 from jfchemistry.optimizers.base import GeometryOptimization
@@ -58,6 +58,12 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         default="LBFGS",
         metadata={"description": "the ASE optimizer to use for the calculation"},
     )
+    unit_cell_optimizer: Optional[
+        Literal["UnitCellFilter", "ExpCellFilter", "FrechetCellFilter"]
+    ] = field(
+        default=None,
+        metadata={"description": "the ASE unit cell optimizer to use for the calculation"},
+    )
     fmax: float = field(
         default=0.05,
         metadata={"description": "the maximum force convergence criterion in eV/Angstrom"},
@@ -65,6 +71,14 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
     steps: int = field(
         default=250000,
         metadata={"description": "the maximum number of optimization steps"},
+    )
+    trajectory: Optional[str] = field(
+        default=None,
+        metadata={"description": "the trajectory file to save the optimization"},
+    )
+    logfile: Optional[str] = field(
+        default=None,
+        metadata={"description": "the log file to save the optimization"},
     )
 
     def get_properties(self, structure: Atoms):
@@ -101,10 +115,29 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         """
         atoms = structure.to_ase_atoms()
         charge = int(structure.charge)
-        spin_multiplicity = int(structure.spin_multiplicity)
+        if type(structure) is Molecule:
+            spin_multiplicity = int(structure.spin_multiplicity)
+        else:
+            spin_multiplicity = 1
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
-        opt = getattr(ase.optimize, self.optimizer)(atoms, logfile=None)
+
+        if type(structure) is Structure:
+            if self.unit_cell_optimizer is not None:
+                opt_atoms = getattr(filters, self.unit_cell_optimizer)(atoms)
+        else:
+            opt_atoms = atoms
+
+        opt_func = getattr(ase.optimize, self.optimizer)
+        opt = opt_func(opt_atoms, logfile=self.logfile, trajectory=self.trajectory)
         opt.run(self.fmax, self.steps)
-        opt_structure = type(structure).from_ase_atoms(atoms)
-        properties = self.get_properties(atoms)
+        if type(structure) is Structure:
+            if self.unit_cell_optimizer is not None:
+                print(opt_atoms.get_cell())
+                opt_atoms = opt_atoms.atoms
+
+        properties = self.get_properties(opt_atoms)
+        from ase import io
+
+        io.write("opt.cif", opt_atoms)
+        opt_structure = type(structure).from_ase_atoms(opt_atoms)
         return opt_structure, properties

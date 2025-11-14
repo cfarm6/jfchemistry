@@ -104,6 +104,14 @@ def jfchem_job():
     return DeferredJobDecorator
 
 
+def write_file(structure: SiteCollection) -> str | None:
+    """Write the structure to a file."""
+    if isinstance(structure, Structure):
+        return structure.to(fmt="cif")
+    else:
+        return structure.to(fmt="xyz")
+
+
 @dataclass
 class SingleStructureMaker(Maker):
     """Base class for operations on structures with 3D geometry.
