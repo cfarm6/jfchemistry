@@ -62,7 +62,7 @@ class PolymerInput(Maker):
     @jfchem_job()
     def make(
         self, monomer: str, head: str | None = None, tail: str | None = None
-    ) -> Response[type[Output]]:
+    ) -> Response[_output_model]:
         """Make a polymer."""
         from rdkit.Chem import rdmolfiles, rdmolops
 

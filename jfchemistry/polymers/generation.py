@@ -41,14 +41,12 @@ class GenerateInfinitePolymerChain(Maker):
     """
 
     name: str = "Infinite Polymer Chain"
-    num_conformers: Optional[int] = field(
+    num_conformers: int = field(
         default=100,
         metadata={"description": "Number of conformers to generate for the monomer."},
     )
-    chain_length: Optional[int] = field(
-        default=2, metadata={"description": "Length of the polymer chain."}
-    )
-    inter_chain_distance: Optional[float] = field(
+    chain_length: int = field(default=2, metadata={"description": "Length of the polymer chain."})
+    interchain_distance: float = field(
         default=12.0,
         metadata={"description": "Distance between the chains in Angstroms."},
     )
@@ -112,7 +110,7 @@ class GenerateInfinitePolymerChain(Maker):
         )
 
     @jfchem_job()
-    def make(self, polymer: Polymer) -> Response[type[PolymerInfiniteChainOutput]]:
+    def make(self, polymer: Polymer) -> Response[_output_model]:
         """Make a polymer infinite chain.
 
         Steps:
@@ -134,12 +132,15 @@ class GenerateInfinitePolymerChain(Maker):
         chain_length times and rotating it by the rotation angle each time.
         15. Return the polymer structure.
         """
+        if isinstance(self.rotation_angles, (int, float)):
+            self.rotation_angles = [float(self.rotation_angles)] * self.chain_length
+
         structure = infinite_chain_generator(
             polymer.monomer,
             self.chain_length,
             self.rotation_angles,
             self.num_conformers,
-            self.dihedral_angle_cutoff,
+            self.interchain_distance,
         )
 
         file = structure.to_file(fmt="cif")
@@ -155,17 +156,11 @@ class GenerateFinitePolymerChain(Maker):
     """
 
     name: str = "Finite Polymer Chain"
-    num_conformers: Optional[int] = field(
+    num_conformers: int = field(
         default=100,
         metadata={"description": "Number of conformers to generate for the monomer."},
     )
-    chain_length: Optional[int] = field(
-        default=2, metadata={"description": "Length of the polymer chain."}
-    )
-    inter_chain_distance: Optional[float] = field(
-        default=12.0,
-        metadata={"description": "Distance between the chains in Angstroms."},
-    )
+    chain_length: int = field(default=2, metadata={"description": "Length of the polymer chain."})
     rotation_angles: list[float] | float = field(
         default=180.0,
         metadata={
@@ -215,30 +210,32 @@ class GenerateFinitePolymerChain(Maker):
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
         # Convert single float to list if needed
-        if isinstance(self.rotation_angles, (int, float)):
-            if self.chain_length is None:
-                raise ValueError("chain_length must be set when rotation_angles is a single value")
+        if isinstance(self.rotation_angles, float):
             self.rotation_angles = [float(self.rotation_angles)] * self.chain_length
 
         # Validate rotation_angles length matches chain_length
-        if self.chain_length is not None and len(self.rotation_angles) != self.chain_length:
-            raise ValueError(
-                f"rotation_angles length ({len(self.rotation_angles)}) must equal "
-                f"chain_length ({self.chain_length})"
-            )
+        if isinstance(self.rotation_angles, list):
+            if len(self.rotation_angles) != self.chain_length:
+                raise ValueError(
+                    f"rotation_angles length ({len(self.rotation_angles)}) must equal "
+                    f"chain_length ({self.chain_length})"
+                )
 
         self.make_output_model(
             self._properties_model,
         )
 
     @jfchem_job()
-    def make(self, polymer: Polymer) -> Response[type[PolymerFiniteChainOutput]]:
+    def make(self, polymer: Polymer) -> Response[_output_model]:
         """Make a polymer finite chain.
 
         Steps:
         1. Build the chain with the infinite chain builder
         2. Add end caps and convert to a molecular structure
         """
+        if isinstance(self.rotation_angles, (int, float)):
+            self.rotation_angles = [float(self.rotation_angles)] * self.chain_length
+
         chain = finite_chain_generator(
             polymer,
             self.chain_length,
@@ -246,7 +243,6 @@ class GenerateFinitePolymerChain(Maker):
             self.head_angle,
             self.tail_angle,
             self.num_conformers,
-            self.inter_chain_distance,
         )
 
         file = chain.to_file(fmt="xyz")

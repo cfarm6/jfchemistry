@@ -9,6 +9,7 @@ from typing import Any, Literal, Optional
 
 import ase.optimize
 from ase import Atoms, filters
+from ase.filters import Filter
 from pymatgen.core.structure import Molecule, SiteCollection, Structure
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
@@ -131,8 +132,7 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         opt = opt_func(opt_atoms, logfile=self.logfile, trajectory=self.trajectory)
         opt.run(self.fmax, self.steps)
         if type(structure) is Structure:
-            if self.unit_cell_optimizer is not None:
-                print(opt_atoms.get_cell())
+            if self.unit_cell_optimizer is not None and isinstance(opt_atoms, Filter):
                 opt_atoms = opt_atoms.atoms
 
         properties = self.get_properties(opt_atoms)
