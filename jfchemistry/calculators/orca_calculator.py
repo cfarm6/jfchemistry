@@ -14,7 +14,6 @@ from opi.output.core import Output
 from pydantic import BaseModel
 
 from jfchemistry.base_classes import SystemProperty
-from jfchemistry.calculators.base import Calculator
 
 # Import fully typed Literal definitions
 from jfchemistry.calculators.orca_keywords import (
@@ -25,6 +24,8 @@ from jfchemistry.calculators.orca_keywords import (
     SolventType,
     XCFunctionalType,
 )
+
+from .base import WavefunctionCalculator
 
 # Re-export types for external use
 __all__ = [
@@ -52,7 +53,7 @@ class ORCAProperties(BaseModel):
 
 
 @dataclass
-class ORCACalculator(Calculator):
+class ORCACalculator(WavefunctionCalculator):
     """ORCA DFT Calculator with full type support.
 
     This calculator wraps the ORCA Python Interface (OPI) package to provide

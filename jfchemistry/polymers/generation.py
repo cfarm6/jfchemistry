@@ -7,14 +7,12 @@ from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import BaseModel, ConfigDict, Field, create_model
-from pymatgen.core.structure import (
-    Structure,
-)
+from pymatgen.core.structure import Molecule, Structure
 
-from jfchemistry.base_classes import Polymer, SystemProperty
+from jfchemistry.base_classes import Polymer
 from jfchemistry.base_jobs import Output, Properties, jfchem_job
 
-from .chain_generator import chain_generator
+from .chain_generator import finite_chain_generator, infinite_chain_generator
 
 
 class PolymerInfiniteChainOutput(Output):
@@ -26,22 +24,17 @@ class PolymerInfiniteChainOutput(Output):
     properties: Optional[Any] = None
 
 
-class PolymerInfiniteChainSystemProperties(BaseModel):
-    """Polymer Infinite Chain System Properties."""
+class PolymerFiniteChainOutput(Output):
+    """Polymer Infinite Chain Output."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    total_energy: SystemProperty
-
-
-class PolymerInfiniteChainProperties(Properties):
-    """Polymer Infinite Chain Properties."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    system: PolymerInfiniteChainSystemProperties
+    structure: Molecule
+    files: Optional[Any] = None
+    properties: Optional[Any] = None
 
 
 @dataclass
-class PolymerInfiniteChain(Maker):
+class GenerateInfinitePolymerChain(Maker):
     """Construct an Infinite Polymer Chain Model.
 
     Portions of the workflow are adapted from the PSP library: https://github.com/Ramprasad-Group/PSP
@@ -52,18 +45,14 @@ class PolymerInfiniteChain(Maker):
         default=100,
         metadata={"description": "Number of conformers to generate for the monomer."},
     )
-    dihedral_angle_cutoff: Optional[float] = field(
-        default=8.0,
-        metadata={"description": "Cutoff for the dihedral angle in degrees."},
-    )
     chain_length: Optional[int] = field(
-        default=1, metadata={"description": "Length of the polymer chain."}
+        default=2, metadata={"description": "Length of the polymer chain."}
     )
     inter_chain_distance: Optional[float] = field(
         default=12.0,
         metadata={"description": "Distance between the chains in Angstroms."},
     )
-    rotation_angle: float = field(
+    rotation_angles: list[float] | float = field(
         default=180.0,
         metadata={
             "description": "Dihedral angle of the polymer chain\
@@ -72,7 +61,7 @@ class PolymerInfiniteChain(Maker):
     )
     _dimerized: bool = False
     _output_model: type[PolymerInfiniteChainOutput] = PolymerInfiniteChainOutput
-    _properties_model: type[PolymerInfiniteChainProperties] = PolymerInfiniteChainProperties
+    _properties_model: type[Properties] = Properties
 
     def make_output_model(self, properties_model: type[BaseModel]):
         """Make a properties model for the job."""
@@ -105,6 +94,19 @@ class PolymerInfiniteChain(Maker):
 
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
+        # Convert single float to list if needed
+        if isinstance(self.rotation_angles, (int, float)):
+            if self.chain_length is None:
+                raise ValueError("chain_length must be set when rotation_angles is a single value")
+            self.rotation_angles = [float(self.rotation_angles)] * self.chain_length
+
+        # Validate rotation_angles length matches chain_length
+        if self.chain_length is not None and len(self.rotation_angles) != self.chain_length:
+            raise ValueError(
+                f"rotation_angles length ({len(self.rotation_angles)}) must equal "
+                f"chain_length ({self.chain_length})"
+            )
+
         self.make_output_model(
             self._properties_model,
         )
@@ -132,14 +134,121 @@ class PolymerInfiniteChain(Maker):
         chain_length times and rotating it by the rotation angle each time.
         15. Return the polymer structure.
         """
-        structure = chain_generator(
+        structure = infinite_chain_generator(
             polymer.monomer,
             self.chain_length,
-            self.rotation_angle,
+            self.rotation_angles,
             self.num_conformers,
             self.dihedral_angle_cutoff,
+        )
+
+        file = structure.to_file(fmt="cif")
+
+        return Response(output=self._output_model(structure=structure, files={"chain.cif": file}))
+
+
+@dataclass
+class GenerateFinitePolymerChain(Maker):
+    """Construct a Finite Polymer Chain Model.
+
+    Portions of the workflow are adapted from the PSP library: https://github.com/Ramprasad-Group/PSP
+    """
+
+    name: str = "Finite Polymer Chain"
+    num_conformers: Optional[int] = field(
+        default=100,
+        metadata={"description": "Number of conformers to generate for the monomer."},
+    )
+    chain_length: Optional[int] = field(
+        default=2, metadata={"description": "Length of the polymer chain."}
+    )
+    inter_chain_distance: Optional[float] = field(
+        default=12.0,
+        metadata={"description": "Distance between the chains in Angstroms."},
+    )
+    rotation_angles: list[float] | float = field(
+        default=180.0,
+        metadata={
+            "description": "Dihedral angle of the polymer chain\
+            in degrees measured across the connection points."
+        },
+    )
+    head_angle: float = field(
+        default=180.0, metadata={"description": "Dihedral angle of the head group"}
+    )
+    tail_angle: float = field(
+        default=180.0, metadata={"description": "Dihedral angle of the tail group"}
+    )
+    _dimerized: bool = False
+    _output_model: type[PolymerFiniteChainOutput] = PolymerFiniteChainOutput
+    _properties_model: type[Properties] = Properties
+
+    def make_output_model(self, properties_model: type[BaseModel]):
+        """Make a properties model for the job."""
+        fields = {}
+        for f_name, f_info in self._output_model.model_fields.items():
+            f_dict = f_info.asdict()  # type: ignore
+            annotation = f_dict["annotation"]
+            if f_name == "properties":
+                annotation = (
+                    properties_model
+                    | list[type[properties_model]]
+                    | OutputReference
+                    | list[OutputReference]
+                )  # type: ignore
+
+            fields[f_name] = (
+                Annotated[
+                    annotation | None,  # type: ignore
+                    *f_dict["metadata"],  # type: ignore
+                    Field(**f_dict["attributes"]),
+                ],  # type: ignore
+                None,
+            )
+
+        self._output_model = create_model(
+            f"{self._output_model.__name__}",
+            __base__=self._output_model,
+            **fields,
+        )
+
+    def __post_init__(self):
+        """Post-initialization hook to make the output model."""
+        # Convert single float to list if needed
+        if isinstance(self.rotation_angles, (int, float)):
+            if self.chain_length is None:
+                raise ValueError("chain_length must be set when rotation_angles is a single value")
+            self.rotation_angles = [float(self.rotation_angles)] * self.chain_length
+
+        # Validate rotation_angles length matches chain_length
+        if self.chain_length is not None and len(self.rotation_angles) != self.chain_length:
+            raise ValueError(
+                f"rotation_angles length ({len(self.rotation_angles)}) must equal "
+                f"chain_length ({self.chain_length})"
+            )
+
+        self.make_output_model(
+            self._properties_model,
+        )
+
+    @jfchem_job()
+    def make(self, polymer: Polymer) -> Response[type[PolymerFiniteChainOutput]]:
+        """Make a polymer finite chain.
+
+        Steps:
+        1. Build the chain with the infinite chain builder
+        2. Add end caps and convert to a molecular structure
+        """
+        chain = finite_chain_generator(
+            polymer,
+            self.chain_length,
+            self.rotation_angles,
+            self.head_angle,
+            self.tail_angle,
+            self.num_conformers,
             self.inter_chain_distance,
         )
-        file = structure.to_file(fmt="cif")
-        structure.to("final.cif")
-        return Response(output=self._output_model(structure=structure, files={"chain.cif": file}))
+
+        file = chain.to_file(fmt="xyz")
+
+        return Response(output=self._output_model(structure=chain, files={"chain.xyz": file}))

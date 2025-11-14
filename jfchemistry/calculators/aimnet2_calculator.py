@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from jfchemistry.base_classes import AtomicProperty, SystemProperty
 
 from .ase_calculator import ASECalculator
+from .base import MachineLearnedInteratomicPotentialCalculator
 
 
 class AimNet2AtomicProperties(BaseModel):
@@ -49,7 +50,7 @@ class AimNet2Properties(BaseModel):
 
 
 @dataclass
-class AimNet2Calculator(ASECalculator):
+class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator):
     """AimNet2 neural network potential calculator.
 
     AimNet2 is a neural network-based calculator for computing molecular energies

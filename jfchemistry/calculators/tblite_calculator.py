@@ -19,6 +19,7 @@ from jfchemistry.base_classes import (
 )
 
 from .ase_calculator import ASECalculator
+from .base import SemiempiricalCalculator
 
 BOND_ORDER_THRESHOLD = 0.1
 
@@ -66,7 +67,7 @@ class TBLiteProperties(BaseModel):
 
 
 @dataclass
-class TBLiteCalculator(ASECalculator):
+class TBLiteCalculator(ASECalculator, SemiempiricalCalculator):
     """TBLite calculator for GFN-xTB semi-empirical methods.
 
     TBLite provides implementations of the GFN (Geometrical-dependent

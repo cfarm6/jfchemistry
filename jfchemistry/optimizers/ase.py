@@ -76,6 +76,10 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         default=None,
         metadata={"description": "the trajectory file to save the optimization"},
     )
+    logfile: Optional[str] = field(
+        default=None,
+        metadata={"description": "the log file to save the optimization"},
+    )
 
     def get_properties(self, structure: Atoms):
         """Get the properties for an ASE Atoms object."""
@@ -124,10 +128,11 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
             opt_atoms = atoms
 
         opt_func = getattr(ase.optimize, self.optimizer)
-        opt = opt_func(opt_atoms, logfile=None, trajectory=self.trajectory)
+        opt = opt_func(opt_atoms, logfile=self.logfile, trajectory=self.trajectory)
         opt.run(self.fmax, self.steps)
         if type(structure) is Structure:
             if self.unit_cell_optimizer is not None:
+                print(opt_atoms.get_cell())
                 opt_atoms = opt_atoms.atoms
 
         properties = self.get_properties(opt_atoms)
