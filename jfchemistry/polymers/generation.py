@@ -155,7 +155,7 @@ class GenerateFinitePolymerChain(Maker):
     Portions of the workflow are adapted from the PSP library: https://github.com/Ramprasad-Group/PSP
     """
 
-    name: str = "Finite Polymer Chain"
+    name: str = "GenerateFinite Polymer Chain"
     num_conformers: int = field(
         default=100,
         metadata={"description": "Number of conformers to generate for the monomer."},
