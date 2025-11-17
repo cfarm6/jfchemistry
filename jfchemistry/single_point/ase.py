@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from ase import Atoms
-from pymatgen.core.structure import SiteCollection
+from pymatgen.core.structure import Molecule, SiteCollection
 
 from jfchemistry.calculators.ase_calculator import ASECalculator
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
@@ -75,7 +75,10 @@ class ASESinglePointCalculator(SinglePointEnergyCalculator, ASECalculator):
         """
         atoms = structure.to_ase_atoms()
         charge = int(structure.charge)
-        spin_multiplicity = int(structure.spin_multiplicity)
+        if isinstance(structure, Molecule):
+            spin_multiplicity = int(structure.spin_multiplicity)
+        else:
+            spin_multiplicity = None
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
         properties = self.get_properties(atoms)
         return structure, properties

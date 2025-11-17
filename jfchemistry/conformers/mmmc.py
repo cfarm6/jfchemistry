@@ -160,16 +160,13 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
             Molecule(species=atom_symbols, coords=coords)
             for coords in conformer_ensemble.final_ensemble
         ]
-        from ase import io
 
-        for molecule in molecules:
-            io.write("conformers.xyz", molecule.to_ase_atoms(), append=True)
         # Return the properties
         properties = [
             MMMCProperties(
                 system=MMMCSystemProperties(
                     total_energy=SystemProperty(
-                        name="total_energy", value=energy / EV_TO_KCAL, units="kcal/mol"
+                        name="total_energy", value=energy / EV_TO_KCAL, units="eV"
                     )
                 )
             )
