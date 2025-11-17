@@ -81,9 +81,18 @@ class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
     """
 
     name: str = "ORB Model Calculator"
-    model: Literal["orb-v3-conservative-omol", "orb-v3-direct-omol"] = field(
-        default="orb-v3-conservative-omol", metadata={"description": "The ORB model to use"}
-    )
+    model: Literal[
+        "orb-v3-conservative-omol",
+        "orb-v3-direct-omol",
+        "orb-v3-direct-20-omat",
+        "orb-v3-direct-20-mpa",
+        "orb-v3-direct-inf-omat",
+        "orb-v3-direct-inf-mpa",
+        "orb-v3-conservative-20-omat",
+        "orb-v3-conservative-20-mpa",
+        "orb-v3-conservative-inf-omat",
+        "orb-v3-conservative-inf-mpa",
+    ] = field(default="orb-v3-conservative-omol", metadata={"description": "The ORB model to use"})
     device: Literal["cpu", "cuda"] = field(
         default="cpu", metadata={"description": "The device to use"}
     )
@@ -120,6 +129,13 @@ class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
             >>> print(atoms.info["charge"]) # doctest: +SKIP
             0
         """
+        if (
+            self.model in {"orb-v3-conservative-omol", "orb-v3-direct-omol"}
+        ) and atoms.cell is not None:
+            raise ValueError(
+                "ORB OMol models do not support periodic boundary conditions.\
+                Please remove the cell from the atoms object."
+            )
         try:
             from orb_models.forcefield import pretrained  # type: ignore
             from orb_models.forcefield.calculator import ORBCalculator  # type: ignore
