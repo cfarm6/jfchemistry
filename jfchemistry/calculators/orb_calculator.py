@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from ase import Atoms
+from monty.json import MSONable
 from pydantic import BaseModel
 
 from jfchemistry.base_classes import AtomicProperty, SystemProperty
@@ -36,7 +37,7 @@ class OrbProperties(BaseModel):
 
 
 @dataclass
-class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator):
+class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
     """Orbital Materials ORB machine learning force field calculator.
 
     ORB models are graph neural network-based force fields developed by Orbital

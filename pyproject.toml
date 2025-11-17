@@ -7,7 +7,7 @@ readme = "README.md"
 keywords = []
 authors = [{ name = "Carson Farmer" }]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["multiple-minimum-monte-carlo>=0.0.9,<0.0.10"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]

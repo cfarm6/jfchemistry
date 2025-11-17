@@ -7,6 +7,7 @@ for fast and accurate calculation of molecular energies and partial charges.
 from dataclasses import dataclass, field
 
 from ase import Atoms
+from monty.json import MSONable
 
 from jfchemistry.base_classes import AtomicProperty, SystemProperty
 from jfchemistry.base_jobs import Properties, PropertyClass
@@ -50,7 +51,7 @@ class AimNet2Properties(Properties):
 
 
 @dataclass
-class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator):
+class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
     """AimNet2 neural network potential calculator.
 
     AimNet2 is a neural network-based calculator for computing molecular energies

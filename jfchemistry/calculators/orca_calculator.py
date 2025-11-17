@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from monty.json import MSONable
 from opi.input.simple_keywords.base import SimpleKeyword
 from opi.input.simple_keywords.basis_set import BasisSet
 from opi.input.simple_keywords.dft import Dft
@@ -56,7 +57,7 @@ class ORCAProperties(BaseModel):
 
 
 @dataclass
-class ORCACalculator(WavefunctionCalculator):
+class ORCACalculator(WavefunctionCalculator, MSONable):
     """ORCA DFT Calculator with full type support.
 
     This calculator wraps the ORCA Python Interface (OPI) package to provide

@@ -9,6 +9,7 @@ from typing import Literal, Optional
 
 from ase import Atoms
 from ase.units import Bohr, Hartree
+from monty.json import MSONable
 from pydantic import BaseModel
 
 from jfchemistry.base_classes import (
@@ -96,7 +97,7 @@ class TBLiteProperties(BaseModel):
 
 
 @dataclass
-class TBLiteCalculator(ASECalculator, SemiempiricalCalculator):
+class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
     """TBLite calculator for GFN-xTB semi-empirical methods.
 
     TBLite provides implementations of the GFN (Geometrical-dependent

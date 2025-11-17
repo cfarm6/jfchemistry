@@ -5,13 +5,14 @@ Environment) calculators into jfchemistry workflows.
 """
 
 from ase import Atoms
+from monty.json import MSONable
 from pydantic.dataclasses import dataclass
 
 from .base import Calculator
 
 
 @dataclass
-class ASECalculator(Calculator):
+class ASECalculator(Calculator, MSONable):
     """Base class for ASE calculator integration.
 
     This class provides the interface for setting up ASE calculators on
