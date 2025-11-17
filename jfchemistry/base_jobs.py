@@ -7,6 +7,7 @@ from typing import Annotated, Any, Optional, cast
 from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
+from monty.json import MontyDecoder
 from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 from pymatgen.core.structure import SiteCollection, Structure
 from rdkit.Chem import rdchem
@@ -66,6 +67,8 @@ class Output(BaseModel):
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Any:
         """Create an Output from a dictionary."""
+        if isinstance(d["structure"], dict):
+            d["structure"] = MontyDecoder().process_decoded(d["structure"])
         return cls.model_validate(d, extra="allow", strict=False)
 
     def to_dict(self) -> dict[str, Any]:

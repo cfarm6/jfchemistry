@@ -1,11 +1,12 @@
 """Polymer Input Ndoes."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Any, Optional
+from typing import TYPE_CHECKING, Annotated
 
 from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from pydantic import BaseModel, ConfigDict, Field, create_model
+from rdkit.Chem import rdmolfiles, rdmolops
 
 from jfchemistry.base_classes import Polymer, RDMolMolecule
 from jfchemistry.base_jobs import Output, Properties, jfchem_job
@@ -19,8 +20,8 @@ class PolymerInputOutput(Output):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     structure: Polymer
-    files: Optional[Any] = None
-    properties: Optional[Any] = None
+    files: None = None
+    properties: None = None
 
 
 @dataclass
@@ -64,8 +65,6 @@ class PolymerInput(Maker):
         self, monomer: str, head: str | None = None, tail: str | None = None
     ) -> Response[_output_model]:
         """Make a polymer."""
-        from rdkit.Chem import rdmolfiles, rdmolops
-
         monomer_mol = rdmolops.AddHs(rdmolfiles.MolFromSmiles(monomer))
         head_mol = rdmolops.AddHs(rdmolfiles.MolFromSmiles(head)) if head else None
         tail_mol = rdmolops.AddHs(rdmolfiles.MolFromSmiles(tail)) if tail else None
@@ -75,4 +74,5 @@ class PolymerInput(Maker):
             monomer=RDMolMolecule(monomer_mol),
             tail=RDMolMolecule(tail_mol) if tail_mol else None,
         )
+        print(polymer)
         return Response(output=self._output_model(structure=polymer))
