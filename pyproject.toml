@@ -31,6 +31,7 @@ openbabel = ">=3.1.1,<4"
 gcc = ">=15.2.0,<15.3"
 gfortran = ">=15.2.0,<15.3"
 networkx = "==3.1"
+packmol = ">=21.1.2,<22"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }

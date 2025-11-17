@@ -122,9 +122,8 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
             spin_multiplicity = 1
         atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
 
-        if type(structure) is Structure:
-            if self.unit_cell_optimizer is not None:
-                opt_atoms = getattr(filters, self.unit_cell_optimizer)(atoms)
+        if type(structure) is Structure and self.unit_cell_optimizer is not None:
+            opt_atoms = getattr(filters, self.unit_cell_optimizer)(atoms)
         else:
             opt_atoms = atoms
 
