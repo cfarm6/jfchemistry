@@ -18,7 +18,7 @@ type GoatKeywordsType = Literal["GOAT", "GOAT-EXPLORE", "GOAT-DIVERSITY"]
 
 
 @dataclass
-class GOATConformerGeneration(ORCACalculator, ConformerGeneration):
+class GOATConformers(ORCACalculator, ConformerGeneration):
     """Generate conformers using GOAT."""
 
     name: str = "GOAT Conformer Generation"

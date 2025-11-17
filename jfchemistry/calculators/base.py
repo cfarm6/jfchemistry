@@ -3,11 +3,12 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from monty.json import MSONable
 from pymatgen.core import SiteCollection
 
 
 @dataclass
-class Calculator:
+class Calculator(MSONable):
     """Base class for calculators."""
 
     charge: Optional[int | float] = None

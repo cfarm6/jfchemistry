@@ -196,7 +196,9 @@ class SingleStructureMaker(Maker):
         self.make_output_model(self._properties_model)
 
     def handle_structures(
-        self, structures: list[SiteCollection] | SiteCollection
+        self,
+        structures: list[SiteCollection] | SiteCollection,
+        **kwargs: Any,
     ) -> Response[_output_model] | None:
         """Distribute workflow jobs for Pymatgen structures.
 
@@ -207,6 +209,7 @@ class SingleStructureMaker(Maker):
             maker: A Maker instance that will process each structure.
             structures: Either a list of SiteCollection (Molecule/Structure) objects
                 or a single SiteCollection.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing distributed jobs if structures is a list, None if
@@ -227,7 +230,7 @@ class SingleStructureMaker(Maker):
         jobs: list[Response[type[self._output_model]]] = []
         if isinstance(structures, list):
             for structure in structures:
-                jobs.append(self.make(structure))  # type: ignore
+                jobs.append(self.make(structure, **kwargs))  # type: ignore
         else:
             return None
 
@@ -273,6 +276,7 @@ class SingleStructureMaker(Maker):
     def make(
         self,
         structure: SiteCollection | list[SiteCollection],
+        **kwargs: Any,
     ) -> Response[_output_model]:
         """Create a workflow job for processing structure(s).
 
@@ -281,6 +285,7 @@ class SingleStructureMaker(Maker):
 
         Args:
             structure: Single Pymatgen SiteCollection or list of SiteCollections.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -299,7 +304,7 @@ class SingleStructureMaker(Maker):
         if isinstance(structure, list):
             if len(structure) == 1:
                 structure = structure[0]
-        resp = self.handle_structures(structure)
+        resp = self.handle_structures(structure, **kwargs)
         if resp is not None:
             return resp
         else:  # If the structure is not a list, generate a single structure

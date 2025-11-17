@@ -25,5 +25,7 @@ Examples:
 """
 
 from .crest import CRESTConformers
+from .goat import GOATConformers
+from .mmmc import MMMCConformers
 
-__all__ = ["CRESTConformers"]
+__all__ = ["CRESTConformers", "GOATConformers", "MMMCConformers"]

@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional, Union
 
 import tomli_w
+from monty.json import MSONable
 
 from jfchemistry.calculators.base import Calculator
 
@@ -65,7 +66,7 @@ type SolvationType = Union[
 
 
 @dataclass
-class CRESTCalculator(Calculator):
+class CRESTCalculator(Calculator, MSONable):
     """Base class for CREST Applications."""
 
     name: str = "CREST"
