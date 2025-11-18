@@ -408,9 +408,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3b/6c/99acb2f9eb85c29fc6f3a7ac4dccfd992e22666dd08a642b303311326a97/nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e3/94/1843518e420fa3ed6919835845df698c7e27e183cb997394e4a670973a65/omegaconf-2.3.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
+      - pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
-      - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+      - pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
       - pypi: https://files.pythonhosted.org/packages/85/e4/07c80521879c2d15f321465ac24c70efe2381378c00bf5e56a0f4fbac8cd/protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ce/b1/5f49af514f76431ba4eea935b8ad3725cdeb397e9245ab919dbc1d1dc20f/psutil-7.1.3-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/d2/ea/f6d5ee7433a5a1c1e4746e2a4e9a222eab545fdbe04b66754ffdab479ee8/pytorch_ignite-0.5.3-py3-none-any.whl
@@ -827,9 +827,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/f6/74/86a07f1d0f42998ca31312f998bd3b9a7eff7f52378f4f270c8679c77fb9/nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3b/6c/99acb2f9eb85c29fc6f3a7ac4dccfd992e22666dd08a642b303311326a97/nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
+      - pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
-      - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+      - pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
       - pypi: https://files.pythonhosted.org/packages/5c/d0/0c577d9325b05594fdd33aa970bf53fb673f051a45496842caee13cfd7fe/scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6a/23/8146aad7d88f4fcb3a6218f41a60f6c2d4e3a72de72da1825dc7c8f7877c/semantic_version-2.10.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/fd/42a1720542199ae6ff0f9c37bbd55dd3033ddd7bbe00d68cde09d6824887/sparse-0.17.0-py2.py3-none-any.whl
@@ -1271,12 +1271,12 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3b/6c/99acb2f9eb85c29fc6f3a7ac4dccfd992e22666dd08a642b303311326a97/nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/5b/e1/0a6560bab7fb7b5a88d35a505b859c6d969cb2fa2681b568eb5d95019dec/openai-2.8.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
+      - pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
       - pypi: https://files.pythonhosted.org/packages/16/32/f8e3c85d1d5250232a5d3477a2a28cc291968ff175caeadaf3cc19ce0e4a/parso-0.8.5-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b4/9a/24e4b890c7ee4358964aa92c4d1865df0e8831f7df6abaa3a39914521724/polars-1.35.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e2/c8/fd9f48dd6b89ae9cff53d896b51d08579ef9c739e46ea87a647b376c8ca2/polars_runtime_32-1.35.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+      - pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
       - pypi: https://files.pythonhosted.org/packages/ce/b1/5f49af514f76431ba4eea935b8ad3725cdeb397e9245ab919dbc1d1dc20f/psutil-7.1.3-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/13/95/aec81f781c75cd10554dc17a25849c720d54feafb6f7847690478dcf5ef8/pyarrow-22.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c8/f1/d6a797abb14f6283c0ddff96bbdd46937f64122b8c925cab503dd37f8214/pyasn1-0.6.1-py3-none-any.whl
@@ -1711,11 +1711,11 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/f6/74/86a07f1d0f42998ca31312f998bd3b9a7eff7f52378f4f270c8679c77fb9/nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3b/6c/99acb2f9eb85c29fc6f3a7ac4dccfd992e22666dd08a642b303311326a97/nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
+      - pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
       - pypi: https://files.pythonhosted.org/packages/90/96/04b8e52da071d28f5e21a805b19cb9390aa17a47462ac87f5e2696b9566d/paginate-0.5.7-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
-      - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+      - pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
       - pypi: https://files.pythonhosted.org/packages/81/40/b2d7b9fdccc63e48ae4dbd363b6b89eb7ac346ea49ed667bb71f92af3021/pymdown_extensions-10.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/04/11/432f32f8097b03e3cd5fe57e88efb685d964e2e5178a48ed61e841f7fdce/pyyaml_env_tag-1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5c/d0/0c577d9325b05594fdd33aa970bf53fb673f051a45496842caee13cfd7fe/scikit_learn-1.7.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
@@ -2140,10 +2140,10 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/f6/74/86a07f1d0f42998ca31312f998bd3b9a7eff7f52378f4f270c8679c77fb9/nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3b/6c/99acb2f9eb85c29fc6f3a7ac4dccfd992e22666dd08a642b303311326a97/nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+      - pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
       - pypi: git+https://github.com/orbital-materials/orb-models.git#6ac855d0516b79f6c3326863a050d5c934315aab
-      - pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/e4/f2a338abfb5a6b9e2a48dc4acaa9df0bd94126df336ab403178f6a7a901a/periodictable-2.0.2-py3-none-any.whl
-      - pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+      - pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
       - pypi: https://files.pythonhosted.org/packages/4e/6d/280c4c2ce28b1593a19ad5239c8b826871fc6ec275c21afc8e1820108039/proto_plus-1.26.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/85/e4/07c80521879c2d15f321465ac24c70efe2381378c00bf5e56a0f4fbac8cd/protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c8/f1/d6a797abb14f6283c0ddff96bbdd46937f64122b8c925cab503dd37f8214/pyasn1-0.6.1-py3-none-any.whl
@@ -4661,9 +4661,16 @@ packages:
 - pypi: ./
   name: jfchemistry
   version: 0.0.1
-  sha256: 259bf62e84749bfc647985df5a7967ff3b5270b3c86c594c8f4747fd4be6bdca
+  sha256: 3aa40587d64cc4908da8236a98a17f4d91be9e576de35465a10200ca1086be7d
   requires_dist:
   - multiple-minimum-monte-carlo>=0.0.9,<0.0.10
+  - tomli-w>=1.2.0,<2
+  - icecream>=2.1.8,<3
+  - orca-pi @ git+https://github.com/faccts/opi.git
+  - fireworks>=2.0.6,<3
+  - molbar>=1.1.3,<2
+  - prism-pruner @ git+https://github.com/ntampellini/prism_pruner.git
+  - periodictable>=2.0.2,<3
   requires_python: '>=3.12'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
@@ -6744,10 +6751,9 @@ packages:
   - tqdm>=4.66.5
   - pytest ; extra == 'test'
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/3b/54/92220424e7134ad4173fc313c6014689e436594d29b14d20ec74364bbba4/orca_pi-1.0.1-py3-none-any.whl
+- pypi: git+https://github.com/faccts/opi.git#ec76e5364655a5e017ac40c5ded2b9c0b73ea54a
   name: orca-pi
-  version: 1.0.1
-  sha256: 41d1e3665395f32118d98fc4c08096acacd4ee82694e0a3c1f3e3dcb8b372281
+  version: 1.0.0.post74.dev0+ec76e53
   requires_dist:
   - numpy>=2.2.6,<3
   - platformdirs>=4.3.8,<5
@@ -7069,7 +7075,7 @@ packages:
   - pkg:pypi/pre-commit?source=hash-mapping
   size: 200293
   timestamp: 1762692428418
-- pypi: git+https://github.com/ntampellini/prism_pruner.git?branch=master#a3eb7dc908f8dc43873f12d2272d255a679dbad4
+- pypi: git+https://github.com/ntampellini/prism_pruner.git#a3eb7dc908f8dc43873f12d2272d255a679dbad4
   name: prism-pruner
   version: 0.0.4
   requires_dist:

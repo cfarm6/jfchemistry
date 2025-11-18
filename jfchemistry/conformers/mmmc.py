@@ -160,7 +160,10 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
             Molecule(species=atom_symbols, coords=coords)
             for coords in conformer_ensemble.final_ensemble
         ]
+        from ase import io
 
+        for _, molecule in enumerate(molecules):
+            io.write("conformer.xyz", molecule.to_ase_atoms(), append=True)
         # Return the properties
         properties = [
             MMMCProperties(

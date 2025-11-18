@@ -1,8 +1,10 @@
 """Base Class for ORCA DFT Calculations."""
 
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
+import numpy as np
 from monty.json import MSONable
 from opi.input.simple_keywords.base import SimpleKeyword
 from opi.input.simple_keywords.basis_set import BasisSet
@@ -15,7 +17,7 @@ from opi.input.simple_keywords.solvent import Solvent
 from opi.output.core import Output
 from pydantic import BaseModel
 
-from jfchemistry.base_classes import SystemProperty
+from jfchemistry import AtomicProperty, SystemProperty
 
 # Import fully typed Literal definitions
 from jfchemistry.calculators.orca_keywords import (
@@ -50,10 +52,18 @@ class ORCASystemProperties(BaseModel):
     solvation_energy: Optional[SystemProperty] = None
 
 
+class ORCAAtomicProperties(BaseModel):
+    """Atomic properties of the ORCA calculation."""
+
+    homo_participation_ratio: Optional[AtomicProperty] = None
+    lumo_participation_ratio: Optional[AtomicProperty] = None
+
+
 class ORCAProperties(BaseModel):
     """Properties of the ORCA calculation."""
 
     system: ORCASystemProperties
+    atomic: ORCAAtomicProperties
 
 
 @dataclass
@@ -128,6 +138,27 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
             "description": "The specific solvation model implementation to use for the calculation"
         },
     )
+    participation_ratio: bool = field(
+        default=False,
+        metadata={
+            "description": "Calculate the per-atom \
+                participation ratio for a series of molecular orbitals"
+        },
+    )
+    homo_threshold: Optional[float] = field(
+        default=None,
+        metadata={
+            "description": "The threshold energies from the HOMO orbital to be considered for the \
+                participation ratio calculation in eV"
+        },
+    )
+    lumo_threshold: Optional[float] = field(
+        default=None,
+        metadata={
+            "description": "The threshold energies from the LUMO orbital to be considered for the \
+                participation ratio calculation in eV"
+        },
+    )
     _properties_model: type[ORCAProperties] = ORCAProperties
 
     def set_keywords(self) -> list[SimpleKeyword]:
@@ -173,7 +204,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
                 keywords.append(solvation_obj)
         return keywords
 
-    def parse_output(self, output: Output) -> ORCAProperties:
+    def parse_output(self, output: Output) -> ORCAProperties:  # noqa: PLR0915
         """Extract molecular properties from ORCA output.
 
         Parses the OPI Output object to extract computed molecular properties
@@ -216,5 +247,108 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
                 {self.solvation_model} {self.solvent} model with {self.solvation} solvation model",
             )
             properties.solvation_energy = solvation_energy
+        # Calculate the participation ratio if requested.
+        if self.participation_ratio:
+            config_dict = {
+                "1elIntegrals": ["S"],
+                "JSONFormats": ["json"],
+                "MOCoefficients": True,
+            }
+            output.create_gbw_json(force=True, config=config_dict)
+            output.parse(read_gbw_json=True, read_prop_json=True)
+            if output.results_gbw is None:
+                raise ValueError("GBW file not found in output")
+            if output.results_gbw[0].molecule is None:
+                raise ValueError("Molecular orbitals not found in output")
+            S = output.get_int_overlap()
+            B = np.zeros(
+                (
+                    output.results_properties.calculation_info.numofatoms,  # type: ignore[attr-defined]
+                    output.results_properties.calculation_info.numofbasisfuncts,  # type: ignore[attr-defined]
+                )
+            )  # type: ignore[attr-defined]
+            MO = output.results_gbw[0].molecule.molecularorbitals
+            if MO is None:
+                raise ValueError("Molecular orbitals not found in output")
+            if MO.mos is None:
+                raise ValueError("Molecular orbitals not found in output")
+            participation_ratio: dict[str, list[float]] = {"homo": [], "lumo": []}
+            orbitallabels = MO.orbitallabels
+            if orbitallabels is None:
+                raise ValueError("Orbital labels not found in output")
+            orbital_indices: list[int] = []
+            for x in orbitallabels:
+                match = re.match(r"(\d+)(.*)", x)
+                if match is None:
+                    raise ValueError(f"Orbital label '{x}' does not match expected pattern")
+                orbital_indices.append(int(match.groups()[0]))
 
-        return ORCAProperties(system=properties)
+            if self.homo_threshold is not None:
+                homo = output.get_homo()
+                if homo is None:
+                    raise ValueError("HOMO not found in output")
+                homo_energy = homo.orbitalenergy
+                if homo_energy is None:
+                    raise ValueError("HOMO energy not found in output")
+
+                homo_orbitals = [
+                    mo
+                    for mo in MO.mos
+                    if mo is not None
+                    and mo.orbitalenergy is not None
+                    and mo.occupancy == 2.0  # noqa: PLR2004
+                    and mo.orbitalenergy - homo_energy <= self.homo_threshold
+                ]
+                for orbital in homo_orbitals:
+                    C = orbital.mocoefficients  # type: ignore[attr-defined]
+                    if C is None:
+                        raise ValueError("Molecular orbital coefficients not found in output")
+                    for orbital_index, atom_index in enumerate(orbital_indices):
+                        B[atom_index, orbital_index] = C[orbital_index]
+                    p = B @ S @ C
+                    participation_ratio["homo"].append(p)
+                    homo_pr_property = AtomicProperty(
+                        name="HOMO Participation Ratio",
+                        value=participation_ratio["homo"],
+                        units="",
+                        description=f"Participation ratio of the HOMO atomic orbitals within\
+                             {self.homo_threshold} eV of HOMO",
+                    )
+            if self.lumo_threshold is not None:
+                lumo = output.get_lumo()
+                if lumo is None:
+                    raise ValueError("LUMO not found in output")
+                lumo_energy = lumo.orbitalenergy
+                if lumo_energy is None:
+                    raise ValueError("LUMO energy not found in output")
+                lumo_orbitals = [
+                    mo
+                    for mo in MO.mos
+                    if mo is not None
+                    and mo.orbitalenergy is not None
+                    and mo.occupancy == 0.0
+                    and mo.orbitalenergy - lumo_energy <= self.lumo_threshold
+                ]
+                for orbital in lumo_orbitals:
+                    C = orbital.mocoefficients  # type: ignore[attr-defined]
+                    if C is None:
+                        raise ValueError("Molecular orbital coefficients not found in output")
+                    for orbital_index, atom_index in enumerate(orbital_indices):
+                        B[atom_index, orbital_index] = C[orbital_index]
+                    p = B @ S @ C
+                    participation_ratio["lumo"].append(p)
+                    lumo_pr_property = AtomicProperty(
+                        name="LUMO Participation Ratio",
+                        value=participation_ratio["lumo"],
+                        units="",
+                        description=f"Participation ratio of the LUMO atomic orbitals within\
+                             {self.lumo_threshold} eV of LUMO",
+                    )
+        else:
+            homo_pr_property = None
+            lumo_pr_property = None
+        atomic_properties = ORCAAtomicProperties(
+            homo_participation_ratio=homo_pr_property,
+            lumo_participation_ratio=lumo_pr_property,
+        )
+        return ORCAProperties(system=properties, atomic=atomic_properties)
