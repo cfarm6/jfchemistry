@@ -26,11 +26,12 @@ Examples:
     >>> energy = properties["Global"]["Total Energy [eV]"] # doctest: +SKIP
 """
 
-from .aimnet2_calculator import AimNet2Calculator
-from .ase_calculator import ASECalculator
-from .crest import CRESTCalculator
-from .orb_calculator import ORBModelCalculator
-from .orca_calculator import (
+from .ase.aimnet2_calculator import AimNet2Calculator
+from .ase.ase_calculator import ASECalculator
+from .ase.orb_calculator import ORBModelCalculator
+from .ase.tblite_calculator import TBLiteCalculator
+from .crest.crest import CRESTCalculator
+from .orca.orca_calculator import (
     BasisSetType,
     ECPType,
     ORCACalculator,
@@ -39,7 +40,6 @@ from .orca_calculator import (
     SolventType,
     XCFunctionalType,
 )
-from .tblite_calculator import TBLiteCalculator
 
 __all__ = [
     "ASECalculator",

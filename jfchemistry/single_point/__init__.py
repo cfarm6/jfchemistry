@@ -1,14 +1,14 @@
 """Single point energy calculations for molecular structures."""
 
-from .aimnet2 import AimNet2SinglePointCalculator
-from .ase import ASESinglePointCalculator
-from .orb import ORBModelSinglePointCalculator
-from .orca import ORCASinglePointCalculator
-from .tblite import TBLiteSinglePointCalculator
+from .ase.aimnet2 import AimNet2SinglePointCalculator
+from .ase.fairchem import FairChemSinglePointCalculator
+from .ase.orb import ORBModelSinglePointCalculator
+from .ase.tblite import TBLiteSinglePointCalculator
+from .orca.orca import ORCASinglePointCalculator
 
 __all__ = [
-    "ASESinglePointCalculator",
     "AimNet2SinglePointCalculator",
+    "FairChemSinglePointCalculator",
     "ORBModelSinglePointCalculator",
     "ORCASinglePointCalculator",
     "TBLiteSinglePointCalculator",

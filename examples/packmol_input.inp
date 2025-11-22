@@ -1,0 +1,8 @@
+tolerance 2.0
+filetype xyz
+output /home/carson/research/SoftwareDevelopment/jfchemistry/examples/packed_structure.xyz
+
+structure /home/carson/research/SoftwareDevelopment/jfchemistry/examples/input_molecule.xyz
+  number 2
+  inside box 0. 0. 0. 13.67296965757581                         13.67296965757581 13.67296965757581
+end structure

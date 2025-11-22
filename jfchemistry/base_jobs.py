@@ -67,8 +67,9 @@ class Output(BaseModel):
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Any:
         """Create an Output from a dictionary."""
-        if isinstance(d["structure"], dict):
-            d["structure"] = MontyDecoder().process_decoded(d["structure"])
+        for key, value in d.items():
+            if isinstance(value, dict):
+                d[key] = MontyDecoder().process_decoded(value)
         return cls.model_validate(d, extra="allow", strict=False)
 
     def to_dict(self) -> dict[str, Any]:

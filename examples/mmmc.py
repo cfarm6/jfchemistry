@@ -4,12 +4,12 @@ import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators import ORBModelCalculator
 from jfchemistry.conformers import MMMCConformers
+from jfchemistry.optimizers.torchsim.fairchem import FairChemTorchSimOptimizer
 from jfchemistry.polymers.generation import GenerateFinitePolymerChain
 from jfchemistry.polymers.input import PolymerInput
 
-chain_length = 32
+chain_length = 5
 rotation_angles = np.array([180] * (chain_length) + np.random.randn(chain_length) * 10)
 
 
@@ -24,7 +24,7 @@ generate_structure = GenerateFinitePolymerChain(
 ).make(polymer.output.structure)
 
 
-calc = ORBModelCalculator(model="orb-v3-direct-20-omat", device="cuda", compile=True)
+calc = FairChemTorchSimOptimizer(device="cuda")
 
 conformers = MMMCConformers(
     angle_step=10.0,

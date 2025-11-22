@@ -8,8 +8,10 @@ and GFN-xTB methods.
 from dataclasses import dataclass, field
 from typing import Optional
 
+import torch_sim as ts
 from ase import optimize
 from jobflow import Response
+from multiple_minimum_monte_carlo.batch_calculation import TorchSimCalculation
 from multiple_minimum_monte_carlo.calculation import ASEOptimization
 from multiple_minimum_monte_carlo.conformer import Conformer
 from multiple_minimum_monte_carlo.conformer_ensemble import ConformerEnsemble
@@ -17,9 +19,9 @@ from pymatgen.core.structure import Molecule
 
 from jfchemistry.base_classes import SystemProperty
 from jfchemistry.base_jobs import Output, Properties, PropertyClass, jfchem_job
-from jfchemistry.calculators.ase_calculator import ASECalculator
 from jfchemistry.conformers.base import ConformerGeneration
-from jfchemistry.optimizers.ase import ASEOptimizer
+from jfchemistry.optimizers.ase.ase import ASEOptimizer
+from jfchemistry.optimizers.torchsim.base import TorchSimOptimizer
 
 EV_TO_KCAL = 23.0605
 
@@ -43,7 +45,7 @@ class MMMCOutput(Output):
 
 
 @dataclass
-class MMMCConformers(ASEOptimizer, ConformerGeneration):
+class MMMCConformers(ConformerGeneration):
     """Generate conformers with the multiple minimum monte carlo method."""
 
     name: str = "Multiple Minimum Monte Carlo Conformer Generation"
@@ -105,7 +107,7 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
     )
 
     _filename: str = "molecule.xyz"
-    _calculator: Optional[ASECalculator] = field(default=None)
+    _calculator: Optional[ASEOptimizer | TorchSimOptimizer] = field(default=None)
     _properties_model: type[MMMCProperties] = MMMCProperties
     _output_model: type[MMMCProperties] = MMMCProperties
 
@@ -120,21 +122,30 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
         # Create Optimizer
         if self._calculator is None:
             raise ValueError("Calculator is not set")
-        atoms = self._calculator.set_calculator(
-            structure.to_ase_atoms(),
-            charge=int(structure.charge),
-            spin_multiplicity=int(structure.spin_multiplicity),
-        )
-        optimizer = ASEOptimization(
-            atoms.calc,
-            optimizer=getattr(optimize, self.optimizer),
-            fmax=self.fmax,
-            max_cycles=self.steps,
-        )
+        if isinstance(self._calculator, ASEOptimizer):
+            atoms = self._calculator.set_calculator(
+                structure.to_ase_atoms(),
+                charge=int(structure.charge),
+                spin_multiplicity=int(structure.spin_multiplicity),
+            )
+            calc = ASEOptimization(
+                atoms.calc,
+                optimizer=getattr(optimize, self._calculator.optimizer),
+                fmax=self._calculator.fmax,
+                max_cycles=self._calculator.steps,
+            )
+        elif isinstance(self._calculator, TorchSimOptimizer):
+            model = self._calculator.get_model()
+            calc = TorchSimCalculation(
+                model=model,
+                optimizer=ts.Optimizer.fire,
+                max_cycles=self._calculator.max_steps,
+                device=self._calculator.device,
+            )
         # Build conformer ensemble
         conformer_ensemble = ConformerEnsemble(
             conformer=conformer,
-            calc=optimizer,
+            calc=calc,
             energy_window=self.energy_window,
             max_bonds_rotate=self.max_bonds_rotate,
             max_attempts=self.max_attempts,
@@ -154,6 +165,8 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
         print(conformer_ensemble.final_energies)
         # Get the best conformer
         if conformer.atoms is None:
+            raise ValueError("Atoms are not set")
+        if conformer.atoms is None or isinstance(conformer.atoms, list):
             raise ValueError("Atoms are not set")
         atom_symbols = list(conformer.atoms.get_chemical_symbols())
         molecules = [
@@ -182,7 +195,7 @@ class MMMCConformers(ASEOptimizer, ConformerGeneration):
     def make(
         self,
         structure: Molecule | list[Molecule],
-        calculator: ASECalculator,
+        calculator: ASEOptimizer | TorchSimOptimizer,
     ) -> Response[_output_model]:
         """Make the MMMC conformer generation."""
         self._calculator = calculator

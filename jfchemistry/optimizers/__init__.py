@@ -28,13 +28,15 @@ Examples:
     >>> properties = job.output["properties"]
 """
 
-from .aimnet2 import AimNet2Optimizer
-from .orb import ORBModelOptimizer
-from .orca import ORCAOptimizer
-from .tblite import TBLiteOptimizer
+from .ase.aimnet2 import AimNet2Optimizer
+from .ase.fairchem import FairChemOptimizer
+from .ase.orb import ORBModelOptimizer
+from .ase.tblite import TBLiteOptimizer
+from .orca.orca import ORCAOptimizer
 
 __all__ = [
     "AimNet2Optimizer",
+    "FairChemOptimizer",
     "ORBModelOptimizer",
     "ORCAOptimizer",
     "TBLiteOptimizer",

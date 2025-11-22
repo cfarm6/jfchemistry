@@ -14,7 +14,7 @@ class Calculator(MSONable):
     charge: Optional[int | float] = None
     spin_multiplicity: Optional[int] = None
 
-    def set_properties(self, structure: SiteCollection) -> None:
+    def get_properties(self, structure: SiteCollection) -> None:
         """Set the properties for the structure."""
 
 
