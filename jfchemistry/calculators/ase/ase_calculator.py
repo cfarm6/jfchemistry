@@ -8,7 +8,7 @@ from ase import Atoms
 from monty.json import MSONable
 from pydantic.dataclasses import dataclass
 
-from .base import Calculator
+from jfchemistry.calculators.base import Calculator
 
 
 @dataclass

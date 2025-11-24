@@ -42,17 +42,3 @@ class SinglePointEnergyCalculator(SingleStructureMaker):
             NotImplementedError: This method must be implemented by subclasses.
         """
         raise NotImplementedError
-
-    def get_properties(self, structure: SiteCollection):
-        """Get the properties of the structure.
-
-        Args:
-            structure: The molecular structure to extract properties from.
-
-        Returns:
-            A dictionary containing the properties of the structure.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError

@@ -9,7 +9,9 @@ from jobflow.core.reference import OutputReference
 from pydantic import BaseModel, Field, create_model
 from pymatgen.core.structure import SiteCollection, Structure
 
-from jfchemistry.base_jobs import Output, Properties, jfchem_job
+from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties
 
 type Ensemble = list[SiteCollection]
 type EnsembleSiteCollection = Ensemble | list[EnsembleSiteCollection]

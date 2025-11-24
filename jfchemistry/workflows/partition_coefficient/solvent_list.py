@@ -3,8 +3,8 @@
 from enum import Enum
 from typing import get_args
 
-from jfchemistry.calculators.orca_keywords import SolventType as ORCASolventType
-from jfchemistry.calculators.tblite_calculator import TBLiteSolventType
+from jfchemistry.calculators.ase.tblite_calculator import TBLiteSolventType
+from jfchemistry.calculators.orca.orca_keywords import SolventType as ORCASolventType
 
 ## Get the sets of solvents
 tblite_solvents: set[str] = {s.lower().replace(" ", "_") for s in get_args(TBLiteSolventType)}

@@ -1,29 +1,24 @@
-"""Geometry optimization using AimNet2 neural network potential.
+"""Geometry optimization using FairChem neural network potential.
 
-This module provides fast geometry optimization using the AimNet2 neural
-network potential combined with ASE optimizers.
+This module provides fast geometry optimization using the FairChem neural
+network potential combined with TorchSim optimizers.
 """
 
 from dataclasses import dataclass
+from typing import Literal
 
-from jfchemistry.calculators.aimnet2_calculator import AimNet2Calculator
-from jfchemistry.optimizers.ase import ASEOptimizer
+from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics
 
 
 @dataclass
-class AimNet2Optimizer(AimNet2Calculator, ASEOptimizer):
-    """Optimize molecular structures using AimNet2 neural network potential.
+class TorchSimMolecularDynamicsNVE(TorchSimMolecularDynamics):
+    """Run a molecular dynamics simulation using TorchSim in NVE ensemble.
 
-    Combines AimNet2's fast neural network energy/force predictions with
-    ASE optimization algorithms for efficient geometry optimization. Ideal
-    for large molecular systems where speed is critical.
-
-    Inherits all attributes from AimNet2Calculator (model, charge, multiplicity)
-    and ASEOptimizer (optimizer, fmax, steps).
+    Inherits all attributes from TorchSimMolecularDynamics.
 
     Attributes:
-        name: Name of the optimizer (default: "AimNet2 Optimizer").
-        Additional attributes inherited from AimNet2Calculator and ASEOptimizer.
+        name: Name of the calculator (default: "FairChem TorchSim Single Point Calculator").
+        Additional attributes inherited from FairChemTSCalculator and TorchSimSinglePointCalculator.
 
     Examples:
         >>> from ase.build import molecule # doctest: +SKIP
@@ -51,4 +46,5 @@ class AimNet2Optimizer(AimNet2Calculator, ASEOptimizer):
         >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"] # doctest: +SKIP
     """
 
-    name: str = "AimNet2 Optimizer"
+    name: str = "TorchSim Molecular Dynamics NVE"
+    integrator: Literal["nve"] = "nve"

@@ -10,7 +10,7 @@ from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 from pymatgen.io.xyz import XYZ
 
-from jfchemistry.calculators.orca_calculator import ORCACalculator, ORCAProperties
+from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
 
 from .base import ConformerGeneration
 
@@ -35,6 +35,7 @@ class GOATConformers(ORCACalculator, ConformerGeneration):
         sk_list = super().set_keywords()
         # Add the GOAT keywords
         sk_list.append(getattr(Goat, self.goat.upper()))  # type: ignore
+
         # Make the calculator
         calc = Calculator(basename=self._basename, working_dir=Path("."))
         calc.structure = Structure.from_xyz("input.xyz")

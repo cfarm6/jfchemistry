@@ -1,24 +1,26 @@
-"""Geometry optimization using AimNet2 neural network potential.
+"""Geometry optimization using FairChem neural network potential.
 
-This module provides fast geometry optimization using the AimNet2 neural
-network potential combined with ASE optimizers.
+This module provides fast geometry optimization using the FairChem neural
+network potential combined with TorchSim optimizers.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Literal
 
-from jfchemistry.calculators.aimnet2_calculator import AimNet2Calculator
-from jfchemistry.single_point.ase import ASESinglePointCalculator
+from torch_sim.models.interface import ModelInterface
+
+from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics
 
 
 @dataclass
-class AimNet2SinglePointCalculator(AimNet2Calculator, ASESinglePointCalculator):
-    """Calculate the single point energy of a structure using AimNet2 neural network potential.
+class TorchSimMolecularDynamicsNVTLangevin(TorchSimMolecularDynamics):
+    """Run a molecular dynamics simulation using TorchSim in NVE ensemble.
 
-    Inherits all attributes from AimNet2Calculator and ASESinglePointCalculator.
+    Inherits all attributes from TorchSimMolecularDynamics.
 
     Attributes:
-        name: Name of the calculator (default: "AimNet2 Single Point Calculator").
-        Additional attributes inherited from AimNet2Calculator and ASESinglePointCalculator.
+        name: Name of the calculator (default: "FairChem TorchSim Single Point Calculator").
+        Additional attributes inherited from FairChemTSCalculator and TorchSimSinglePointCalculator.
 
     Examples:
         >>> from ase.build import molecule # doctest: +SKIP
@@ -46,4 +48,12 @@ class AimNet2SinglePointCalculator(AimNet2Calculator, ASESinglePointCalculator):
         >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"] # doctest: +SKIP
     """
 
-    name: str = "AimNet2 Single Point Calculator"
+    name: str = "TorchSim Molecular Dynamics NVT Langevin"
+    integrator: Literal["nvt_langevin"] = "nvt_langevin"
+    gamma: float = field(
+        default=1.0, metadata={"description": "Friction coefficient controlling noise strength"}
+    )
+
+    def setup_dicts(self, model: ModelInterface):
+        """Post initialization hook."""
+        self.step_kwargs["gamma"] = self.gamma

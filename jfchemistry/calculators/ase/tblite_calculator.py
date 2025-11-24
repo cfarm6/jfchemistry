@@ -10,17 +10,17 @@ from typing import Literal, Optional
 from ase import Atoms
 from ase.units import Bohr, Hartree
 from monty.json import MSONable
-from pydantic import BaseModel
 
-from jfchemistry.base_classes import (
+from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.calculators.base import SemiempiricalCalculator
+from jfchemistry.core.properties import (
     AtomicProperty,
     BondProperty,
     OrbitalProperty,
+    Properties,
+    PropertyClass,
     SystemProperty,
 )
-
-from .ase_calculator import ASECalculator
-from .base import SemiempiricalCalculator
 
 BOND_ORDER_THRESHOLD = 0.1
 
@@ -54,20 +54,20 @@ TBLiteSolventType = Literal[
 ]
 
 
-class TBLiteAtomicProperties(BaseModel):
+class TBLiteAtomicProperties(PropertyClass):
     """Atomic properties of the TBLite calculator."""
 
     tblite_partial_charges: AtomicProperty
     tblite_forces: AtomicProperty
 
 
-class TBLiteBondProperties(BaseModel):
+class TBLiteBondProperties(PropertyClass):
     """Bond properties of the TBLite calculator."""
 
     tblite_wiberg_bond_orders: BondProperty
 
 
-class TBLiteOrbitalProperties(BaseModel):
+class TBLiteOrbitalProperties(PropertyClass):
     """Orbital properties of the TBLite calculator."""
 
     tblite_orbital_energies: OrbitalProperty
@@ -75,7 +75,7 @@ class TBLiteOrbitalProperties(BaseModel):
     tblite_orbital_coefficients: OrbitalProperty
 
 
-class TBLiteSystemProperties(BaseModel):
+class TBLiteSystemProperties(PropertyClass):
     """System properties of the TBLite calculator."""
 
     total_energy: SystemProperty
@@ -87,7 +87,7 @@ class TBLiteSystemProperties(BaseModel):
     lumo_energy: SystemProperty
 
 
-class TBLiteProperties(BaseModel):
+class TBLiteProperties(Properties):
     """Properties of the TBLite calculator."""
 
     system: TBLiteSystemProperties

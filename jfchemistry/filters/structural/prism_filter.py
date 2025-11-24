@@ -5,7 +5,7 @@ from typing import ClassVar, Literal
 
 import numpy as np
 
-from jfchemistry.base_jobs import Properties
+from jfchemistry.core.properties import Properties
 from jfchemistry.filters.base import Ensemble, PropertyEnsemble
 from jfchemistry.filters.structural.base import StructuralFilter
 

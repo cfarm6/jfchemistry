@@ -9,11 +9,9 @@ from dataclasses import dataclass, field
 from ase import Atoms
 from monty.json import MSONable
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
-
-from .ase_calculator import ASECalculator
-from .base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 
 class AimNet2AtomicProperties(PropertyClass):
@@ -67,21 +65,6 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
         charge: Molecular charge override. If None, uses charge from structure.
         multiplicity: Spin multiplicity override. If None, uses spin from structure.
 
-    Examples:
-        >>> from jfchemistry.calculators import AimNet2Calculator # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>>
-        >>> # Create calculator for neutral molecule
-        >>> calc = AimNet2Calculator(charge=0, multiplicity=1) # doctest: +SKIP
-        >>>
-        >>> # Setup calculator on structure
-        >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
-        >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
-        >>>
-        >>> # Compute properties
-        >>> properties = calc.get_properties(atoms) # doctest: +SKIP
-        >>> energy = properties["Global"]["Total Energy [eV]"] # doctest: +SKIP
-        >>> charges = properties["Atomic"]["AimNet2 Partial Charges [e]"] # doctest: +SKIP
     """
 
     name: str = "AimNet2 Calculator"

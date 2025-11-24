@@ -12,8 +12,8 @@ from opi.input.simple_keywords.opt import Opt
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
-from jfchemistry.calculators.orca_calculator import ORCACalculator, ORCAProperties
-from jfchemistry.calculators.orca_keywords import OptModelType
+from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
+from jfchemistry.calculators.orca.orca_keywords import OptModelType
 from jfchemistry.optimizers.base import GeometryOptimization
 
 

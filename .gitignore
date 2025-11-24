@@ -182,3 +182,6 @@ pyrightconfig.json
 
 # Examples
 examples/*.yaml*
+
+# Environment
+.env

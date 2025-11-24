@@ -10,7 +10,7 @@ from opi.core import Calculator
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
-from jfchemistry.calculators.orca_calculator import ORCACalculator, ORCAProperties
+from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 

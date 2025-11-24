@@ -223,7 +223,7 @@ class PackmolPacking(StructurePacking):
         try:
             result = subprocess.run(
                 [self.packmol_path, "-i", input_file],
-                capture_output=True,
+                capture_output=False,
                 text=True,
                 check=False,
             )
@@ -409,13 +409,9 @@ class PackmolPacking(StructurePacking):
             if box_dims is not None and all(d > 0 for d in box_dims):
                 volume = box_dims[0] * box_dims[1] * box_dims[2]
                 # Calculate molecular weight from structure composition
-                molecular_weight = (
-                    sum(site.specie.atomic_mass for site in structure) / self.num_molecules
-                )
-                AVOGADRO = 6.02214076e23
-                total_mass = (self.num_molecules * molecular_weight) / AVOGADRO
+                density = structure.density
                 volume_cm3 = volume / 1e24  # Convert Angstrom^3 to cm^3
-                properties["density"] = total_mass / volume_cm3 if volume_cm3 > 0 else None
+                properties["density"] = density if volume_cm3 > 0 else None
             else:
                 properties["density"] = None
 

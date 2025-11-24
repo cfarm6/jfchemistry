@@ -9,27 +9,25 @@ from typing import Literal
 
 from ase import Atoms
 from monty.json import MSONable
-from pydantic import BaseModel
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-
-from .ase_calculator import ASECalculator
-from .base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 
-class OrbAtomicProperties(BaseModel):
+class OrbAtomicProperties(PropertyClass):
     """Properties of the ORB model calculation."""
 
     orb_forces: AtomicProperty
 
 
-class OrbSystemProperties(BaseModel):
+class OrbSystemProperties(PropertyClass):
     """System properties of the ORB model calculation."""
 
     total_energy: SystemProperty
 
 
-class OrbProperties(BaseModel):
+class OrbProperties(Properties):
     """Properties of the ORB model calculation."""
 
     atomic: OrbAtomicProperties
@@ -37,7 +35,7 @@ class OrbProperties(BaseModel):
 
 
 @dataclass
-class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
+class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
     """Orbital Materials ORB machine learning force field calculator.
 
     ORB models are graph neural network-based force fields developed by Orbital
@@ -129,9 +127,7 @@ class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
             >>> print(atoms.info["charge"]) # doctest: +SKIP
             0
         """
-        if (
-            self.model in {"orb-v3-conservative-omol", "orb-v3-direct-omol"}
-        ) and atoms.cell is not None:
+        if (self.model in {"orb-v3-conservative-omol", "orb-v3-direct-omol"}) and all(atoms.pbc):
             raise ValueError(
                 "ORB OMol models do not support periodic boundary conditions.\
                 Please remove the cell from the atoms object."

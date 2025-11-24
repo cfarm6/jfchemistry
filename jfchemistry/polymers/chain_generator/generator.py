@@ -20,7 +20,7 @@ from rdkit.Chem import (
     rdMolTransforms,
 )
 
-from jfchemistry.base_classes import Polymer
+from jfchemistry.core.structures import Polymer
 
 
 @dataclass
@@ -203,9 +203,6 @@ def infinite_chain_generator(  # noqa: PLR0913, PLR0915
         m_a0 = _monomer[monomer_connection.connected_atoms[0]].position
         _monomer.rotate(m_a0 - m_cp0, c_cp1 - m_cp0, center=m_cp0)
         chain += _monomer
-        print("New Length: ", len(chain))
-        print("Start Index: ", (i + 1) * atoms_per_monomer)
-        print("Stop Length: ", (i + 2) * atoms_per_monomer)
         chain.set_dihedral(
             monomer_connection.connected_atoms[0] + i * atoms_per_monomer,  # C-A0
             monomer_connection.connected_atoms[1] + i * atoms_per_monomer,  # C-A1
