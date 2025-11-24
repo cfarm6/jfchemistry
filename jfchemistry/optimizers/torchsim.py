@@ -93,7 +93,7 @@ class TorchSimOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
         model = self.calculator.get_model()
 
         final_state = ts.optimize(
-            system=structure,
+            system=structure.to_ase_atoms(),
             model=model,
             optimizer=optimizer,
         )
