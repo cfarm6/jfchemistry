@@ -5,19 +5,21 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 import ase.optimize
-from ase import Atoms, filters
+from ase import filters
 from ase.filters import Filter
 from pymatgen.core.structure import Molecule, SiteCollection, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class ASEOptimizer(GeometryOptimization, ASECalculator):
+class ASEOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
     """Base class for geometry optimization using ASE optimizers.
 
     Combines geometry optimization workflows with ASE calculator interfaces.
@@ -55,6 +57,10 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
     """
 
     name: str = "ASE Optimizer"
+    calculator: ASECalculator = field(
+        default_factory=lambda: ASECalculator,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
     optimizer: Literal["LBFGS", "BFGS", "GPMin", "MDMin", "FIRE", "FIRE2", "QuasiNewton"] = field(
         default="LBFGS",
         metadata={"description": "the ASE optimizer to use for the calculation"},
@@ -82,13 +88,7 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
         metadata={"description": "the log file to save the optimization"},
     )
 
-    def get_properties(self, structure: Atoms):
-        """Get the properties for an ASE Atoms object."""
-        raise NotImplementedError
-
-    def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+    def operation(self, structure: SiteCollection) -> tuple[SiteCollection, Properties]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
@@ -100,6 +100,7 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
 
         Args:
             structure: Input molecular structure with 3D coordinates.
+            calculator: Calculator to use for the calculation.
 
         Returns:
             Tuple containing:
@@ -120,7 +121,9 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
             spin_multiplicity = int(structure.spin_multiplicity)
         else:
             spin_multiplicity = 1
-        atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
+        atoms = self.calculator.set_calculator(
+            atoms, charge=charge, spin_multiplicity=spin_multiplicity
+        )
 
         if type(structure) is Structure and self.unit_cell_optimizer is not None:
             opt_atoms = getattr(filters, self.unit_cell_optimizer)(atoms)
@@ -134,7 +137,7 @@ class ASEOptimizer(GeometryOptimization, ASECalculator):
             if self.unit_cell_optimizer is not None and isinstance(opt_atoms, Filter):
                 opt_atoms = opt_atoms.atoms
 
-        properties = self.get_properties(opt_atoms)
+        properties = self.calculator.get_properties(opt_atoms)
         from ase import io
 
         io.write("opt.cif", opt_atoms)

@@ -4,18 +4,18 @@ This module provides the base framework for geometry optimization using
 ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from ase import Atoms
 from pymatgen.core.structure import Molecule, SiteCollection
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 
 @dataclass
-class ASESinglePointCalculator(SinglePointEnergyCalculator, ASECalculator):
+class ASESinglePoint(SingleStructureCalculatorMaker, SinglePointEnergyCalculator):
     """Base class for single point energy calculations using ASE calculators.
 
     Combines single point energy calculations with ASE calculator interfaces.
@@ -28,10 +28,10 @@ class ASESinglePointCalculator(SinglePointEnergyCalculator, ASECalculator):
     """
 
     name: str = "ASE Single Point Calculator"
-
-    def get_properties(self, structure: Atoms):
-        """Get the properties for an ASE Atoms object."""
-        raise NotImplementedError
+    calculator: ASECalculator = field(
+        default_factory=lambda: ASECalculator,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
 
     def operation(
         self, structure: SiteCollection
@@ -59,6 +59,8 @@ class ASESinglePointCalculator(SinglePointEnergyCalculator, ASECalculator):
             spin_multiplicity = int(structure.spin_multiplicity)
         else:
             spin_multiplicity = None
-        atoms = self.set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
-        properties = self.get_properties(atoms)
+        atoms = self.calculator.set_calculator(
+            atoms, charge=charge, spin_multiplicity=spin_multiplicity
+        )
+        properties = self.calculator.get_properties(atoms)
         return structure, properties

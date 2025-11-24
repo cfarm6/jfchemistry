@@ -15,7 +15,7 @@ from rdkit.Chem import SaltRemover, rdchem, rdmolfiles, rdmolops
 if TYPE_CHECKING:
     from pydantic.fields import _FieldInfoAsDict
 
-from jfchemistry import RDMolMolecule
+from jfchemistry.core.structures import RDMolMolecule
 
 
 class Properties(BaseModel):
@@ -53,18 +53,6 @@ class MoleculeInput(Maker):
             Uses RDKit's SaltRemover to strip common counter-ions.
         add_hydrogens: Whether to add explicit hydrogen atoms to the molecule
             (default: True). Required for most 3D structure generation methods.
-
-    Examples:
-        >>> # Subclass implementation
-        >>> from rdkit import Chem
-        >>> from jfchemistry import RDMolMolecule
-        >>> class MyInput(MoleculeInput):
-        ...     def get_structure(self, input):
-        ...         # Convert identifier to RDKit molecule
-        ...         return Chem.MolFromSmiles(input)
-        >>>
-        >>> maker = MyInput(remove_salts=True, add_hydrogens=True)
-        >>> structure = maker.get_structure("my_identifier")
     """
 
     # Input parameters
@@ -229,14 +217,6 @@ class PubChemCID(MoleculeInput):
 
         Returns:
             RDKit Mol object from PubChem SDF data.
-
-        Examples:
-            >>> from rdkit import Chem
-            >>> from jfchemistry import RDMolMolecule
-            >>> pubchem = PubChemCID()
-            >>> mol = pubchem.get_structure(702)  # Ethanol
-            >>> mol.GetNumAtoms()  # Without hydrogens initially
-            9
         """
         import requests
         from rdkit.Chem import rdmolfiles
@@ -258,12 +238,6 @@ class PubChemCID(MoleculeInput):
                 - structure: RDMolMolecule from PubChem
                 - files: MOL file representation
 
-        Examples:
-            >>> from jfchemistry.inputs import PubChemCID
-            >>> pubchem = PubChemCID()
-            >>> job = pubchem.make(702)
-            >>> mol = job.output["structure"]
-            >>> mol_file = job.output["files"]
         """
         return super()._make(input)
 
@@ -280,21 +254,6 @@ class Smiles(MoleculeInput):
         name: Name of the input method (default: "SMILES Input").
         remove_salts: Inherited from MoleculeInput.
         add_hydrogens: Inherited from MoleculeInput.
-
-    Examples:
-        >>> from jfchemistry.inputs import Smiles
-        >>>
-        >>> # Simple molecule
-        >>> smiles = Smiles()
-        >>> job = smiles.make("CCO")  # Ethanol
-        >>> mol = job.output["structure"]
-        >>>
-        >>> # Aromatic molecule with stereochemistry
-        >>> job = smiles.make("c1ccc(cc1)C(=O)O")  # Benzoic acid
-        >>>
-        >>> # Salt that will be removed
-        >>> smiles_clean = Smiles(remove_salts=True)
-        >>> job = smiles_clean.make("CCO.Cl")  # Only ethanol kept
     """
 
     name: str = "SMILES Input"
@@ -330,13 +289,6 @@ class Smiles(MoleculeInput):
             Response containing:
                 - structure: RDMolMolecule from SMILES
                 - files: MOL file representation
-
-        Examples:
-            >>> from jfchemistry.inputs import Smiles
-            >>> smiles = Smiles()
-            >>> job = smiles.make("c1ccccc1")  # Benzene
-            >>> mol = job.output["structure"]
-            >>> mol_file = job.output["files"]
         """
         resp = super()._make(input)
         return resp

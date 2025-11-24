@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from jfchemistry.base_jobs import Properties
+from jfchemistry.core.properties import Properties
 from jfchemistry.filters.base import Ensemble, EnsembleFilter, PropertyEnsemble
 
 EH_TO_KCAL = 627.5096080305927

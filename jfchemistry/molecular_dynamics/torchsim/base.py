@@ -19,9 +19,9 @@ from pymatgen.core import SiteCollection, Structure
 from torch_sim.models.interface import ModelInterface
 from torch_sim.units import UnitConversion as Uc
 
-from jfchemistry import SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass, jfchem_job
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
+from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
 from jfchemistry.molecular_dynamics.base import MolecularDynamics, MolecularDynamicsOutput
 
 UNITS = ts.units.UnitSystem.metal

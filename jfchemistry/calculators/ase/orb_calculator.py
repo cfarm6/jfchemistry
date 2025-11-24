@@ -10,10 +10,9 @@ from typing import Literal
 from ase import Atoms
 from monty.json import MSONable
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 
 class OrbAtomicProperties(PropertyClass):
@@ -36,7 +35,7 @@ class OrbProperties(Properties):
 
 
 @dataclass
-class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
+class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
     """Orbital Materials ORB machine learning force field calculator.
 
     ORB models are graph neural network-based force fields developed by Orbital
@@ -128,9 +127,7 @@ class ORBModelCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
             >>> print(atoms.info["charge"]) # doctest: +SKIP
             0
         """
-        if (
-            self.model in {"orb-v3-conservative-omol", "orb-v3-direct-omol"}
-        ) and atoms.cell is not None:
+        if (self.model in {"orb-v3-conservative-omol", "orb-v3-direct-omol"}) and all(atoms.pbc):
             raise ValueError(
                 "ORB OMol models do not support periodic boundary conditions.\
                 Please remove the cell from the atoms object."

@@ -10,9 +10,11 @@ from jobflow.core.flow import Flow
 from jobflow.core.job import OutputReference, Response
 
 from jfchemistry import SingleStructureMaker, SystemProperty
-from jfchemistry.base_jobs import Output, Properties, PropertyClass, jfchem_job
 from jfchemistry.conformers import CRESTConformers
 from jfchemistry.conformers.base import ConformerGeneration
+from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties, PropertyClass
 from jfchemistry.filters.energy import EnergyFilter
 from jfchemistry.filters.structural.base import StructuralFilter
 from jfchemistry.filters.structural.prism_filter import PrismPrunerFilter

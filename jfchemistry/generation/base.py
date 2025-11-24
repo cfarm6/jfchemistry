@@ -9,7 +9,8 @@ from typing import Any
 
 from pymatgen.core.structure import SiteCollection
 
-from jfchemistry import RDMolMolecule, SingleMoleculeMaker
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.structures import RDMolMolecule
 
 
 @dataclass

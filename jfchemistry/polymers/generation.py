@@ -9,8 +9,10 @@ from jobflow.core.reference import OutputReference
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pymatgen.core.structure import Molecule, Structure
 
-from jfchemistry.base_classes import Polymer
-from jfchemistry.base_jobs import Output, Properties, jfchem_job
+from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties
+from jfchemistry.core.structures import Polymer
 
 from .chain_generator import finite_chain_generator, infinite_chain_generator
 

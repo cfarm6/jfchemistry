@@ -3,7 +3,8 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.optimizers.torchsim.fairchem import FairChemTorchSimOptimizer
+from jfchemistry.calculators.torchsim import FairChemCalculator
+from jfchemistry.optimizers.torchsim import TorchSimOptimizer
 from jfchemistry.packing import PackmolPacking
 from jfchemistry.polymers.generation import GenerateFinitePolymerChain
 from jfchemistry.polymers.input import PolymerInput
@@ -21,11 +22,13 @@ packing = PackmolPacking(
     density=0.2,  # g/cm^3
 ).make(finite_chain_job.output.structure)
 
-opt = FairChemTorchSimOptimizer(
-    model="uma-s-1",
-    task="omol",
-    device="cuda",
+opt = TorchSimOptimizer(
     optimizer="FIRE",
+    calculator=FairChemCalculator(
+        model="uma-s-1",
+        task="omol",
+        device="cuda",
+    ),
 ).make(packing.output.structure)
 
 flow = Flow(

@@ -10,7 +10,7 @@ from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import Molecule
 
-from jfchemistry.calculators import CRESTCalculator
+from jfchemistry.calculators.crest import CRESTCalculator
 from jfchemistry.modification.molbar_screening import molbar_screening
 from jfchemistry.modification.protonation.base import ProtonationMaker
 

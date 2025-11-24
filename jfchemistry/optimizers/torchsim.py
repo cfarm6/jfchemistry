@@ -10,13 +10,14 @@ from typing import Literal
 import torch_sim as ts
 from pymatgen.core import Structure
 
-from jfchemistry.base_jobs import Properties
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
-from jfchemistry.single_point.base import SinglePointEnergyCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
+from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.properties import Properties
+from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class TorchSimOptimizer(SinglePointEnergyCalculator, TorchSimCalculator):
+class TorchSimOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -41,6 +42,10 @@ class TorchSimOptimizer(SinglePointEnergyCalculator, TorchSimCalculator):
     """
 
     name: str = "TorchSim Optimizer"
+    calculator: TorchSimCalculator = field(
+        default_factory=lambda: TorchSimCalculator,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
     optimizer: Literal["FIRE", "Gradient Descent"] = field(
         default="FIRE", metadata={"description": "The optimizer to use"}
     )
@@ -85,15 +90,14 @@ class TorchSimOptimizer(SinglePointEnergyCalculator, TorchSimCalculator):
             >>> structures, properties = opt.operation(ethane) # doctest: +SKIP
         """
         optimizer = getattr(ts.Optimizer, self.optimizer.lower().replace(" ", "_"))
-        model = self.get_model()
+        model = self.calculator.get_model()
 
         final_state = ts.optimize(
             system=structure,
             model=model,
             optimizer=optimizer,
         )
-        final_structure = final_state.to_structures()[0]
-        properties = self.get_properties(final_structure)
-        final_structure.to_file("final.cif")
-        structure.to_file("initial.cif")
+        final_atoms = final_state.to_atoms()[0]
+        final_structure = type(structure).from_ase_atoms(final_atoms)
+        properties = self.calculator.get_properties(final_structure)
         return final_structure, properties

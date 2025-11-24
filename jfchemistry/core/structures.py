@@ -8,53 +8,6 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, SerializeAsAny
 from rdkit.Chem import rdchem
 
-type NestedFloatList = list[float] | list["NestedFloatList"] | float
-
-
-class Property(BaseModel):
-    """A calculated property."""
-
-    name: str
-    value: NestedFloatList
-    units: str
-    uncertainty: Optional[NestedFloatList] = None
-    description: Optional[str] = None
-
-    @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> Any:
-        """Create a Property from a dictionary."""
-        return cls.model_validate(d, extra="ignore", strict=False)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert the Property to a dictionary."""
-        return self.model_dump(mode="json")
-
-
-class AtomicProperty(Property):
-    """An atomic property."""
-
-    value: NestedFloatList
-
-
-class BondProperty(Property):
-    """A bond property."""
-
-    value: NestedFloatList
-    atoms1: list[int]
-    atoms2: list[int]
-
-
-class OrbitalProperty(Property):
-    """An orbital property."""
-
-    value: NestedFloatList
-
-
-class SystemProperty(Property):
-    """A system property."""
-
-    value: NestedFloatList
-
 
 class RDMolMolecule(rdchem.Mol):
     """RDKit molecule wrapper with serialization support.
@@ -71,20 +24,6 @@ class RDMolMolecule(rdchem.Mol):
 
     Raises:
         None
-
-    Examples:
-        >>> from rdkit import Chem
-        >>> from jfchemistry import RDMolMolecule
-        >>>
-        >>> # Create from SMILES
-        >>> mol = Chem.MolFromSmiles("CCO")
-        >>> rdmol = RDMolMolecule(mol)
-        >>>
-        >>> # Serialize to dictionary
-        >>> mol_dict = rdmol.as_dict()
-        >>>
-        >>> # Deserialize from dictionary
-        >>> restored_mol = RDMolMolecule.from_dict(mol_dict)
     """
 
     @classmethod
@@ -108,14 +47,6 @@ class RDMolMolecule(rdchem.Mol):
         Returns:
             Dictionary containing the serialized molecule with module and class
             metadata for reconstruction.
-
-        Examples:
-            >>> from rdkit import Chem
-            >>> from jfchemistry import RDMolMolecule
-            >>> mol = RDMolMolecule(Chem.MolFromSmiles("CCO"))
-            >>> mol_dict = mol.as_dict()
-            >>> print(mol_dict.keys())
-            dict_keys(['@module', '@class', 'data'])
         """
         data = pickle.dumps(self)
         encoded = base64.b64encode(data).decode("utf-8")
@@ -140,15 +71,6 @@ class RDMolMolecule(rdchem.Mol):
 
         Returns:
             RDMolMolecule instance reconstructed from the dictionary.
-
-        Examples:
-            >>> from rdkit import Chem
-            >>> from jfchemistry import RDMolMolecule
-            >>> mol = RDMolMolecule(Chem.MolFromSmiles("CCO"))
-            >>> mol_dict = mol.as_dict()
-            >>> restored_mol = RDMolMolecule.from_dict(mol_dict)
-            >>> Chem.MolToSmiles(restored_mol)
-            'CCO'
         """
         data = d["data"]
 

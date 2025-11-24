@@ -6,12 +6,13 @@ from typing import Literal, Optional
 import torch_sim as ts
 from fairchem.core.calculate.pretrained_mlip import _MODEL_CKPTS
 from fairchem.core.units.mlip_unit.api.inference import UMATask
+from monty.json import MSONable
 from pymatgen.core import Structure
 from torch_sim.models.fairchem import FairChemModel
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
+from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 model_types = Literal[
     *[model for model in _MODEL_CKPTS.checkpoints.keys() if isinstance(model, str)]  # type: ignore
@@ -40,7 +41,9 @@ class FairChemProperties(Properties):
 
 
 @dataclass
-class FairChemTSCalculator(TorchSimCalculator):
+class FairChemCalculator(
+    TorchSimCalculator, MachineLearnedInteratomicPotentialCalculator, MSONable
+):
     """Base class for using TorchSim with FairChem Models."""
 
     name: str = "FairChem TorchSim Calculator"

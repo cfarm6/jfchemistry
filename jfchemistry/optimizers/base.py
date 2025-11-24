@@ -7,13 +7,12 @@ in jfchemistry.
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from jobflow.core.maker import Maker
 from pymatgen.core.structure import SiteCollection
-
-from jfchemistry import SingleStructureMaker
 
 
 @dataclass
-class GeometryOptimization(SingleStructureMaker):
+class GeometryOptimization(Maker):
     """Base Maker for optimizing a structure.
 
     This class serves as the base interface for all geometry optimization
@@ -37,20 +36,6 @@ class GeometryOptimization(SingleStructureMaker):
         Returns:
             A tuple containing the optimized molecular structure and a dictionary
             of properties from the optimization.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError
-
-    def get_properties(self, structure: SiteCollection):
-        """Get the properties of the structure.
-
-        Args:
-            structure: The molecular structure to extract properties from.
-
-        Returns:
-            A dictionary containing the properties of the structure.
 
         Raises:
             NotImplementedError: This method must be implemented by subclasses.

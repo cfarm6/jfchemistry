@@ -9,10 +9,9 @@ from dataclasses import dataclass, field
 from ase import Atoms
 from monty.json import MSONable
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 
 class AimNet2AtomicProperties(PropertyClass):

@@ -10,7 +10,7 @@ from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import SiteCollection
 
-from jfchemistry.calculators.crest.crest import CRESTCalculator
+from jfchemistry.calculators.crest import CRESTCalculator
 from jfchemistry.modification.molbar_screening import molbar_screening
 from jfchemistry.modification.tautomers.base import TautomerMaker
 

@@ -16,14 +16,14 @@ Main Features:
     - Property calculations with various quantum chemistry methods
 """
 
-from .base_classes import (
+from .core.makers.single_molecule import SingleMoleculeMaker
+from .core.makers.single_structure import SingleStructureMaker
+from .core.properties import (
     AtomicProperty,
     BondProperty,
     Property,
-    RDMolMolecule,
     SystemProperty,
 )
-from .base_jobs import SingleMoleculeMaker, SingleStructureMaker
 
 __all__ = [
     "AtomicProperty",

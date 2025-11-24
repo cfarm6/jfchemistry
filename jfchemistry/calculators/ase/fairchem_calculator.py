@@ -13,10 +13,9 @@ from fairchem.core.calculate.pretrained_mlip import _MODEL_CKPTS
 from fairchem.core.units.mlip_unit.api.inference import InferenceSettings, UMATask
 from monty.json import MSONable
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 model_types = Literal[
     *[model for model in _MODEL_CKPTS.checkpoints.keys() if isinstance(model, str)]  # type: ignore

@@ -10,18 +10,17 @@ from typing import Optional
 
 import torch_sim as ts
 from ase import optimize
-from jobflow import Response
 from multiple_minimum_monte_carlo.batch_calculation import TorchSimCalculation
 from multiple_minimum_monte_carlo.calculation import ASEOptimization
 from multiple_minimum_monte_carlo.conformer import Conformer
 from multiple_minimum_monte_carlo.conformer_ensemble import ConformerEnsemble
 from pymatgen.core.structure import Molecule
 
-from jfchemistry.base_classes import SystemProperty
-from jfchemistry.base_jobs import Output, Properties, PropertyClass, jfchem_job
 from jfchemistry.conformers.base import ConformerGeneration
-from jfchemistry.optimizers.ase.ase import ASEOptimizer
-from jfchemistry.optimizers.torchsim.base import TorchSimOptimizer
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
+from jfchemistry.optimizers.ase import ASEOptimizer
+from jfchemistry.optimizers.torchsim import TorchSimOptimizer
 
 EV_TO_KCAL = 23.0605
 
@@ -49,6 +48,10 @@ class MMMCConformers(ConformerGeneration):
     """Generate conformers with the multiple minimum monte carlo method."""
 
     name: str = "Multiple Minimum Monte Carlo Conformer Generation"
+    optimizer: ASEOptimizer | TorchSimOptimizer = field(
+        default_factory=lambda: ASEOptimizer,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
     energy_window: float = field(
         default=10.0,
         metadata={"description": "the energy window for the conformer ensemble [kcal/mol]"},
@@ -107,7 +110,7 @@ class MMMCConformers(ConformerGeneration):
     )
 
     _filename: str = "molecule.xyz"
-    _calculator: Optional[ASEOptimizer | TorchSimOptimizer] = field(default=None)
+    _optimizer: Optional[ASEOptimizer | TorchSimOptimizer] = field(default=None)
     _properties_model: type[MMMCProperties] = MMMCProperties
     _output_model: type[MMMCProperties] = MMMCProperties
 
@@ -120,27 +123,25 @@ class MMMCConformers(ConformerGeneration):
         # Create conformer
         conformer = Conformer(input_xyz=self._filename, charge=int(structure.charge))
         # Create Optimizer
-        if self._calculator is None:
-            raise ValueError("Calculator is not set")
-        if isinstance(self._calculator, ASEOptimizer):
-            atoms = self._calculator.set_calculator(
+        if isinstance(self.optimizer, ASEOptimizer):
+            atoms = self.optimizer.calculator.set_calculator(
                 structure.to_ase_atoms(),
                 charge=int(structure.charge),
                 spin_multiplicity=int(structure.spin_multiplicity),
             )
             calc = ASEOptimization(
                 atoms.calc,
-                optimizer=getattr(optimize, self._calculator.optimizer),
-                fmax=self._calculator.fmax,
-                max_cycles=self._calculator.steps,
+                optimizer=getattr(optimize, self.optimizer.optimizer),
+                fmax=self.optimizer.fmax,
+                max_cycles=self.optimizer.steps,
             )
-        elif isinstance(self._calculator, TorchSimOptimizer):
-            model = self._calculator.get_model()
+        elif isinstance(self.optimizer, TorchSimOptimizer):
+            model = self.optimizer.calculator.get_model()
             calc = TorchSimCalculation(
                 model=model,
                 optimizer=ts.Optimizer.fire,
-                max_cycles=self._calculator.max_steps,
-                device=self._calculator.device,
+                max_cycles=self.optimizer.max_steps,
+                device=self.optimizer.calculator.device,
             )
         # Build conformer ensemble
         conformer_ensemble = ConformerEnsemble(
@@ -190,14 +191,3 @@ class MMMCConformers(ConformerGeneration):
         ]
 
         return (molecules, properties)
-
-    @jfchem_job()
-    def make(
-        self,
-        structure: Molecule | list[Molecule],
-        calculator: ASEOptimizer | TorchSimOptimizer,
-    ) -> Response[_output_model]:
-        """Make the MMMC conformer generation."""
-        self._calculator = calculator
-        make_func = super().make.__wrapped__
-        return make_func(self, structure)

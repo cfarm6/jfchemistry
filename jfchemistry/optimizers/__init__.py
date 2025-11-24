@@ -11,33 +11,10 @@ Available Optimizers:
     - ORBModelOptimizer: Machine learning force field optimizer
     - TBLiteOptimizer: GFN-xTB semi-empirical optimizer
 
-Examples:
-    >>> from jfchemistry.optimizers import TBLiteOptimizer
-    >>> from ase.build import molecule
-    >>> from pymatgen.core import Molecule
-    >>> molecule = Molecule.from_ase_atoms(molecule("CCH"))
-    >>>
-    >>> # Optimize with GFN2-xTB
-    >>> optimizer = TBLiteOptimizer(
-    ...     method="GFN2-xTB",
-    ...     fmax=0.01,
-    ...     steps=1000
-    ... )
-    >>> job = optimizer.make(molecule)
-    >>> optimized = job.output["structure"]
-    >>> properties = job.output["properties"]
 """
 
-from .ase.aimnet2 import AimNet2Optimizer
-from .ase.fairchem import FairChemOptimizer
-from .ase.orb import ORBModelOptimizer
-from .ase.tblite import TBLiteOptimizer
-from .orca.orca import ORCAOptimizer
+from .ase import ASEOptimizer
+from .orca import ORCAOptimizer
+from .torchsim import TorchSimOptimizer
 
-__all__ = [
-    "AimNet2Optimizer",
-    "FairChemOptimizer",
-    "ORBModelOptimizer",
-    "ORCAOptimizer",
-    "TBLiteOptimizer",
-]
+__all__ = ["ASEOptimizer", "ORCAOptimizer", "TorchSimOptimizer"]

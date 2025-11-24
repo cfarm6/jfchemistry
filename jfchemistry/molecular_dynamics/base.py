@@ -9,7 +9,7 @@ from typing import Any, Optional
 from jobflow import Maker
 from pymatgen.core.structure import SiteCollection
 
-from jfchemistry.base_jobs import Output
+from jfchemistry.core.outputs import Output
 
 
 class MolecularDynamicsOutput(Output):

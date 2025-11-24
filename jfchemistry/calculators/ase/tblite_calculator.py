@@ -11,15 +11,16 @@ from ase import Atoms
 from ase.units import Bohr, Hartree
 from monty.json import MSONable
 
-from jfchemistry.base_classes import (
+from jfchemistry.calculators.ase.ase_calculator import ASECalculator
+from jfchemistry.calculators.base import SemiempiricalCalculator
+from jfchemistry.core.properties import (
     AtomicProperty,
     BondProperty,
     OrbitalProperty,
+    Properties,
+    PropertyClass,
     SystemProperty,
 )
-from jfchemistry.base_jobs import Properties, PropertyClass
-from jfchemistry.calculators.ase.ase_calculator import ASECalculator
-from jfchemistry.calculators.base import SemiempiricalCalculator
 
 BOND_ORDER_THRESHOLD = 0.1
 

@@ -4,13 +4,14 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional
 
 import torch_sim as ts
+from monty.json import MSONable
 from orb_models.forcefield import pretrained
 from pymatgen.core import Structure
 from torch_sim.models.orb import OrbModel
 
-from jfchemistry.base_classes import AtomicProperty, SystemProperty
-from jfchemistry.base_jobs import Properties, PropertyClass
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
+from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
+from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
 
 
 class OrbAtomicProperties(PropertyClass):
@@ -34,7 +35,7 @@ class OrbProperties(Properties):
 
 
 @dataclass
-class OrbTSCalculator(TorchSimCalculator):
+class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
     """Base class for using TorchSim with Orb Models."""
 
     name: str = "Orb TorchSim Calculator"

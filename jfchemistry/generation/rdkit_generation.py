@@ -9,7 +9,7 @@ from typing import Annotated, Literal, Optional
 
 from pymatgen.core.structure import Molecule, SiteCollection
 
-from jfchemistry.base_classes import RDMolMolecule
+from jfchemistry.core.structures import RDMolMolecule
 from jfchemistry.generation.base import StructureGeneration
 
 

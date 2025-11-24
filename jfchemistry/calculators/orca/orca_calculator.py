@@ -88,21 +88,6 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         solvation_model: Specific solvation model implementation (2 options available).
         charge: Molecular charge override. If None, uses charge from structure.
         spin_multiplicity: Spin multiplicity override. If None, uses spin from structure.
-
-    Examples:
-        >>> from jfchemistry.calculators import ORCACalculator
-        >>>
-        >>> # Create a simple calculator with a basis set and functional
-        >>> calc = ORCACalculator(
-        ...     basis_set="DEF2_SVP",  # IDE will autocomplete all 488 options
-        ...     xc_functional="B3LYP",  # IDE will autocomplete all 195 options
-        ...     cores=4
-        ... )
-        >>>
-        >>> # Set up keywords
-        >>> keywords = calc.set_keywords()
-        >>> print(len(keywords))
-        2
     """
 
     name: str = "ORCA"

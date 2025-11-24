@@ -8,8 +8,10 @@ from jobflow.core.maker import Maker
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from rdkit.Chem import rdmolfiles, rdmolops
 
-from jfchemistry.base_classes import Polymer, RDMolMolecule
-from jfchemistry.base_jobs import Output, Properties, jfchem_job
+from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties
+from jfchemistry.core.structures import Polymer, RDMolMolecule
 
 if TYPE_CHECKING:
     from pydantic.fields import _FieldInfoAsDict

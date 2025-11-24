@@ -1,45 +1,32 @@
-"""Base class for ensemble site collection filters."""
+"""Base class for makers that process single structures."""
 
+import importlib
 from dataclasses import dataclass
 from typing import Annotated, Any, cast
 
 from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
-from pydantic import BaseModel, Field, create_model
+from pydantic import Field, create_model
 from pymatgen.core.structure import SiteCollection, Structure
 
 from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties
 
-type Ensemble = list[SiteCollection]
-type EnsembleSiteCollection = Ensemble | list[EnsembleSiteCollection]
-
-type PropertyEnsemble = list[Properties]
-type PropertyEnsembleCollection = PropertyEnsemble | list[PropertyEnsembleCollection]
-
-
-class EnsembleOutput(Output):
-    """Output for an ensemble filter."""
-
-    structure: Any
-    files: Any
-    properties: Any
-
 
 @dataclass
-class EnsembleFilter(Maker):
+class SingleStructureMaker(Maker):
     """Base class for operations on structures with 3D geometry.
 
-    This Maker processes a list of Pymatgen SiteCollection objects (Molecule or Structure)
+    This Maker processes Pymatgen SiteCollection objects (Molecule or Structure)
     that have assigned 3D coordinates. It handles automatic job distribution for
-    lists of structures and provides a common interface for ensemble generation,
-    energy pre-screening, energy screening, conformer generation, and structure modifications.
+    lists of structures and provides a common interface for geometry optimization,
+    conformer generation, and structure modifications.
 
     Subclasses should implement the operation() method to define specific
-    computational tasks such as ensemble generation, energy pre-screening,
-    energy screening, conformer generation, and geometry optimization.
+    computational tasks such as geometry optimization, property calculation,
+    or structure modification.
 
     Attributes:
         name: Descriptive name for the job/operation being performed.
@@ -67,29 +54,24 @@ class EnsembleFilter(Maker):
         >>> optimized_structures = job.output["structure"] # doctest: +SKIP
     """
 
-    name: str = "Ensemble Site Collection Maker"
-    _output_model: type[EnsembleOutput] = EnsembleOutput
+    name: str = "Single Structure Maker"
+    _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[BaseModel]):
+    def make_output_model(self, properties_model: type[Properties]):
         """Make a properties model for the job."""
         fields = {}
-
-        def _nested_property_union(model: type[BaseModel], max_depth: int = 3):
-            """Create a nested union of property models up to the specified depth."""
-            unions: Any = model
-            current_level: Any = model
-            for _ in range(max_depth):
-                current_level = list[current_level]  # type: ignore[assignment]
-                unions |= current_level  # type: ignore[operator]
-            return unions
-
+        if isinstance(self._output_model, dict):
+            module = self._output_model["@module"]
+            class_name = self._output_model["@callable"]
+            self._output_model = getattr(importlib.import_module(module), class_name)
         for f_name, f_info in self._output_model.model_fields.items():
             f_dict = f_info.asdict()  # type: ignore
             annotation = f_dict["annotation"]
             if f_name == "properties":
                 annotation = (
-                    _nested_property_union(properties_model)
+                    properties_model
+                    | list[type[properties_model]]
                     | OutputReference
                     | list[OutputReference]
                 )  # type: ignore
@@ -115,8 +97,8 @@ class EnsembleFilter(Maker):
 
     def handle_structures(
         self,
-        ensemble: SiteCollection | EnsembleSiteCollection,
-        properties: PropertyEnsembleCollection | None,
+        structures: list[SiteCollection] | SiteCollection,
+        **kwargs: Any,
     ) -> Response[_output_model] | None:
         """Distribute workflow jobs for Pymatgen structures.
 
@@ -125,8 +107,9 @@ class EnsembleFilter(Maker):
 
         Args:
             maker: A Maker instance that will process each structure.
-            ensemble: List of SiteCollections
-            properties: List of properties for the ensemble
+            structures: Either a list of SiteCollection (Molecule/Structure) objects
+                or a single SiteCollection.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing distributed jobs if structures is a list, None if
@@ -144,27 +127,12 @@ class EnsembleFilter(Maker):
             >>> # Processes each structure in parallel
             >>> result = handle_structures(opt, structures) # doctest: +SKIP
         """
-        if isinstance(ensemble, SiteCollection):
-            output = self._output_model(
-                structure=[ensemble],
-                files=[file for file in [self.write_file(ensemble)] if file is not None],
-                properties=[properties] if properties is not None else None,
-            )
-            return Response(output=output)  # type: ignore
         jobs: list[Response[type[self._output_model]]] = []
-
-        def _is_base_ensemble(value: EnsembleSiteCollection) -> bool:
-            return isinstance(value, list) and all(
-                isinstance(item, SiteCollection) for item in value
-            )
-
-        if _is_base_ensemble(ensemble):
+        if isinstance(structures, list):
+            for structure in structures:
+                jobs.append(self.make(structure, **kwargs))  # type: ignore
+        else:
             return None
-
-        for _ensemble, _properties in zip(
-            ensemble, properties if properties is not None else [None] * len(ensemble), strict=False
-        ):
-            jobs.append(self.make(_ensemble, _properties))
 
         output = self._output_model(
             structure=[job.output.structure for job in jobs],
@@ -177,17 +145,15 @@ class EnsembleFilter(Maker):
         )
 
     def operation(
-        self, ensemble: Ensemble, properties: PropertyEnsemble
-    ) -> tuple[Ensemble, PropertyEnsemble]:
-        """Perform the computational operation on an ensemble.
+        self, structure: SiteCollection
+    ) -> tuple[SiteCollection | list[SiteCollection], _properties_model]:
+        """Perform the computational operation on a structure.
 
         This method must be implemented by subclasses to define the specific
-        operation to perform (e.g., ensemble generation, energy pre-screening,
-        energy screening, conformer generation, and geometry optimization).
+        operation to perform (e.g., optimization, property calculation).
 
         Args:
-            ensemble: List of Pymatgen SiteCollection (Molecule or Structure) with 3D coordinates.
-            properties: List of properties for the ensemble.
+            structure: Pymatgen SiteCollection (Molecule or Structure) with 3D coordinates.
 
         Returns:
             Tuple containing:
@@ -209,17 +175,17 @@ class EnsembleFilter(Maker):
     @jfchem_job()
     def make(
         self,
-        ensemble: EnsembleSiteCollection,
-        properties: PropertyEnsembleCollection,
+        structure: SiteCollection | list[SiteCollection],
+        **kwargs: Any,
     ) -> Response[_output_model]:
-        """Create a workflow job for processing an ensemble.
+        """Create a workflow job for processing structure(s).
 
         Automatically handles job distribution for lists of structures. Each
         structure in a list is processed as a separate job for parallel execution.
 
         Args:
-            ensemble: List of Pymatgen SiteCollection or list of SiteCollections.
-            properties: List of properties for the ensemble.
+            structure: Single Pymatgen SiteCollection or list of SiteCollections.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -235,25 +201,21 @@ class EnsembleFilter(Maker):
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        resp = self.handle_structures(ensemble, properties)
+        if isinstance(structure, list):
+            if len(structure) == 1:
+                structure = structure[0]
+        resp = self.handle_structures(structure, **kwargs)
         if resp is not None:
             return resp
-        else:
-            ensemble, properties = self.operation(
-                cast("Ensemble", ensemble), cast("PropertyEnsemble", properties)
-            )
-            if isinstance(ensemble, list) and len(ensemble) > 1:
-                files = [self.write_file(s) for s in ensemble]
+        else:  # If the structure is not a list, generate a single structure
+            structures, properties = self.operation(cast("SiteCollection", structure))
+            if isinstance(structures, list):
+                files = [self.write_file(s) for s in structures]
             else:
-                files = [self.write_file(ensemble[0])]
-            if properties is not None:
-                properties = [
-                    Properties.model_validate(property, extra="allow", strict=False)
-                    for property in properties
-                ]
+                files = [self.write_file(structures)]
             return Response(
                 output=self._output_model(
-                    structure=ensemble,
+                    structure=structures,
                     files=files,
                     properties=properties,
                 ),

@@ -12,7 +12,7 @@ from pymatgen.core import SiteCollection
 from torch_sim.models.interface import ModelInterface
 from torch_sim.units import UnitConversion as Uc
 
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
 from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics, TSMDProperties
 
 

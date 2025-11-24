@@ -4,17 +4,18 @@ This module provides the base framework for geometry optimization using
 ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pymatgen.core.structure import Structure
 
-from jfchemistry.base_jobs import Properties
-from jfchemistry.calculators.torchsim.base import TorchSimCalculator
+from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
+from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 
 @dataclass
-class TorchSimSinglePointCalculator(SinglePointEnergyCalculator, TorchSimCalculator):
+class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureCalculatorMaker):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -27,6 +28,10 @@ class TorchSimSinglePointCalculator(SinglePointEnergyCalculator, TorchSimCalcula
     """
 
     name: str = "TorchSim Single Point Calculator"
+    calculator: TorchSimCalculator = field(
+        default_factory=lambda: TorchSimCalculator,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
 
     def operation(self, structure: Structure) -> tuple[Structure, Properties]:
         """Optimize molecular structure using ASE.
@@ -47,5 +52,5 @@ class TorchSimSinglePointCalculator(SinglePointEnergyCalculator, TorchSimCalcula
                 - Dictionary of computed properties from calculator
 
         """
-        properties = self.get_properties(structure)
+        properties = self.calculator.get_properties(structure)
         return structure, properties

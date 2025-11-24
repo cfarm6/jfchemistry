@@ -12,8 +12,8 @@ from monty.json import MSONable
 from pymatgen.core import Structure
 from torch_sim.models.interface import ModelInterface
 
-from jfchemistry.base_jobs import Properties
 from jfchemistry.calculators.base import Calculator
+from jfchemistry.core.properties import Properties
 
 
 @dataclass

@@ -3,7 +3,7 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators.torchsim.orb_ts_calculator import OrbTSCalculator
+from jfchemistry.calculators.torchsim.orb_calculator import OrbCalculator
 from jfchemistry.molecular_dynamics.torchsim.nvt.nvt_nose_hoover import (
     TorchSimMolecularDynamicsNVTNoseHoover,
 )
@@ -40,30 +40,11 @@ nvt = TorchSimMolecularDynamicsNVTNoseHoover(
     log_pressure=False,
 ).make(
     [packing.output.structure, packing.output.structure],
-    OrbTSCalculator(
+    OrbCalculator(
         device="cuda", model="orb_v3_conservative_inf_omat", compile=True, compute_stress=True
     ),
 )
 
-# npt = TorchSimMolecularDynamicsNPTNoseHoover(
-#     duration=10.0,  # fs
-#     timestep=1,  # fs
-#     temperature=300.0,  # K
-#     autobatcher=False,
-#     external_pressure=1.0,  # atm
-#     logfile="trajectory_npt",
-#     log_interval=100.0,  # fs
-#     log_potential_energy=True,
-#     log_kinetic_energy=True,
-#     log_temperature=True,
-#     log_volume=True,
-#     log_pressure=False,
-# ).make(
-#     nvt.output.structure,
-#     OrbTSCalculator(
-#         device="cuda", model="orb_v3_conservative_inf_omat", compile=True, compute_stress=True
-#     ),
-# )
 
 flow = Flow([polymer_job, finite_chain_job, packing, nvt])
 
