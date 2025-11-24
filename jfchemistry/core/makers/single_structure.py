@@ -71,7 +71,7 @@ class SingleStructureMaker(Maker):
             if f_name == "properties":
                 annotation = (
                     properties_model
-                    | list[type[properties_model]]
+                    | list[properties_model]  # type: ignore
                     | OutputReference
                     | list[OutputReference]
                 )  # type: ignore

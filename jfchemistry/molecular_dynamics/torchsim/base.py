@@ -64,6 +64,10 @@ class TorchSimMolecularDynamics(MolecularDynamics):
     """
 
     name: str = "TorchSim Molecular Dynamics"
+    calculator: TorchSimCalculator = field(
+        default_factory=lambda: TorchSimCalculator,
+        metadata={"description": "the calculator to use for the calculation"},
+    )
     integrator: Literal[
         "nve", "nvt_nose_hoover", "nvt_langevin", "npt_langevin", "npt_nose_hoove"
     ] = field(default="nve", metadata={"description": "The integrator to use for the simulation"})
@@ -264,8 +268,6 @@ class TorchSimMolecularDynamics(MolecularDynamics):
     def operation(
         self,
         structure: SiteCollection | list[SiteCollection],
-        calculator: TorchSimCalculator,
-        **kwargs: Any,
     ) -> tuple[
         SiteCollection | list[SiteCollection],
         TSMDProperties | list[TSMDProperties],
@@ -281,8 +283,6 @@ class TorchSimMolecularDynamics(MolecularDynamics):
 
         Args:
             structure: Input molecular structure with 3D coordinates.
-            calculator: TorchSimCalculator to use for the calculation.
-            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Tuple containing:
@@ -299,7 +299,7 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         """
         if not isinstance(structure, list):
             structure = [structure]
-        model = calculator.get_model()
+        model = self.calculator.get_model()
         dtype = model.dtype
         device = model.device
         self.setup_dicts(model)
@@ -378,8 +378,6 @@ class TorchSimMolecularDynamics(MolecularDynamics):
     def make(
         self,
         structure: SiteCollection | list[SiteCollection],
-        calculator: TorchSimCalculator,
-        **kwargs: Any,
     ) -> Response[_output_model]:
         """Create a workflow job for processing structure(s).
 
@@ -388,8 +386,6 @@ class TorchSimMolecularDynamics(MolecularDynamics):
 
         Args:
             structure: Single Pymatgen SiteCollection or list of SiteCollections.
-            calculator: TorchSimCalculator to use for the calculation.
-            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -407,7 +403,7 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         """
         if isinstance(structure, SiteCollection):
             structure = [structure]
-        structures, properties = self.operation(structure, calculator, **kwargs)
+        structures, properties = self.operation(structure)
         if isinstance(structures, list):
             files = [self.write_file(s) for s in structures]
         else:
