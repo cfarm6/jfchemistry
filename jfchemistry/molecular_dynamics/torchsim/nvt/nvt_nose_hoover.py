@@ -11,7 +11,6 @@ import torch
 from pymatgen.core import SiteCollection
 from torch_sim.models.interface import ModelInterface
 
-from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
 from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics, TSMDProperties
 
 
@@ -79,7 +78,6 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
     def operation(
         self,
         structure: SiteCollection | list[SiteCollection],
-        calculator: TorchSimCalculator,
         **kwargs: Any,
     ) -> tuple[
         SiteCollection | list[SiteCollection],
@@ -92,6 +90,6 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
             calculator: TorchSimCalculator to use for the calculation.
             **kwargs: Additional kwargs to pass to the operation.
         """
-        if isinstance(structure, list):
+        if isinstance(structure, list) and len(structure) > 1:
             raise TypeError("NVT Nose-Hoover does not support batching")
-        return super().operation([structure], calculator, **kwargs)
+        return super().operation(structure)

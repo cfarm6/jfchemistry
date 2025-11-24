@@ -4,16 +4,17 @@ import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators.torchsim.orb_calculator import OrbCalculator
+from jfchemistry.calculators.torchsim import OrbCalculator
 from jfchemistry.conformers import MMMCConformers
+from jfchemistry.optimizers.torchsim import TorchSimOptimizer
 from jfchemistry.polymers.generation import GenerateFinitePolymerChain
 from jfchemistry.polymers.input import PolymerInput
 
-chain_length = 5
+chain_length = 2
 rotation_angles = np.array([180] * (chain_length) + np.random.randn(chain_length) * 10)
 
 
-polymer = PolymerInput().make(head="C[*:0]", monomer="[*:0]CC(C1=CC=CC=N1)[*:1]", tail="C[*:1]")
+polymer = PolymerInput().make(head="C[*:0]", monomer="[*:0]C(F)(F)C(F)(F)[*:1]", tail="C[*:1]")
 
 generate_structure = GenerateFinitePolymerChain(
     chain_length=chain_length,
@@ -23,12 +24,16 @@ generate_structure = GenerateFinitePolymerChain(
     num_conformers=100,
 ).make(polymer.output.structure)
 
-
-calc = OrbCalculator(device="cuda")
+optimizer = TorchSimOptimizer(
+    calculator=OrbCalculator(
+        device="cuda", model="orb_v3_conservative_inf_omat", compile=True, compute_stress=True
+    ),
+)
 
 conformers = MMMCConformers(
+    optimizer=optimizer,
     angle_step=10.0,
-).make(generate_structure.output.structure, calc)
+).make(generate_structure.output.structure)
 
 flow = Flow(
     [

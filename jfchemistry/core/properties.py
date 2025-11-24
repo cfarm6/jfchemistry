@@ -12,7 +12,7 @@ class Property(BaseModel):
 
     name: str
     value: NestedFloatList
-    units: str
+    units: Optional[str] = None
     uncertainty: Optional[NestedFloatList] = None
     description: Optional[str] = None
 

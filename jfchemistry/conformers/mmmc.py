@@ -41,6 +41,7 @@ class MMMCOutput(Output):
     """Output of the MMMC conformer generation."""
 
     structure: list[Molecule]
+    properties: list[MMMCProperties]
 
 
 @dataclass
@@ -112,7 +113,7 @@ class MMMCConformers(ConformerGeneration):
     _filename: str = "molecule.xyz"
     _optimizer: Optional[ASEOptimizer | TorchSimOptimizer] = field(default=None)
     _properties_model: type[MMMCProperties] = MMMCProperties
-    _output_model: type[MMMCProperties] = MMMCProperties
+    _output_model: type[MMMCOutput] = MMMCOutput
 
     def operation(
         self, structure: Molecule
@@ -163,7 +164,6 @@ class MMMCConformers(ConformerGeneration):
         )
         # RUN
         conformer_ensemble.run_monte_carlo()
-        print(conformer_ensemble.final_energies)
         # Get the best conformer
         if conformer.atoms is None:
             raise ValueError("Atoms are not set")
@@ -189,5 +189,5 @@ class MMMCConformers(ConformerGeneration):
             )
             for energy in conformer_ensemble.final_energies
         ]
-
+        print(properties)
         return (molecules, properties)

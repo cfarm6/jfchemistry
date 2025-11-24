@@ -38,11 +38,11 @@ nvt = TorchSimMolecularDynamicsNVTNoseHoover(
     log_temperature=True,
     log_volume=True,
     log_pressure=False,
-).make(
-    [packing.output.structure, packing.output.structure],
-    OrbCalculator(
+    calculator=OrbCalculator(
         device="cuda", model="orb_v3_conservative_inf_omat", compile=True, compute_stress=True
     ),
+).make(
+    [packing.output.structure],
 )
 
 

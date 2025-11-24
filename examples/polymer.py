@@ -4,7 +4,7 @@ import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators.torchsim import FairChemCalculator
+from jfchemistry.calculators.torchsim import OrbCalculator
 from jfchemistry.polymers.generation import GenerateInfinitePolymerChain
 from jfchemistry.polymers.input import PolymerInput
 from jfchemistry.single_point.torchsim import TorchSimSinglePoint
@@ -20,7 +20,7 @@ infinite_chain_job = GenerateInfinitePolymerChain(
 ).make(polymer_job.output.structure)
 
 opt_job = TorchSimSinglePoint(
-    calculator=FairChemCalculator(),
+    calculator=OrbCalculator(model="orb_v3_direct_20_omat", compile=True, compute_stress=True),
 ).make(infinite_chain_job.output.structure)
 
 flow = Flow(

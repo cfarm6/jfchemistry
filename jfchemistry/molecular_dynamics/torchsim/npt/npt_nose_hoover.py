@@ -115,4 +115,6 @@ class TorchSimMolecularDynamicsNPTNoseHoover(TorchSimMolecularDynamics):
         """
         if isinstance(structure, SiteCollection):
             structure = [structure]
-        return super().operation(structure, calculator, **kwargs)
+        if len(structure) > 1:
+            raise ValueError("NPT Nose-Hoover does not support batching")
+        return super().operation(structure, **kwargs)
