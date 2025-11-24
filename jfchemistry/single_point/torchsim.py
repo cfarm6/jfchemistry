@@ -6,7 +6,7 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 
 from dataclasses import dataclass, field
 
-from pymatgen.core.structure import Structure
+from pymatgen.core import SiteCollection
 
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
 from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
@@ -33,7 +33,7 @@ class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureCalculator
         metadata={"description": "the calculator to use for the calculation"},
     )
 
-    def operation(self, structure: Structure) -> tuple[Structure, Properties]:
+    def operation(self, structure: SiteCollection) -> tuple[SiteCollection, Properties]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
