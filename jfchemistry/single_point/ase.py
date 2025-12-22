@@ -5,17 +5,17 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from pymatgen.core.structure import Molecule, SiteCollection
+from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
-from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 
 @dataclass
-class ASESinglePoint(SingleStructureCalculatorMaker, SinglePointEnergyCalculator):
+class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
     """Base class for single point energy calculations using ASE calculators.
 
     Combines single point energy calculations with ASE calculator interfaces.
@@ -34,8 +34,8 @@ class ASESinglePoint(SingleStructureCalculatorMaker, SinglePointEnergyCalculator
     )
 
     def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
+        self, structure: Molecule | Structure
+    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
@@ -58,7 +58,7 @@ class ASESinglePoint(SingleStructureCalculatorMaker, SinglePointEnergyCalculator
         if isinstance(structure, Molecule):
             spin_multiplicity = int(structure.spin_multiplicity)
         else:
-            spin_multiplicity = None
+            spin_multiplicity = 1
         atoms = self.calculator.set_calculator(
             atoms, charge=charge, spin_multiplicity=spin_multiplicity
         )

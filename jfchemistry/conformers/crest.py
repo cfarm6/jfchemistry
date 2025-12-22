@@ -7,14 +7,15 @@ and GFN-xTB methods.
 
 import subprocess
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, Union, cast
+from typing import Any, Literal, Optional, Union
 
 import tomli_w
 from pydantic import BaseModel
-from pymatgen.core.structure import SiteCollection
+from pymatgen.core.structure import Molecule
 from pymatgen.io.xyz import XYZ
 
 from jfchemistry.conformers.base import ConformerGeneration
+from jfchemistry.core.properties import Properties
 
 
 class CRESTProperties(BaseModel):
@@ -338,8 +339,8 @@ class CRESTConformers(ConformerGeneration):
         #     shutil.rmtree(tmp_dir)
 
     def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], None]:
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate conformers using CREST metadynamics search.
 
         Performs a conformational search using CREST with the configured
@@ -347,7 +348,7 @@ class CRESTConformers(ConformerGeneration):
         a temporary directory and returns the unique low-energy conformers.
 
         Args:
-            structure: Input molecular structure with 3D coordinates. The
+            molecule: Input molecular structure with 3D coordinates. The
          1       structure's charge property is used if calculation charges
                 are not explicitly set.
 
@@ -366,7 +367,7 @@ class CRESTConformers(ConformerGeneration):
             >>> conformers, props = gen.operation(mol) # doctest: +SKIP
         """
         # Write structures to sdf file
-        structure.to(self._xyz_filename, fmt="xyz")
+        molecule.to(self._xyz_filename, fmt="xyz")
 
         self.input = self._xyz_filename
 
@@ -375,8 +376,6 @@ class CRESTConformers(ConformerGeneration):
         self.make_commands()
         self.run()
 
-        conformers = cast(
-            "list[SiteCollection]", XYZ.from_file("crest_conformers.xyz").all_molecules
-        )
+        conformers = XYZ.from_file("crest_conformers.xyz").all_molecules
 
-        return (conformers, None)
+        return (conformers, [Properties() for _ in conformers])

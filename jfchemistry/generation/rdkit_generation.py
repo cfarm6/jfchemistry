@@ -9,12 +9,14 @@ from typing import Annotated, Literal, Optional
 
 from pymatgen.core.structure import Molecule, SiteCollection
 
+from jfchemistry.core.makers.single_rdmolecule import SingleRDMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.core.structures import RDMolMolecule
 from jfchemistry.generation.base import StructureGeneration
 
 
 @dataclass
-class RDKitGeneration(StructureGeneration):
+class RDKitGeneration(StructureGeneration, SingleRDMoleculeMaker):
     """Generate 3D structures using RDKit distance geometry methods.
 
     This class uses RDKit's distance geometry embedding algorithms (ETKDG family)
@@ -218,7 +220,9 @@ class RDKitGeneration(StructureGeneration):
         },
     )
 
-    def operation(self, mol: RDMolMolecule) -> tuple[SiteCollection | list[SiteCollection], None]:
+    def operation(
+        self, mol: RDMolMolecule
+    ) -> tuple[SiteCollection | list[SiteCollection], Properties | list[Properties]]:
         """Generate 3D structure(s) using RDKit distance geometry embedding.
 
         Embeds 3D coordinates into the molecule using the specified ETKDG method
@@ -282,6 +286,6 @@ class RDKitGeneration(StructureGeneration):
             molecule.set_charge_and_spin(charge, spin)
             molecules.append(molecule)
         if self.num_conformers == 1:
-            return molecules[0], None
+            return molecules[0], Properties()
         else:
-            return molecules, None
+            return molecules, Properties()

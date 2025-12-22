@@ -16,9 +16,9 @@ show_root_heading: true
 show_source: true
 members: - as_dict - from_dict
 
-## SingleMoleculeMaker
+## SingleRDMoleculeMaker
 
-::: jfchemistry.jfchemistry.SingleMoleculeMaker
+::: jfchemistry.jfchemistry.SingleRDMoleculeMaker
 handler: python
 options:
 show_root_heading: true

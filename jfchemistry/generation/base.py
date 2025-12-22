@@ -5,16 +5,12 @@ generation methods from molecular representations.
 """
 
 from dataclasses import dataclass, field
-from typing import Any
 
-from pymatgen.core.structure import SiteCollection
-
-from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
-from jfchemistry.core.structures import RDMolMolecule
+from jfchemistry.core.makers.single_rdmolecule import SingleRDMoleculeMaker
 
 
 @dataclass
-class StructureGeneration(SingleMoleculeMaker):
+class StructureGeneration(SingleRDMoleculeMaker):
     """Base class for generating 3D structures from RDKit molecules.
 
     This abstract class defines the interface for structure generation
@@ -48,32 +44,3 @@ class StructureGeneration(SingleMoleculeMaker):
     name: str = "Structure Generation"
     # Check the structure with PoseBusters
     check_structure: bool = field(default=False)
-
-    def operation(
-        self, structure: RDMolMolecule
-    ) -> tuple[SiteCollection | list[SiteCollection], dict[str, Any]]:
-        """Generate 3D structure(s) from an RDKit molecule.
-
-        This method must be implemented by subclasses to perform the actual
-        3D coordinate generation using a specific algorithm.
-
-        Args:
-            structure: RDKit molecule without 3D coordinates.
-
-        Returns:
-            Tuple containing:
-                - Generated 3D structure(s) as Pymatgen SiteCollection(s)
-                - Dictionary of properties from the generation process
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-
-        Examples:
-            >>> # In a subclass
-            >>> def operation(self, structure):
-            ...     # Generate 3D coordinates
-            ...     structure_3d = generate_3d(structure)
-            ...     props = {"energy": -123.45, "rmsd": 0.12}
-            ...     return structure_3d, props
-        """
-        raise NotImplementedError

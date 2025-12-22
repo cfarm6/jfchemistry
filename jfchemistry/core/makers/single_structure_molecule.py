@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from jobflow.core.job import Response
 from pymatgen.core import Molecule
+from pymatgen.core.structure import Structure
 
 from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers.pymatgen_base_maker import PymatgenBaseMaker
@@ -12,20 +13,8 @@ from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class SingleMoleculeMaker(PymatgenBaseMaker):
-    """Base class for operations on structures with 3D geometry.
-
-    This Maker processes Pymatgen SiteCollection objects (Molecule or Structure)
-    that have assigned 3D coordinates. It handles automatic job distribution for
-    lists of structures and provides a common interface for geometry optimization,
-    conformer generation, and structure modifications.
-
-    Subclasses should implement the operation() method to define specific
-    computational tasks such as geometry optimization, property calculation,
-    or structure modification.
-
-    Attributes:
-        name: Descriptive name for the job/operation being performed.
+class SingleStructureMoleculeMaker(PymatgenBaseMaker):
+    """Base class for operations on single structures.
 
     Examples:
         >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
@@ -50,20 +39,20 @@ class SingleMoleculeMaker(PymatgenBaseMaker):
         >>> optimized_structures = job.output["structure"] # doctest: +SKIP
     """
 
-    name: str = "Single Structure Maker"
+    name: str = "Single Structure Molecule Maker"
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
     def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+        self, structure: Molecule | Structure
+    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
         """Perform the computational operation on a structure."""
         raise NotImplementedError
 
     @jfchem_job()
     def make(
         self,
-        structure: Molecule | list[Molecule],
+        structure: Molecule | Structure | list[Molecule] | list[Structure],
     ) -> Response[_output_model]:
         """Create a workflow job for processing structure(s).
 

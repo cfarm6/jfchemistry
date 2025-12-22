@@ -4,31 +4,37 @@ import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators.torchsim import OrbCalculator
-from jfchemistry.polymers.generation import GenerateInfinitePolymerChain
+from jfchemistry.polymers.generation import GenerateFinitePolymerChain
 from jfchemistry.polymers.input import PolymerInput
-from jfchemistry.single_point.torchsim import TorchSimSinglePoint
+
+# from jfchemistry.single_point.torchsim import TorchSimSinglePoint
+from jfchemistry.single_point.pyscfgpu import PySCFGPUSinglePoint
 
 chain_length = 10
 rotation_angles = np.array([60] * (chain_length - 2) + np.random.randn(chain_length - 2) * 10)
 
-polymer_job = PolymerInput().make(head="C[*:0]", monomer="C(C(F)(F)[*:1])[*:0]", tail="C[*:1]")
+polymer_job = PolymerInput().make(
+    head="[Si](C)(C)(C)O[*:0]", monomer="[*:0][Si](C)(C)O[*:1]", tail="[*:1][Si](C)(C)(C)"
+)
 
-infinite_chain_job = GenerateInfinitePolymerChain(
-    rotation_angles=rotation_angles,
+finite_chain_job = GenerateFinitePolymerChain(
+    rotation_angles=rotation_angles.tolist(),
     chain_length=chain_length - 2,
 ).make(polymer_job.output.structure)
 
-opt_job = TorchSimSinglePoint(
-    calculator=OrbCalculator(model="orb_v3_direct_20_omat", compile=True, compute_stress=True),
-).make(infinite_chain_job.output.structure)
+pyscf_gpu = PySCFGPUSinglePoint(
+    basis_set="def2svp",
+    xc_functional="r2scan",
+    participation_ratio=True,
+    homo_threshold=1.0,
+    lumo_threshold=1.0,
+).make(finite_chain_job.output.structure)
 
 flow = Flow(
     [
         polymer_job,
-        infinite_chain_job,
-        opt_job,
-        # pr_job
+        finite_chain_job,
+        pyscf_gpu,
     ]
 )
 

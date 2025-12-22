@@ -5,15 +5,12 @@ in jfchemistry.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
 
-from pymatgen.core.structure import SiteCollection
-
-from jfchemistry import SingleStructureMaker
+from jobflow.core.maker import Maker
 
 
 @dataclass
-class SinglePointEnergyCalculator(SingleStructureMaker):
+class SinglePointEnergyCalculator(Maker):
     """Base Maker for calculating the single point energy of a structure.
 
     This class serves as the base interface for all single point energy calculation
@@ -25,20 +22,3 @@ class SinglePointEnergyCalculator(SingleStructureMaker):
     """
 
     name: str = "Single Point Energy Calculator"
-
-    def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Calculate the single point energy of a structure.
-
-        Args:
-            structure: The molecular structure to calculate the single point energy of a structure.
-
-        Returns:
-            A tuple containing the molecular structure with the single point energy calculated
-            and a dictionary of properties from the single point energy calculation and the energy.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError

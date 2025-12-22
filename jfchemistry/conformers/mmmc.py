@@ -116,19 +116,19 @@ class MMMCConformers(ConformerGeneration):
     _output_model: type[MMMCOutput] = MMMCOutput
 
     def operation(
-        self, structure: Molecule
-    ) -> tuple[Molecule | list[Molecule], list[MMMCProperties]]:
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Operation of the MMMC conformer generation."""
         # Write to XYZ file
-        structure.to(self._filename)
+        molecule.to(self._filename)
         # Create conformer
-        conformer = Conformer(input_xyz=self._filename, charge=int(structure.charge))
+        conformer = Conformer(input_xyz=self._filename, charge=int(molecule.charge))
         # Create Optimizer
         if isinstance(self.optimizer, ASEOptimizer):
             atoms = self.optimizer.calculator.set_calculator(
-                structure.to_ase_atoms(),
-                charge=int(structure.charge),
-                spin_multiplicity=int(structure.spin_multiplicity),
+                molecule.to_ase_atoms(),
+                charge=int(molecule.charge),
+                spin_multiplicity=int(molecule.spin_multiplicity),
             )
             calc = ASEOptimization(
                 atoms.calc,
@@ -176,8 +176,8 @@ class MMMCConformers(ConformerGeneration):
         ]
         from ase import io
 
-        for _, molecule in enumerate(molecules):
-            io.write("conformer.xyz", molecule.to_ase_atoms(), append=True)
+        for _, m in enumerate(molecules):
+            io.write("conformer.xyz", m.to_ase_atoms(), append=True)
         # Return the properties
         properties = [
             MMMCProperties(
@@ -189,5 +189,4 @@ class MMMCConformers(ConformerGeneration):
             )
             for energy in conformer_ensemble.final_energies
         ]
-        print(properties)
         return (molecules, properties)

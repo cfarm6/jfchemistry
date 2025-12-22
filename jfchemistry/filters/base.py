@@ -7,14 +7,14 @@ from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import BaseModel, Field, create_model
-from pymatgen.core.structure import SiteCollection, Structure
+from pymatgen.core.structure import Molecule, SiteCollection, Structure
 
 from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties
 
-type Ensemble = list[SiteCollection]
-type EnsembleSiteCollection = Ensemble | list[EnsembleSiteCollection]
+type Ensemble = list[Structure | Molecule]
+type EnsembleCollection = Ensemble | list[Ensemble]
 
 type PropertyEnsemble = list[Properties]
 type PropertyEnsembleCollection = PropertyEnsemble | list[PropertyEnsembleCollection]
@@ -115,7 +115,7 @@ class EnsembleFilter(Maker):
 
     def handle_structures(
         self,
-        ensemble: SiteCollection | EnsembleSiteCollection,
+        ensemble: EnsembleCollection,
         properties: PropertyEnsembleCollection | None,
     ) -> Response[_output_model] | None:
         """Distribute workflow jobs for Pymatgen structures.
@@ -144,16 +144,16 @@ class EnsembleFilter(Maker):
             >>> # Processes each structure in parallel
             >>> result = handle_structures(opt, structures) # doctest: +SKIP
         """
-        if isinstance(ensemble, SiteCollection):
+        if not isinstance(ensemble, list):
             output = self._output_model(
                 structure=[ensemble],
                 files=[file for file in [self.write_file(ensemble)] if file is not None],
                 properties=[properties] if properties is not None else None,
             )
             return Response(output=output)  # type: ignore
-        jobs: list[Response[type[self._output_model]]] = []
+        jobs: list[Response[EnsembleOutput]] = []
 
-        def _is_base_ensemble(value: EnsembleSiteCollection) -> bool:
+        def _is_base_ensemble(value: EnsembleCollection) -> bool:
             return isinstance(value, list) and all(
                 isinstance(item, SiteCollection) for item in value
             )
@@ -199,7 +199,7 @@ class EnsembleFilter(Maker):
         """
         raise NotImplementedError
 
-    def write_file(self, structure: SiteCollection) -> str | None:
+    def write_file(self, structure: Structure | Molecule) -> str | None:
         """Write the structure to a file."""
         if isinstance(structure, Structure):
             return structure.to(fmt="cif")
@@ -209,7 +209,7 @@ class EnsembleFilter(Maker):
     @jfchem_job()
     def make(
         self,
-        ensemble: EnsembleSiteCollection,
+        ensemble: EnsembleCollection,
         properties: PropertyEnsembleCollection,
     ) -> Response[_output_model]:
         """Create a workflow job for processing an ensemble.

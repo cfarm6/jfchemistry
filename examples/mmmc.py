@@ -18,7 +18,7 @@ polymer = PolymerInput().make(head="C[*:0]", monomer="[*:0]C(F)(F)C(F)(F)[*:1]",
 
 generate_structure = GenerateFinitePolymerChain(
     chain_length=chain_length,
-    rotation_angles=rotation_angles,
+    rotation_angles=rotation_angles.tolist(),
     head_angle=180.0,
     tail_angle=180.0,
     num_conformers=100,

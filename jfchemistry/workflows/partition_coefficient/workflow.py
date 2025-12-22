@@ -28,6 +28,7 @@ from jfchemistry.single_point.base import SinglePointEnergyCalculator
 if TYPE_CHECKING:
     from pymatgen.core.structure import Molecule
 
+    from jfchemistry.calculators.orca.orca_keywords import SolventType as ORCASolventType
     from jfchemistry.conformers.crest import SolvationType
 
     from .solvent_list import PartitionCoefficientSolventType
@@ -142,6 +143,7 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
             alpha_properties = [alpha_properties]
         if not isinstance(beta_properties, list):
             beta_properties = [beta_properties]
+
         _alpha_properties = [
             Properties.model_validate(property, extra="allow", strict=False)
             for property in alpha_properties
@@ -151,10 +153,18 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
             for property in beta_properties
         ]
         alpha_energy = np.array(
-            [property.system.total_energy.value * 27.2114 for property in _alpha_properties]
+            [
+                property.system.total_energy.value * 27.2114
+                for property in _alpha_properties
+                if property.system is PropertyClass
+            ]
         )
         beta_energy = np.array(
-            [property.system.total_energy.value * 27.2114 for property in _beta_properties]
+            [
+                property.system.total_energy.value * 27.2114
+                for property in _beta_properties
+                if property.system is PropertyClass
+            ]
         )
         if self.alpha_phase != "gas":
             alpha_energy += G
@@ -215,8 +225,8 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
 
     name: str = "Partition Coefficient Workflow"
     threads: int = 1
-    alpha_phase: str = "octanol"
-    beta_phase: str = "water"
+    alpha_phase: str = "OCTANOL"
+    beta_phase: str = "WATER"
     temperature: float = 298.15
     crest_executable: str = "crest"
     _properties_model: type[Properties] = Properties
@@ -344,7 +354,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 ecp="DEF2ECP",
                 dispersion_correction="D4",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase.upper(),
+                solvent=cast("ORCASolventType", self.alpha_phase.upper()),  # type: ignore[arg-type]
                 name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.alpha_phase}",
             )
         if alpha_conformer_generator is _DEFAULT_ALPHA_CONFORMER_GENERATOR:
@@ -360,7 +370,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase.upper(),
+                solvent=cast("ORCASolventType", self.alpha_phase.upper()),  # type: ignore[arg-type]
                 name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.alpha_phase}",
             )
         if alpha_geometry_optimizer is _DEFAULT_ALPHA_GEOMETRY_OPTIMIZER:
@@ -369,7 +379,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.alpha_phase.upper(),
+                solvent=cast("ORCASolventType", self.alpha_phase.upper()),  # type: ignore[arg-type]
                 name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.alpha_phase}",
             )
         if alpha_single_point_energy is _DEFAULT_ALPHA_SINGLE_POINT_ENERGY:
@@ -379,7 +389,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 basis_set="DEF2_TZVPPD",
                 ecp="DEF2ECP",
                 solvation_model="SMD",
-                solvent=self.alpha_phase.upper(),
+                solvent=cast("ORCASolventType", self.alpha_phase.upper()),  # type: ignore[arg-type]
                 name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.alpha_phase}",
             )
         return PhaseComponents(
@@ -415,7 +425,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 ecp="DEF2ECP",
                 dispersion_correction="D4",
                 solvation_model="CPCM",
-                solvent=self.beta_phase.upper(),
+                solvent=cast("ORCASolventType", self.beta_phase.upper()),  # type: ignore[arg-type]
                 name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.beta_phase}",
             )
         if beta_conformer_generator is _DEFAULT_BETA_CONFORMER_GENERATOR:
@@ -431,7 +441,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.beta_phase.upper(),
+                solvent=cast("ORCASolventType", self.beta_phase.upper()),  # type: ignore[arg-type]
                 name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.beta_phase}",
             )
         if beta_geometry_optimizer is _DEFAULT_BETA_GEOMETRY_OPTIMIZER:
@@ -440,7 +450,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 xc_functional="R2SCAN_3C",
                 ecp="DEF2ECP",
                 solvation_model="CPCM",
-                solvent=self.beta_phase.upper(),
+                solvent=cast("ORCASolventType", self.beta_phase.upper()),  # type: ignore[arg-type]
                 name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.beta_phase}",
             )
         if beta_single_point_energy is _DEFAULT_BETA_SINGLE_POINT_ENERGY:
@@ -450,7 +460,7 @@ class PartitionCoefficientWorkflow(SingleStructureMaker):
                 basis_set="DEF2_TZVPPD",
                 ecp="DEF2ECP",
                 solvation_model="SMD",
-                solvent=self.beta_phase.upper(),
+                solvent=cast("ORCASolventType", self.beta_phase.upper()),  # type: ignore[arg-type]
                 name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.beta_phase}",
             )
         return PhaseComponents(

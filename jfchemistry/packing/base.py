@@ -5,15 +5,15 @@ in jfchemistry.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
 
 from pymatgen.core.structure import Molecule, Structure
 
-from jfchemistry import SingleStructureMaker
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class StructurePacking(SingleStructureMaker):
+class StructurePacking(SingleMoleculeMaker):
     """Base Maker for optimizing a structure.
 
     This class serves as the base interface for all structure packing
@@ -26,11 +26,13 @@ class StructurePacking(SingleStructureMaker):
 
     name: str = "Structure Packing"
 
-    def operation(self, structure: Molecule) -> tuple[Structure, Optional[dict[str, Any]]]:
+    def operation(
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Pack a structure.
 
         Args:
-            structure: The molecular structure to optimize.
+            molecule: The molecular structure to optimize.
 
         Returns:
             A tuple containing the optimized molecular structure and a dictionary

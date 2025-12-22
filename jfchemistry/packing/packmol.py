@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional
 
 from pymatgen.core.structure import Molecule, Structure
 
+from jfchemistry.core.properties import Properties
 from jfchemistry.packing.base import StructurePacking
 
 
@@ -325,14 +326,16 @@ class PackmolPacking(StructurePacking):
             # For other file types, try to read as Structure
             return Structure.from_file(output_file)
 
-    def operation(self, structure: Molecule) -> tuple[Structure, Optional[dict[str, Any]]]:
+    def operation(
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Pack a structure using Packmol.
 
         Args:
-            structure: The molecular structure to pack.
+            molecule: The molecular structure to pack.
 
         Returns:
-            A tuple containing the packed structure and a dictionary of properties.
+            A tuple containing the packed structure and properties.
 
         Raises:
             ValueError: If required parameters are missing.
@@ -343,7 +346,7 @@ class PackmolPacking(StructurePacking):
 
         # Write input molecule file
         input_mol_file = f"input_molecule.{self.filetype}"
-        structure.to(filename=input_mol_file, fmt=self.filetype)
+        molecule.to(filename=input_mol_file, fmt=self.filetype)
 
         # Generate packmol output filename
         output_file = f"packed_structure.{self.filetype}"
@@ -351,14 +354,14 @@ class PackmolPacking(StructurePacking):
         # Get box dimensions (either specified or calculated from density)
         if self.packing_mode == "box":
             if self.density is not None:
-                box_dims = self._calculate_box_dimensions_from_density(structure)
+                box_dims = self._calculate_box_dimensions_from_density(molecule)
             else:
                 box_dims = self.box_dimensions
         else:
             box_dims = None
 
         # Write packmol input file (this may calculate box_dimensions from density)
-        packmol_input = self._write_packmol_input(input_mol_file, output_file, structure)
+        packmol_input = self._write_packmol_input(input_mol_file, output_file, molecule)
 
         # Run packmol
         self._run_packmol(packmol_input)
@@ -367,10 +370,28 @@ class PackmolPacking(StructurePacking):
         abs_output_file = os.path.abspath(output_file)
         packed_structure = self._read_packed_structure(abs_output_file, box_dims)
 
-        # Prepare properties
-        properties = self.get_properties(packed_structure)
+        # Convert Structure to Molecule if needed (remove lattice for non-periodic representation)
+        # For packed structures, we typically want to keep them as Structures,
+        # but the base class signature requires Molecule. We'll convert to Molecule.
+        if isinstance(packed_structure, Structure):
+            spin_multiplicity: int | None = None
+            sp = getattr(packed_structure, "spin_multiplicity", None)
+            if sp is not None:
+                spin_multiplicity = int(sp)
+            packed_molecule = Molecule(
+                species=packed_structure.species,
+                coords=packed_structure.cart_coords,
+                charge=packed_structure.charge,
+                spin_multiplicity=spin_multiplicity,
+            )
+        else:
+            packed_molecule = packed_structure
 
-        return packed_structure, properties
+        # Prepare properties and convert to Properties object
+        properties_dict = self.get_properties(packed_structure)
+        properties = Properties.from_dict(properties_dict)
+
+        return packed_molecule, properties
 
     def get_properties(self, structure: Structure) -> dict[str, Any]:
         """Get the properties of the packed structure.

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from jfchemistry.core.properties import Properties
+from jfchemistry.core.properties import Properties, PropertyClass
 from jfchemistry.filters.base import Ensemble, EnsembleFilter, PropertyEnsemble
 
 EH_TO_KCAL = 627.5096080305927
@@ -27,7 +27,13 @@ class EnergyFilter(EnsembleFilter):
             Properties.model_validate(property, extra="allow", strict=False)
             for property in properties
         ]
-        energies = np.array([property.system.total_energy.value for property in parsed_properties])
+        energies = np.array(
+            [
+                property.system.total_energy.value
+                for property in parsed_properties
+                if property.system is PropertyClass
+            ]
+        )
         minimum_energy = np.min(energies)
         delta_energy = energies - minimum_energy
         filtered_indices = np.where(delta_energy <= self.threshold / EH_TO_KCAL)[0]

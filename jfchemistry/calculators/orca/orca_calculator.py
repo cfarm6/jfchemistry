@@ -15,7 +15,6 @@ from opi.input.simple_keywords.solvation import Solvation
 from opi.input.simple_keywords.solvation_model import SolvationModel
 from opi.input.simple_keywords.solvent import Solvent
 from opi.output.core import Output
-from pydantic import BaseModel
 
 from jfchemistry import AtomicProperty, SystemProperty
 from jfchemistry.calculators.base import WavefunctionCalculator
@@ -30,6 +29,7 @@ from jfchemistry.calculators.orca.orca_keywords import (
     SolventType,
     XCFunctionalType,
 )
+from jfchemistry.core.properties import Properties, PropertyClass
 
 # Re-export types for external use
 __all__ = [
@@ -44,21 +44,21 @@ __all__ = [
 ]
 
 
-class ORCASystemProperties(BaseModel):
+class ORCASystemProperties(PropertyClass):
     """System properties of the ORCA calculation."""
 
     total_energy: SystemProperty
     solvation_energy: Optional[SystemProperty] = None
 
 
-class ORCAAtomicProperties(BaseModel):
+class ORCAAtomicProperties(PropertyClass):
     """Atomic properties of the ORCA calculation."""
 
     homo_participation_ratio: Optional[AtomicProperty] = None
     lumo_participation_ratio: Optional[AtomicProperty] = None
 
 
-class ORCAProperties(BaseModel):
+class ORCAProperties(Properties):
     """Properties of the ORCA calculation."""
 
     system: ORCASystemProperties
@@ -225,7 +225,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         if self.solvation_model is not None:
             solvation_energy = SystemProperty(
                 name="Solvation Energy",
-                value=float(solvation_energy),
+                value=float(solvation_energy) if solvation_energy is not None else 0.0,
                 units="Hartree",
                 description=f"Solvation energy contribution from  \
                 {self.solvation_model} {self.solvent} model with {self.solvation} solvation model",
