@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from monty.json import MSONable
-from pymatgen.core import SiteCollection
 
 from jfchemistry.core.properties import Properties
 
@@ -17,7 +16,7 @@ class Calculator(MSONable):
     spin_multiplicity: Optional[int] = None
     _properties_model: type[Properties] = Properties
 
-    def get_properties(self, structure: SiteCollection) -> Properties:
+    def get_properties(*args, **kwargs) -> Properties:
         """Set the properties for the structure."""
         raise NotImplementedError
 

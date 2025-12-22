@@ -5,16 +5,15 @@ generation methods in jfchemistry workflows.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
-from pydantic import BaseModel
-from pymatgen.core.structure import SiteCollection
+from pymatgen.core.structure import Molecule
 
-from jfchemistry import SingleStructureMaker
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class ConformerGeneration(SingleStructureMaker):
+class ConformerGeneration(SingleMoleculeMaker):
     """Base class for conformer generation methods.
 
     This abstract class defines the interface for conformer generation
@@ -46,15 +45,15 @@ class ConformerGeneration(SingleStructureMaker):
     name: str = "Conformer Generation"
 
     def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[BaseModel]]:
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate conformers from the input structure.
 
         This method must be implemented by subclasses to perform the actual
         conformer generation using a specific algorithm or external tool.
 
         Args:
-            structure: Input molecular structure with 3D coordinates.
+            molecule: Input molecular structure with 3D coordinates.
 
         Returns:
             Tuple containing:

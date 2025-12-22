@@ -57,11 +57,11 @@ optimizer = TBLiteOptimizer()
 job = optimizer.make(molecules)
 ```
 
-### Q: What's the difference between SingleMoleculeMaker and SingleStructureMaker?
+### Q: What's the difference between SingleRDMoleculeMaker and SingleStructureMaker?
 
 **A:**
 
--   **SingleMoleculeMaker**: For RDKit molecules without 3D coordinates (e.g., from SMILES)
+-   **SingleRDMoleculeMaker**: For RDKit molecules without 3D coordinates (e.g., from SMILES)
 -   **SingleStructureMaker**: For Pymatgen structures with 3D coordinates
 
 The workflow typically flows: SMILES → RDMolMolecule → 3D Structure → Optimization

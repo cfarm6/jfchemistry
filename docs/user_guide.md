@@ -11,7 +11,7 @@ This guide provides comprehensive examples of using JFChemistry to build computa
 
 JFChemistry is built on [jobflow](https://github.com/materialsproject/jobflow), which enables creating complex, parallelizable workflows. The package is organized around two main base classes:
 
--   **SingleMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
+-   **SingleRDMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
 -   **SingleStructureMaker**: For operations on structures with 3D coordinates (Pymatgen structures)
 
 All workflow components in JFChemistry inherit from these base classes and follow a consistent interface.

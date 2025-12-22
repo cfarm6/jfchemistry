@@ -5,7 +5,7 @@ using jobflow. It supports molecular structure generation, optimization, conform
 generation, and property calculations using various computational chemistry methods.
 
 The package is built around two main base classes:
-    - SingleMoleculeMaker: For operations on molecules without 3D geometry (RDKit molecules)
+    - SingleRDMoleculeMaker: For operations on molecules without 3D geometry (RDKit molecules)
     - SingleStructureMaker: For operations on structures with 3D geometry (Pymatgen structures)
 
 Main Features:
@@ -16,7 +16,7 @@ Main Features:
     - Property calculations with various quantum chemistry methods
 """
 
-from .core.makers.single_molecule import SingleMoleculeMaker
+from .core.makers.single_rdmolecule import SingleRDMoleculeMaker
 from .core.makers.single_structure import SingleStructureMaker
 from .core.properties import (
     AtomicProperty,
@@ -30,7 +30,7 @@ __all__ = [
     "BondProperty",
     "Property",
     "RDMolMolecule",
-    "SingleMoleculeMaker",
+    "SingleRDMoleculeMaker",
     "SingleStructureMaker",
     "SystemProperty",
 ]

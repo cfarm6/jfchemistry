@@ -11,11 +11,13 @@ from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.single_point.base import SinglePointEnergyCalculator
 
 
 @dataclass
-class ORCASinglePointCalculator(ORCACalculator, SinglePointEnergyCalculator):
+class ORCASinglePointCalculator(SinglePointEnergyCalculator, SingleMoleculeMaker, ORCACalculator):
     """Calculate the single point energy of a structure using ORCA DFT calculator.
 
     Inherits all attributes from ORCACalculator.
@@ -28,8 +30,11 @@ class ORCASinglePointCalculator(ORCACalculator, SinglePointEnergyCalculator):
 
     name: str = "ORCA Single Point Calculator"
     _basename: str = "orca_single_point"
+    _properties_model: type[ORCAProperties] = ORCAProperties
 
-    def operation(self, molecule: Molecule) -> tuple[Molecule, ORCAProperties]:
+    def operation(
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Calculate the single point energy of a molecule using ORCA."""
         # Write to XYZ file
         molecule.to("input.xyz", fmt="xyz")
@@ -46,5 +51,4 @@ class ORCASinglePointCalculator(ORCACalculator, SinglePointEnergyCalculator):
         # Parse the output
         output = calc.get_output()
         properties = super().parse_output(output)
-        final_molecule = Molecule.from_file("input.xyz")
-        return final_molecule, properties
+        return molecule, properties

@@ -39,7 +39,7 @@ class ASECalculator(Calculator, MSONable):
 
     name: str = "ASE Calculator"
 
-    def set_calculator(self, atoms: Atoms, charge: int, spin_multiplicity: int | None) -> Atoms:
+    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the calculator for the atoms.
 
         This method must be implemented by subclasses to attach a specific

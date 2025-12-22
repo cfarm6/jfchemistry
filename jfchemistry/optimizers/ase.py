@@ -10,16 +10,16 @@ from typing import Literal, Optional
 import ase.optimize
 from ase import filters
 from ase.filters import Filter
-from pymatgen.core.structure import Molecule, SiteCollection, Structure
+from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
-from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class ASEOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
+class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
     """Base class for geometry optimization using ASE optimizers.
 
     Combines geometry optimization workflows with ASE calculator interfaces.
@@ -88,7 +88,7 @@ class ASEOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
         metadata={"description": "the log file to save the optimization"},
     )
 
-    def operation(self, structure: SiteCollection) -> tuple[SiteCollection, Properties]:
+    def operation(self, structure: Molecule | Structure) -> tuple[Molecule | Structure, Properties]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:

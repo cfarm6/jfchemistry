@@ -8,16 +8,16 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 import torch_sim as ts
-from pymatgen.core import Structure
+from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
-from jfchemistry.core.makers.single_structure_calculator import SingleStructureCalculatorMaker
+from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class TorchSimOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
+class TorchSimOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -63,7 +63,9 @@ class TorchSimOptimizer(SingleStructureCalculatorMaker, GeometryOptimization):
         },
     )
 
-    def operation(self, structure: Structure) -> tuple[Structure, Properties]:
+    def operation(
+        self, structure: Molecule | Structure
+    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:

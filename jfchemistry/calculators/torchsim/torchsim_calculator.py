@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from monty.json import MSONable
-from pymatgen.core import Structure
+from pymatgen.core import SiteCollection
 from torch_sim.models.interface import ModelInterface
 
 from jfchemistry.calculators.base import Calculator
@@ -73,6 +73,6 @@ class TorchSimCalculator(Calculator, MSONable):
         """
         raise NotImplementedError
 
-    def get_properties(self, system: Structure) -> Properties:
+    def get_properties(self, system: SiteCollection) -> Properties:
         """Get the properties for the atoms."""
         raise NotImplementedError

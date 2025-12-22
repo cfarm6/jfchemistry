@@ -7,7 +7,7 @@ import torch_sim as ts
 from fairchem.core.calculate.pretrained_mlip import _MODEL_CKPTS
 from fairchem.core.units.mlip_unit.api.inference import UMATask
 from monty.json import MSONable
-from pymatgen.core import Structure
+from pymatgen.core import SiteCollection
 from torch_sim.models.fairchem import FairChemModel
 
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
@@ -58,8 +58,7 @@ class FairChemCalculator(
     def get_model(self) -> FairChemModel:
         """Get the FairChem model."""
         model = FairChemModel(
-            None,
-            model_name=self.model,
+            model=self.model,
             task_name=self.task,
             cpu=self.device == "cpu",  # type: ignore
             compute_stress=self.compute_stress,  # type: ignore
@@ -67,7 +66,7 @@ class FairChemCalculator(
         self._model = model
         return model
 
-    def get_properties(self, structure: Structure) -> FairChemProperties:
+    def get_properties(self, system: SiteCollection) -> Properties:
         """Get the properties of the FairChem model."""
         if not hasattr(self, "_model"):
             self.get_model()
@@ -81,7 +80,7 @@ class FairChemCalculator(
 
         """Get the properties of the FairChem model"""
         final_results = ts.static(
-            system=structure.to_ase_atoms(),
+            system=system.to_ase_atoms(),
             model=self._model,
             # we don't want to save any trajectories this time, just get the properties
             trajectory_reporter={"filenames": None, "prop_calculators": prop_calculators},

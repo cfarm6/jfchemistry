@@ -76,7 +76,7 @@ properties = opt_job.output["properties"]
 
 JFChemistry is built around two main base classes:
 
--   **SingleMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
+-   **SingleRDMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
 -   **SingleStructureMaker**: For operations on structures with 3D coordinates (Pymatgen structures)
 
 These base classes automatically handle:

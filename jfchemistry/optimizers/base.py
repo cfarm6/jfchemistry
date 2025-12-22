@@ -5,10 +5,8 @@ in jfchemistry.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
 
 from jobflow.core.maker import Maker
-from pymatgen.core.structure import SiteCollection
 
 
 @dataclass
@@ -24,20 +22,3 @@ class GeometryOptimization(Maker):
     """
 
     name: str = "Geometry Optimization"
-
-    def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Optimize a structure.
-
-        Args:
-            structure: The molecular structure to optimize.
-
-        Returns:
-            A tuple containing the optimized molecular structure and a dictionary
-            of properties from the optimization.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError

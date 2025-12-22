@@ -4,7 +4,7 @@ This module provides the base Maker class for molecular dynamics workflows
 in jfchemistry.
 """
 
-from typing import Any, Optional
+from typing import Optional
 
 from jobflow import Maker
 from pymatgen.core.structure import SiteCollection
@@ -30,36 +30,3 @@ class MolecularDynamics(Maker):
     """
 
     name: str = "Molecular Dynamics"
-
-    def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], Optional[dict[str, Any]]]:
-        """Run a molecular dynamics simulation.
-
-        This method should run a molecular dynamics simulation on the given structure.
-
-        Args:
-            structure: The molecular structure to optimize.
-
-        Returns:
-            A tuple containing the optimized molecular structure and a dictionary
-            of properties from the optimization.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError
-
-    def get_properties(self, structure: SiteCollection):
-        """Get the properties of the structure.
-
-        Args:
-            structure: The molecular structure to extract properties from.
-
-        Returns:
-            A dictionary containing the properties of the structure.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError

@@ -6,17 +6,19 @@ for generating low-energy deprotonated structures and tautomers.
 
 import os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Literal
 
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.crest import CRESTCalculator
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.modification.deprotonation.base import DeprotonationMaker
 from jfchemistry.modification.molbar_screening import molbar_screening
 
 
 @dataclass
-class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
+class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator, SingleMoleculeMaker):
     """Generate deprotonated structures using CREST.
 
     Uses CREST's automated deprotonation workflow to identify acidic sites
@@ -60,8 +62,8 @@ class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
         self._commands.append("--newversion")
 
     def operation(
-        self, structure: Molecule
-    ) -> tuple[Molecule | list[Molecule], Optional[dict[str, Any]]]:
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate deprotonated structures using CREST.
 
         Runs CREST's deprotonation workflow to identify acidic sites and
@@ -69,8 +71,8 @@ class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
         GFN2-xTB with Wiberg bond order analysis.
 
         Args:
-            structure: Input molecular structure with 3D coordinates. The
-                structure's charge is used for the CREST calculation.
+            molecule: Input molecular structure with 3D coordinates. The
+                molecule's charge is used for the CREST calculation.
 
         Returns:
             Tuple containing:
@@ -85,9 +87,9 @@ class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
             >>> structures, props = deprot.operation(ethane) # doctest: +SKIP
             >>> print(f"Generated {len(structures)} deprotonated structures") # doctest: +SKIP
         """
-        structure.to("input.xyz", fmt="xyz")
-        if self.charge is None and structure.charge is not None:
-            self.charge = structure.charge
+        molecule.to("input.xyz", fmt="xyz")
+        if self.charge is None and molecule.charge is not None:
+            self.charge = molecule.charge
         super().make_dict()
         super().write_toml()
         self.make_commands()
@@ -102,4 +104,4 @@ class CRESTDeprotonation(DeprotonationMaker, CRESTCalculator):
                 charge=deprotonated_structure.charge - 1,
                 spin_multiplicity=int(deprotonated_structure.charge - 1) // 2 + 1,
             )
-        return molecules, None
+        return molecules, Properties()

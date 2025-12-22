@@ -7,7 +7,7 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 import glob
 import importlib
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Callable, Literal, Optional
+from typing import Annotated, Any, Callable, Literal, Optional, cast
 
 import torch
 import torch_sim as ts
@@ -15,7 +15,7 @@ from ase.atoms import Atoms
 from jobflow.core.job import Response
 from jobflow.core.reference import OutputReference
 from pydantic import Field, create_model
-from pymatgen.core import SiteCollection, Structure
+from pymatgen.core.structure import Molecule, SiteCollection, Structure
 from torch_sim.models.interface import ModelInterface
 from torch_sim.units import UnitConversion as Uc
 
@@ -162,7 +162,7 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         self.step_kwargs = {}
         self.make_output_model(self._properties_model)
 
-    def write_file(self, structure: SiteCollection) -> str | None:
+    def write_file(self, structure: Structure | Molecule) -> str | None:
         """Write the structure to a file."""
         if isinstance(structure, Structure):
             return structure.to(fmt="cif")
@@ -267,9 +267,9 @@ class TorchSimMolecularDynamics(MolecularDynamics):
 
     def operation(
         self,
-        structure: SiteCollection | list[SiteCollection],
+        structure: Molecule | Structure | list[Molecule] | list[Structure],
     ) -> tuple[
-        SiteCollection | list[SiteCollection],
+        Molecule | Structure | list[Molecule] | list[Structure],
         TSMDProperties | list[TSMDProperties],
     ]:
         """Optimize molecular structure using ASE.
@@ -298,7 +298,9 @@ class TorchSimMolecularDynamics(MolecularDynamics):
             >>> structures, properties = opt.operation(ethane) # doctest: +SKIP
         """
         if not isinstance(structure, list):
-            structure = [structure]
+            structure_list: list[Molecule | Structure] = [structure]
+        else:
+            structure_list = structure
         model = self.calculator.get_model()
         dtype = model.dtype
         device = model.device
@@ -306,15 +308,13 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         log_interval = int(self.log_interval // self.timestep)
         log_dict = self.make_reporter()
         trajectory_reporter = ts.TrajectoryReporter(
-            [f"{self.logfile}_{i}.h5" for i in range(len(structure))],
+            [f"{self.logfile}_{i}.h5" for i in range(len(structure_list))],
             state_frequency=log_interval,
             prop_calculators={log_interval: log_dict},
         )
 
-        if not isinstance(structure, list):
-            structure = [structure]
         initial_state = ts.initialize_state(
-            [structure.to_ase_atoms() for structure in structure], device=device, dtype=dtype
+            [s.to_ase_atoms() for s in structure_list], device=device, dtype=dtype
         )
         if self.progress_bar:
             from tqdm import tqdm
@@ -367,12 +367,13 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         else:
             final_states = _final_states
         properties = self.parse_properties()
-        final_structures: list[SiteCollection] = []
+        final_structures: list[Molecule | Structure] = []
         for final_state in final_states:
             for atoms in final_state.to_atoms():
                 # print(len(atoms))
-                final_structures.append(type(structure[0]).from_ase_atoms(atoms))
-        return final_structures, properties
+                final_structures.append(type(structure_list[0]).from_ase_atoms(atoms))
+        # Return as list to match return type annotation
+        return cast("list[Molecule] | list[Structure]", final_structures), properties
 
     @jfchem_job()
     def make(
@@ -402,12 +403,14 @@ class TorchSimMolecularDynamics(MolecularDynamics):
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
         if isinstance(structure, SiteCollection):
-            structure = [structure]
-        structures, properties = self.operation(structure)
-        if isinstance(structures, list):
-            files = [self.write_file(s) for s in structures]
+            structure_list = [structure]
         else:
-            files = [self.write_file(structures)]
+            structure_list = structure
+        structures, properties = self.operation(
+            cast("Molecule | Structure | list[Molecule] | list[Structure]", structure_list)
+        )
+        structures = cast("list[Molecule] | list[Structure]", structures)
+        files = [self.write_file(s) for s in structures]
         if self.log_trajectory:
             trajectories = self.parse_trajectory() if self.log_trajectory else None
             trajectory: list[list[SiteCollection]] = [

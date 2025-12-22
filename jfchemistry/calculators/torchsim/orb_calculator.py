@@ -6,7 +6,7 @@ from typing import Literal, Optional
 import torch_sim as ts
 from monty.json import MSONable
 from orb_models.forcefield import pretrained
-from pymatgen.core import Structure
+from pymatgen.core import SiteCollection
 from torch_sim.models.orb import OrbModel
 
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
@@ -78,7 +78,7 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
         self._model = model
         return model
 
-    def get_properties(self, structure: Structure) -> OrbProperties:
+    def get_properties(self, system: SiteCollection) -> Properties:
         """Get the properties of the Orb model."""
         if not hasattr(self, "_model"):
             self.get_model()
@@ -92,7 +92,7 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
 
         """Get the properties of the Orb model"""
         final_results = ts.static(
-            system=structure.to_ase_atoms(),
+            system=system.to_ase_atoms(),
             model=self._model,
             # we don't want to save any trajectories this time, just get the properties
             trajectory_reporter={"filenames": None, "prop_calculators": prop_calculators},

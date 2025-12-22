@@ -5,20 +5,22 @@ This module provides fast geometry optimization using the ORCA DFT calculator
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 from opi.core import Calculator
 from opi.input.simple_keywords.opt import Opt
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
-from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
+from jfchemistry.calculators.orca.orca_calculator import ORCACalculator
 from jfchemistry.calculators.orca.orca_keywords import OptModelType
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class ORCAOptimizer(ORCACalculator, GeometryOptimization):
+class ORCAOptimizer(ORCACalculator, GeometryOptimization, SingleMoleculeMaker):
     """Optimize molecular structures using ORCA DFT calculator.
 
     Inherits all attributes from ORCACalculator.
@@ -36,7 +38,7 @@ class ORCAOptimizer(ORCACalculator, GeometryOptimization):
     )
     _basename: str = "orca_optimizer"
 
-    def operation(self, molecule: Molecule) -> tuple[Molecule, ORCAProperties]:
+    def operation(self, molecule: Molecule) -> tuple[Molecule, Properties]:
         """Optimize a molecule using ORCA DFT calculator."""
         # Write to XYZ file
         molecule.to("input.xyz", fmt="xyz")
@@ -57,4 +59,5 @@ class ORCAOptimizer(ORCACalculator, GeometryOptimization):
         output = calc.get_output()
         properties = super().parse_output(output)
         final_molecule = Molecule.from_file(output.get_file(".xyz"))
+        final_molecule = cast("Molecule", final_molecule)
         return final_molecule, properties

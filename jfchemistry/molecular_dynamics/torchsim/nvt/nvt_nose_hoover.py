@@ -5,13 +5,12 @@ network potential combined with TorchSim optimizers.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 import torch
-from pymatgen.core import SiteCollection
 from torch_sim.models.interface import ModelInterface
 
-from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics, TSMDProperties
+from jfchemistry.molecular_dynamics.torchsim.base import TorchSimMolecularDynamics
 
 
 @dataclass
@@ -74,22 +73,3 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
         self.init_kwargs["chain_length"] = self.chain_length
         self.init_kwargs["chain_steps"] = self.chain_steps
         self.init_kwargs["sy_steps"] = self.sy_steps
-
-    def operation(
-        self,
-        structure: SiteCollection | list[SiteCollection],
-        **kwargs: Any,
-    ) -> tuple[
-        SiteCollection | list[SiteCollection],
-        TSMDProperties | list[TSMDProperties],
-    ]:
-        """Run an MD simulation with TorchSim in NVT ensemble with Nose-Hoover thermostat.
-
-        Args:
-            structure: Input molecular structure with 3D coordinates.
-            calculator: TorchSimCalculator to use for the calculation.
-            **kwargs: Additional kwargs to pass to the operation.
-        """
-        if isinstance(structure, list) and len(structure) > 1:
-            raise TypeError("NVT Nose-Hoover does not support batching")
-        return super().operation(structure)

@@ -8,16 +8,15 @@ from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import Field, create_model
-from pymatgen.core.structure import SiteCollection, Structure
+from pymatgen.core.structure import Molecule, SiteCollection, Structure
 
 from jfchemistry.calculators.base import Calculator
-from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class SingleStructureCalculatorMaker(Maker):
+class PymatgenBaseMaker(Maker):
     """Base class for operations on structures with 3D geometry.
 
     This Maker processes Pymatgen SiteCollection objects (Molecule or Structure)
@@ -73,7 +72,7 @@ class SingleStructureCalculatorMaker(Maker):
             if f_name == "properties":
                 annotation = (
                     properties_model
-                    | list[type[properties_model]]
+                    | list[type[properties_model]]  # type: ignore
                     | OutputReference
                     | list[OutputReference]
                 )  # type: ignore
@@ -100,7 +99,7 @@ class SingleStructureCalculatorMaker(Maker):
 
     def handle_structures(
         self,
-        structures: list[SiteCollection],
+        structures: Structure | Molecule | list[Structure] | list[Molecule],
     ) -> Response[_output_model]:
         """Distribute workflow jobs for Pymatgen structures.
 
@@ -130,7 +129,7 @@ class SingleStructureCalculatorMaker(Maker):
             >>> # Processes each structure in parallel
             >>> result = handle_structures(opt, structures) # doctest: +SKIP
         """
-        jobs: list[Response[type[self._output_model]]] = []
+        jobs: list[Response] = []
         for structure in structures:
             jobs.append(self.make(structure))  # type: ignore
 
@@ -144,17 +143,22 @@ class SingleStructureCalculatorMaker(Maker):
             detour=jobs,  # type: ignore
         )
 
-    def operation(
-        self, structure: SiteCollection
-    ) -> tuple[SiteCollection | list[SiteCollection], _properties_model]:
+    def write_file(self, structure: SiteCollection) -> str | None:
+        """Write the structure to a file."""
+        if isinstance(structure, Structure):
+            return structure.to(fmt="cif")
+        elif isinstance(structure, Molecule):
+            return structure.to(fmt="xyz")
+
+    def operation(*args, **kwargs):
         """Perform the computational operation on a structure.
 
         This method must be implemented by subclasses to define the specific
         operation to perform (e.g., optimization, property calculation).
 
         Args:
-            structure: Pymatgen SiteCollection (Molecule or Structure) with 3D coordinates.
-            calculator: Calculator to use for the calculation.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
 
         Returns:
             Tuple containing:
@@ -166,48 +170,16 @@ class SingleStructureCalculatorMaker(Maker):
         """
         raise NotImplementedError
 
-    def write_file(self, structure: SiteCollection) -> str | None:
-        """Write the structure to a file."""
-        if isinstance(structure, Structure):
-            return structure.to(fmt="cif")
-        else:
-            return structure.to(fmt="xyz")
-
-    @jfchem_job()
-    def make(
-        self,
-        structure: SiteCollection | list[SiteCollection],
+    def run_job(
+        self, sitecollection: Structure | Molecule | list[Structure] | list[Molecule]
     ) -> Response[_output_model]:
-        """Create a workflow job for processing structure(s).
+        """Run the job for a single structure or a list of structures."""
+        if isinstance(sitecollection, list) and len(sitecollection) == 1:
+            sitecollection = sitecollection[0]
+        elif isinstance(sitecollection, list):
+            return self.handle_structures(sitecollection)
 
-        Automatically handles job distribution for lists of structures. Each
-        structure in a list is processed as a separate job for parallel execution.
-
-        Args:
-            structure: Single Pymatgen SiteCollection or list of SiteCollections.
-            calculator: Calculator to use for the calculation.
-            **kwargs: Additional kwargs to pass to the operation.
-
-        Returns:
-            Response containing:
-                - structure: Processed structure(s)
-                - files: XYZ format file(s) of the structure(s)
-                - properties: Computed properties from the operation
-
-        Examples:
-            >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # dokctest: +SKIP
-            >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> # Generate conformers
-            >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
-            >>> job = conformer_gen.make(molecule) # doctest: +SKIP
-        """
-        if isinstance(structure, list) and len(structure) == 1:
-            structure = structure[0]
-        elif isinstance(structure, list):
-            return self.handle_structures(structure)
-
-        structures, properties = self.operation(structure)
+        structures, properties = self.operation(sitecollection)
         if isinstance(structures, list):
             files = [self.write_file(s) for s in structures]
         else:

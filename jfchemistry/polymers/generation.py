@@ -1,7 +1,7 @@
 """Polymer Generation Nodes."""
 
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Optional, Union
 
 from jobflow.core.job import Response
 from jobflow.core.maker import Maker
@@ -70,12 +70,13 @@ class GenerateInfinitePolymerChain(Maker):
             f_dict = f_info.asdict()  # type: ignore
             annotation = f_dict["annotation"]
             if f_name == "properties":
-                annotation = (
-                    properties_model
-                    | list[type[properties_model]]
-                    | OutputReference
-                    | list[OutputReference]
-                )  # type: ignore
+                # Construct annotation dynamically to avoid type checker errors with variable types
+                annotation = Union[
+                    properties_model,  # type: ignore[valid-type]
+                    list[properties_model],  # type: ignore[valid-type]
+                    OutputReference,
+                    list[OutputReference],
+                ]
 
             fields[f_name] = (
                 Annotated[
@@ -187,12 +188,13 @@ class GenerateFinitePolymerChain(Maker):
             f_dict = f_info.asdict()  # type: ignore
             annotation = f_dict["annotation"]
             if f_name == "properties":
-                annotation = (
-                    properties_model
-                    | list[type[properties_model]]
-                    | OutputReference
-                    | list[OutputReference]
-                )  # type: ignore
+                # Construct annotation dynamically to avoid type checker errors with variable types
+                annotation = Union[
+                    properties_model,  # type: ignore[valid-type]
+                    list[properties_model],  # type: ignore[valid-type]
+                    OutputReference,
+                    list[OutputReference],
+                ]
 
             fields[f_name] = (
                 Annotated[
@@ -247,6 +249,6 @@ class GenerateFinitePolymerChain(Maker):
             self.num_conformers,
         )
 
-        file = chain.to_file(fmt="xyz")
+        file = chain.to_file(fmt="cif")
 
         return Response(output=self._output_model(structure=chain, files={"chain.xyz": file}))

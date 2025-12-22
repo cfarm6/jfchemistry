@@ -6,17 +6,19 @@ for generating low-energy protonated structures at different sites.
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.crest import CRESTCalculator
+from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.properties import Properties
 from jfchemistry.modification.molbar_screening import molbar_screening
 from jfchemistry.modification.protonation.base import ProtonationMaker
 
 
 @dataclass
-class CRESTProtonation(ProtonationMaker, CRESTCalculator):
+class CRESTProtonation(ProtonationMaker, CRESTCalculator, SingleMoleculeMaker):
     """Generate protonated structures using CREST.
 
     Uses CREST's automated protonation workflow to identify basic sites
@@ -86,15 +88,15 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator):
         self._commands.append("--newversion")
 
     def operation(
-        self, structure: Molecule
-    ) -> tuple[Molecule | list[Molecule], Optional[dict[str, Any]]]:
+        self, molecule: Molecule
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate protonated structures using CREST.
 
         Runs CREST's protonation workflow to identify basic sites and
         generate optimized protonated structures.
 
         Args:
-            structure: Input molecular structure with 3D coordinates. The
+            molecule: Input molecular structure with 3D coordinates. The
                 structure's charge is used for the CREST calculation.
 
         Returns:
@@ -109,9 +111,9 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator):
             >>> prot = CRESTProtonation(ewin=6.0, threads=4) # doctest: +SKIP
             >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
         """
-        structure.to("input.xyz", fmt="xyz")
-        if self.charge is None and structure.charge is not None:
-            self.charge = structure.charge
+        molecule.to("input.xyz", fmt="xyz")
+        if self.charge is None and molecule.charge is not None:
+            self.charge = molecule.charge
         super().make_dict()
         super().write_toml()
         self.make_commands()
@@ -126,4 +128,4 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator):
                 charge=molecules[i].charge + 1,
                 spin_multiplicity=int(molecules[i].charge + 1) // 2 + 2,
             )
-        return molecules, None
+        return molecules, Properties()

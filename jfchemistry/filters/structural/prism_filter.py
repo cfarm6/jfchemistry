@@ -5,7 +5,7 @@ from typing import ClassVar, Literal
 
 import numpy as np
 
-from jfchemistry.core.properties import Properties
+from jfchemistry.core.properties import Properties, PropertyClass
 from jfchemistry.filters.base import Ensemble, PropertyEnsemble
 from jfchemistry.filters.structural.base import StructuralFilter
 
@@ -36,8 +36,8 @@ class PrismPrunerFilter(StructuralFilter):
     }
 
     def operation(
-        self, ensemble: Ensemble, properties: PropertyEnsemble | None
-    ) -> tuple[Ensemble, PropertyEnsemble | None]:
+        self, ensemble: Ensemble, properties: PropertyEnsemble
+    ) -> tuple[Ensemble, PropertyEnsemble]:
         """Perform the energy filter operation on an ensemble."""
         from prism_pruner.pruner import prune
 
@@ -47,27 +47,28 @@ class PrismPrunerFilter(StructuralFilter):
                 for property in properties
             ]
             energies = np.array(
-                [property.system.total_energy.value for property in parsed_properties]
+                [
+                    property.system.total_energy.value
+                    for property in parsed_properties
+                    if property.system is PropertyClass
+                ]
             )
         else:
             energies = None
         coords = np.array([molecule.cart_coords for molecule in ensemble])
         atoms = np.array([s.name for s in ensemble[0].species])
 
-        kw_args = {
-            "energies": energies,
-            "max_dE": self.energy_threshold / EH_TO_KCAL,
-            "debugfunction": None,
-            "logfunction": None,
-        }
-        if "RMSD_RC" in self.methods:
-            kw_args["rot_corr_rmsd_pruning"] = True
-        if "RMSD" in self.methods:
-            kw_args["rmsd_pruning"] = True
-        if "MOI" in self.methods:
-            kw_args["moi_pruning"] = True
-
-        _, mask = prune(*[coords, atoms], **kw_args)
+        _, mask = prune(
+            coords,
+            atoms,
+            energies=energies,
+            max_dE=self.energy_threshold / EH_TO_KCAL,
+            debugfunction=None,
+            logfunction=None,
+            moi_pruning="MOI" in self.methods,
+            rmsd_pruning="RMSD" in self.methods,
+            rot_corr_rmsd_pruning="RMSD_RC" in self.methods,
+        )
 
         filtered_ensemble = [item for item, keep in zip(ensemble, mask, strict=False) if keep]
         if properties is not None:
