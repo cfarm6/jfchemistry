@@ -13,46 +13,21 @@ from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class SingleStructureMoleculeMaker(PymatgenBaseMaker):
-    """Base class for operations on single structures.
-
-    Examples:
-        >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from ase.build import molecule # doctest: +SKIP
-        >>>
-        >>> # Create an optimizer
-        >>> optimizer = TBLiteOptimizer(method="GFN2-xTB", fmax=0.01) # doctest: +SKIP
-        >>>
-        >>> # Optimize a single structure
-        >>> mol = Molecule.from_ase_atoms(molecule("H2O")) # doctest: +SKIP
-        >>> job = optimizer.make(mol) # doctest: +SKIP
-        >>> optimized_mol = job.output["structure"] # doctest: +SKIP
-        >>> energy = job.output["properties"]["Global"]["Total Energy [Eh]"] # doctest: +SKIP
-        >>>
-        >>> # Optimize multiple structures in parallel
-        >>> ethanol = Molecule.from_ase_atoms(molecule("C2H5OH")) # doctest: +SKIP
-        >>> methane = Molecule.from_ase_atoms(molecule("CH4")) # doctest: +SKIP
-        >>> water = Molecule.from_ase_atoms(molecule("H2O")) # doctest: +SKIP
-        >>> job = optimizer.make([ethanol, methane, water]) # doctest: +SKIP
-        >>> # Returns list of optimized structures
-        >>> optimized_structures = job.output["structure"] # doctest: +SKIP
-    """
+class SingleStructureMoleculeMaker[T: Molecule | Structure](PymatgenBaseMaker[T]):
+    """Base class for operations on single structures."""
 
     name: str = "Single Structure Molecule Maker"
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def operation(
-        self, structure: Molecule | Structure
-    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
+    def _operation(self, structure: T) -> tuple[T | list[T], Properties | list[Properties]]:
         """Perform the computational operation on a structure."""
         raise NotImplementedError
 
     @jfchem_job()
     def make(
         self,
-        structure: Molecule | Structure | list[Molecule] | list[Structure],
+        structure: T | list[T],
     ) -> Response[_output_model]:
         """Create a workflow job for processing structure(s).
 
@@ -61,7 +36,6 @@ class SingleStructureMoleculeMaker(PymatgenBaseMaker):
 
         Args:
             structure: Single Pymatgen SiteCollection or list of SiteCollections.
-            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -77,4 +51,4 @@ class SingleStructureMoleculeMaker(PymatgenBaseMaker):
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        return self.run_job(structure)
+        return self._run_job(structure)

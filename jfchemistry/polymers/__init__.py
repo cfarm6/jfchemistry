@@ -1,6 +1,5 @@
 """Polymers package."""
 
-from .generation import GenerateFinitePolymerChain, GenerateInfinitePolymerChain
-from .input import PolymerInput
+from .finite_chain import GenerateFinitePolymerChain
 
-__all__ = ["GenerateFinitePolymerChain", "GenerateInfinitePolymerChain", "PolymerInput"]
+__all__ = ["GenerateFinitePolymerChain"]

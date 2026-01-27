@@ -7,16 +7,30 @@ simulation boxes using box packing or fixed position packing.
 import os
 import subprocess
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, cast
 
 from pymatgen.core.structure import Molecule, Structure
 
+from jfchemistry.core.makers.single_maker import SingleJFChemistryMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.packing.base import StructurePacking
 
 
+class PackmolProperties(Properties):
+    packing_mode: Literal["box", "fixed"]
+    tolerance: float
+    num_atoms: int
+    num_molecules: int
+    box_dimensions: tuple[float, float, float]
+    density: float
+    target_density: float
+    fixed_positions: list[tuple[float, float, float]]
+
+
 @dataclass
-class PackmolPacking(StructurePacking):
+class PackmolPacking[InputType: Molecule | Structure, OutputType: Molecule | Structure](
+    SingleJFChemistryMaker[InputType, OutputType], StructurePacking
+):
     """Pack molecules using Packmol.
 
     This class provides an interface to Packmol for packing molecules into
@@ -39,39 +53,6 @@ class PackmolPacking(StructurePacking):
         tolerance: Minimum distance between molecules in Angstroms (default: 2.0).
         packmol_path: Path to packmol executable (default: "packmol").
         filetype: Input/output file format (default: "xyz").
-
-    Examples:
-        >>> from ase.build import molecule # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from jfchemistry.packing import PackmolPacking # doctest: +SKIP
-        >>> water = Molecule.from_ase_atoms(molecule("H2O")) # doctest: +SKIP
-        >>> # Box packing: pack 100 water molecules into a 20x20x20 Angstrom box
-        >>> packer = PackmolPacking( # doctest: +SKIP
-        ...     packing_mode="box", # doctest: +SKIP
-        ...     box_dimensions=(20.0, 20.0, 20.0), # doctest: +SKIP
-        ...     num_molecules=100, # doctest: +SKIP
-        ...     tolerance=2.0 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = packer.make(water) # doctest: +SKIP
-        >>> packed_structure = job.output["structure"] # doctest: +SKIP
-        >>>
-        >>> # Box packing with density: pack 100 water molecules at 1.0 g/cm^3
-        >>> packer_density = PackmolPacking( # doctest: +SKIP
-        ...     packing_mode="box", # doctest: +SKIP
-        ...     density=1.0, # doctest: +SKIP
-        ...     num_molecules=100, # doctest: +SKIP
-        ...     tolerance=2.0 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = packer_density.make(water) # doctest: +SKIP
-        >>> packed_structure = job.output["structure"] # doctest: +SKIP
-        >>>
-        >>> # Fixed packing: place water at specific position
-        >>> packer_fixed = PackmolPacking( # doctest: +SKIP
-        ...     packing_mode="fixed", # doctest: +SKIP
-        ...     fixed_positions=[(10.0, 10.0, 10.0)], # doctest: +SKIP
-        ...     tolerance=2.0 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = packer_fixed.make(water) # doctest: +SKIP
     """
 
     name: str = "Packmol Packing"
@@ -103,10 +84,7 @@ class PackmolPacking(StructurePacking):
         default="packmol",
         metadata={"description": "path to packmol executable"},
     )
-    filetype: str = field(
-        default="xyz",
-        metadata={"description": "input/output file format"},
-    )
+    _filetype: str = "xyz"
 
     def _calculate_box_dimensions_from_density(
         self, structure: Molecule
@@ -181,7 +159,7 @@ class PackmolPacking(StructurePacking):
 
         with open(input_file, "w") as f:
             f.write(f"tolerance {self.tolerance}\n")
-            f.write(f"filetype {self.filetype}\n")
+            f.write(f"filetype {self._filetype}\n")
             f.write(f"output {abs_output_file}\n")
             f.write("\n")
 
@@ -246,7 +224,7 @@ class PackmolPacking(StructurePacking):
 
     def _read_packed_structure(
         self, output_file: str, box_dimensions: Optional[tuple[float, float, float]] = None
-    ) -> Structure:
+    ) -> OutputType:
         """Read packmol output and convert to Structure.
 
         Args:
@@ -267,7 +245,7 @@ class PackmolPacking(StructurePacking):
             )
 
         # Read the packed structure
-        if self.filetype == "xyz":
+        if self._filetype == "xyz":
             mol = Molecule.from_file(output_file)
             # Convert to Structure for periodic systems (box mode)
             # For fixed mode, we can return as Molecule or Structure
@@ -290,7 +268,7 @@ class PackmolPacking(StructurePacking):
                         coords=mol.cart_coords,
                         coords_are_cartesian=True,
                     )
-                    return structure
+                    return cast("OutputType", structure)
                 else:
                     # Fallback: create a large enough lattice
                     from pymatgen.core import Lattice
@@ -305,7 +283,7 @@ class PackmolPacking(StructurePacking):
                         coords=mol.cart_coords,
                         coords_are_cartesian=True,
                     )
-                    return structure
+                    return cast("OutputType", structure)
             else:
                 # For fixed packing, return as Structure with no lattice
                 from pymatgen.core import Lattice
@@ -321,18 +299,18 @@ class PackmolPacking(StructurePacking):
                     coords=mol.cart_coords,
                     coords_are_cartesian=True,
                 )
-                return structure
+                return cast("OutputType", structure)
         else:
             # For other file types, try to read as Structure
-            return Structure.from_file(output_file)
+            return cast("OutputType", Structure.from_file(output_file))
 
-    def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Pack a structure using Packmol.
 
         Args:
-            molecule: The molecular structure to pack.
+            structure: The molecular structure to pack.
 
         Returns:
             A tuple containing the packed structure and properties.
@@ -345,23 +323,24 @@ class PackmolPacking(StructurePacking):
         # Validation will be done in _write_packmol_input
 
         # Write input molecule file
-        input_mol_file = f"input_molecule.{self.filetype}"
-        molecule.to(filename=input_mol_file, fmt=self.filetype)
+        input_mol_file = f"input_molecule.{self._filetype}"
+        # assert isinstance(structure, Structure), "structure must be a molecule for packing"
+        structure.to(filename=input_mol_file, fmt=self._filetype)
 
         # Generate packmol output filename
-        output_file = f"packed_structure.{self.filetype}"
+        output_file = f"packed_structure.{self._filetype}"
 
         # Get box dimensions (either specified or calculated from density)
         if self.packing_mode == "box":
             if self.density is not None:
-                box_dims = self._calculate_box_dimensions_from_density(molecule)
+                box_dims = self._calculate_box_dimensions_from_density(structure)
             else:
                 box_dims = self.box_dimensions
         else:
             box_dims = None
 
         # Write packmol input file (this may calculate box_dimensions from density)
-        packmol_input = self._write_packmol_input(input_mol_file, output_file, molecule)
+        packmol_input = self._write_packmol_input(input_mol_file, output_file, structure)
 
         # Run packmol
         self._run_packmol(packmol_input)
@@ -373,27 +352,26 @@ class PackmolPacking(StructurePacking):
         # Convert Structure to Molecule if needed (remove lattice for non-periodic representation)
         # For packed structures, we typically want to keep them as Structures,
         # but the base class signature requires Molecule. We'll convert to Molecule.
-        if isinstance(packed_structure, Structure):
-            spin_multiplicity: int | None = None
-            sp = getattr(packed_structure, "spin_multiplicity", None)
-            if sp is not None:
-                spin_multiplicity = int(sp)
-            packed_molecule = Molecule(
-                species=packed_structure.species,
-                coords=packed_structure.cart_coords,
-                charge=packed_structure.charge,
-                spin_multiplicity=spin_multiplicity,
-            )
-        else:
-            packed_molecule = packed_structure
+        # if isinstance(packed_structure, Structure):
+        #     spin_multiplicity: int | None = None
+        #     sp = getattr(packed_structure, "spin_multiplicity", None)
+        #     if sp is not None:
+        #         spin_multiplicity = int(sp)
+        #     packed_molecule = Molecule(
+        #         species=packed_structure.species,
+        #         coords=packed_structure.cart_coords,
+        #         charge=packed_structure.charge,
+        #         spin_multiplicity=spin_multiplicity,
+        #     )
+        # else:
+        #     packed_molecule = packed_structure
 
         # Prepare properties and convert to Properties object
-        properties_dict = self.get_properties(packed_structure)
-        properties = Properties.from_dict(properties_dict)
+        properties = self._get_properties(packed_structure)
 
-        return packed_molecule, properties
+        return packed_structure, properties
 
-    def get_properties(self, structure: Structure) -> dict[str, Any]:
+    def _get_properties(self, structure: Structure) -> Properties:
         """Get the properties of the packed structure.
 
         Args:
@@ -443,4 +421,4 @@ class PackmolPacking(StructurePacking):
             properties["fixed_positions"] = self.fixed_positions
             properties["num_molecules"] = len(self.fixed_positions)
 
-        return properties
+        return Properties(**properties)

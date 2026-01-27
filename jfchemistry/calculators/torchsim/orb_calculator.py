@@ -9,6 +9,7 @@ from orb_models.forcefield import pretrained
 from pymatgen.core import SiteCollection
 from torch_sim.models.orb import OrbModel
 
+from jfchemistry import ureg
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
 from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
@@ -36,7 +37,15 @@ class OrbProperties(Properties):
 
 @dataclass
 class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalculator, MSONable):
-    """Base class for using TorchSim with Orb Models."""
+    """Orb TorchSim Calculator.
+
+    Attributes:
+        name: Name of the calculator (default: "Orb TorchSim Calculator").
+        model: The Orb model to use (default: "orb_v3_conservative_omol").
+        device: The device to use for the model (default: "cpu").
+        conservative: Whether to use the conservative model (default: True).
+        precision: The precision to use for the model (default: "float32-high").
+    """
 
     name: str = "Orb TorchSim Calculator"
     model: Literal[
@@ -65,7 +74,7 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
         default=False, metadata={"description": "Whether to compute the stress"}
     )
 
-    def get_model(self) -> OrbModel:
+    def _get_model(self) -> OrbModel:
         """Get the Orb model."""
         orb_model = getattr(pretrained, self.model)(
             device=self.device, precision=self.precision, compile=self.compile
@@ -78,10 +87,10 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
         self._model = model
         return model
 
-    def get_properties(self, system: SiteCollection) -> Properties:
+    def _get_properties(self, system: SiteCollection) -> Properties:
         """Get the properties of the Orb model."""
         if not hasattr(self, "_model"):
-            self.get_model()
+            self._get_model()
         prop_calculators = {
             10: {"potential_energy": lambda state: state.energy},
             20: {"forces": lambda state: state.forces},
@@ -105,22 +114,19 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
             atomic=OrbAtomicProperties(
                 forces=AtomicProperty(
                     name="Orb Forces",
-                    value=forces.tolist(),
-                    units="eV/Å",
+                    value=forces.tolist() * ureg.eV / ureg.angstrom,
                     description=f"Forces predicted by the {self.model} model",
                 ),
             ),
             system=OrbSystemProperties(
                 total_energy=SystemProperty(
                     name="Total Energy",
-                    value=energy.tolist(),
-                    units="eV",
+                    value=energy.tolist() * ureg.eV,
                     description=f"Total energy predicted by the {self.model} model",
                 ),
                 stress=SystemProperty(
                     name="Stress",
-                    value=stress.tolist(),
-                    units="eV/Å^3",
+                    value=stress.tolist() * ureg.eV / ureg.angstrom**3,
                     description=f"Stress predicted by the {self.model} model",
                 )
                 if self.compute_stress

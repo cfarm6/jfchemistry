@@ -19,7 +19,7 @@ JFChemistry provides a flexible framework for building computational chemistry w
 -   **Geometry Optimization**: Optimize structures with multiple methods (GFN-xTB, AimNet2, ORB models)
 -   **Structure Modification**: Perform protonation/deprotonation using CREST
 -   **Workflow Management**: Build complex, parallelizable workflows with jobflow
--   **Multiple Calculators**: Support for ASE, TBLite, AimNet2, and ORB machine learning potentials
+-   **Multiple Calculators**: Support for AimNet2, ORB, and FairChem machine learning potentials along with traditional approaches such as PySCF, TBLite, and ORCA
 
 ## Installation
 
@@ -35,12 +35,6 @@ pixi install
 
 # For development
 pixi install -e dev
-
-# For AimNet2 support
-pixi install -e aimnet2
-
-# For ORB model support
-pixi install -e orb
 
 # For documentation
 pixi install -e docs
@@ -74,10 +68,12 @@ properties = opt_job.output["properties"]
 
 ## Architecture
 
-JFChemistry is built around two main base classes:
+JFChemistry is built around a set of base classes that handle the core functionality of the package.
 
+-   **SingleMoleculeMaker**: For operations on non-periodic structures such as molecules
+-   **SingleStructureMaker**: For operations on periodic structures such as crystals
+-   **SingleStructureMoleculeMaker**: For operations that apply to both periodic and non-periodic structures
 -   **SingleRDMoleculeMaker**: For operations on molecules without 3D coordinates (RDKit molecules)
--   **SingleStructureMaker**: For operations on structures with 3D coordinates (Pymatgen structures)
 
 These base classes automatically handle:
 

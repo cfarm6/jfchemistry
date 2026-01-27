@@ -9,6 +9,7 @@ from monty.json import MSONable
 from pydantic.dataclasses import dataclass
 
 from jfchemistry.calculators.base import Calculator
+from jfchemistry.core.properties import Properties
 
 
 @dataclass
@@ -39,7 +40,7 @@ class ASECalculator(Calculator, MSONable):
 
     name: str = "ASE Calculator"
 
-    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
+    def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the calculator for the atoms.
 
         This method must be implemented by subclasses to attach a specific
@@ -65,6 +66,6 @@ class ASECalculator(Calculator, MSONable):
         """
         raise NotImplementedError
 
-    def get_properties(self, atoms: Atoms):
+    def _get_properties(self, atoms: Atoms) -> Properties:
         """Get the properties for the atoms."""
         raise NotImplementedError

@@ -5,35 +5,19 @@ chemical identifier formats including SMILES and PubChem compound IDs.
 """
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated, Any, Optional
+from typing import TYPE_CHECKING, Annotated
 
-from jobflow.core.job import Response, job
+from jobflow.core.job import Response
 from jobflow.core.maker import Maker
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, Field, create_model
 from rdkit.Chem import SaltRemover, rdchem, rdmolfiles, rdmolops
 
 if TYPE_CHECKING:
     from pydantic.fields import _FieldInfoAsDict
 
+from jfchemistry.core.outputs import Output
+from jfchemistry.core.properties import Properties
 from jfchemistry.core.structures import RDMolMolecule
-
-
-class Properties(BaseModel):
-    """Properties of the structure."""
-
-    atomic: Optional[Any] = None
-    bond: Optional[Any] = None
-    system: Optional[Any] = None
-    orbital: Optional[Any] = None
-
-
-class Output(BaseModel):
-    """Output of the job."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    structure: Optional[Any] = None
-    properties: Optional[Any] = None
-    files: Optional[Any] = None
 
 
 @dataclass
@@ -44,7 +28,7 @@ class MoleculeInput(Maker):
     from various chemical identifier formats. It handles salt removal and hydrogen
     addition automatically.
 
-    Subclasses should implement the get_structure() method to convert specific
+    Subclasses should implement the _get_structure() method to convert specific
     identifier types (SMILES, PubChem CID, etc.) into RDKit molecules.
 
     Attributes:
@@ -70,7 +54,7 @@ class MoleculeInput(Maker):
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[BaseModel]):
+    def _make_output_model(self, properties_model: type[BaseModel]):
         """Make a properties model for the job."""
         fields = {}
         for f_name, f_info in self._output_model.model_fields.items():
@@ -96,9 +80,9 @@ class MoleculeInput(Maker):
 
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
-        self.make_output_model(self._properties_model)
+        self._make_output_model(self._properties_model)
 
-    def get_structure(self, input: int | str) -> RDMolMolecule:
+    def _get_structure(self, input: int | str) -> RDMolMolecule:
         """Retrieve or parse structure from the input identifier.
 
         This method must be implemented by subclasses to convert specific
@@ -115,7 +99,7 @@ class MoleculeInput(Maker):
         """
         raise NotImplementedError
 
-    def clean_structure(self, mol: rdchem.Mol) -> rdchem.Mol:
+    def _clean_structure(self, mol: rdchem.Mol) -> rdchem.Mol:
         """Clean and prepare the molecule structure.
 
         Performs post-processing on the molecule including salt removal and
@@ -135,7 +119,7 @@ class MoleculeInput(Maker):
             >>> # Molecule with salt
             >>> mol = Chem.MolFromSmiles("CCO.Cl")
             >>> maker = MoleculeInput(remove_salts=True)
-            >>> clean_mol = maker.clean_structure(mol)
+            >>> clean_mol = maker._clean_structure(mol)
             >>> Chem.MolToSmiles(clean_mol)  # Only ethanol remains
             '[H]OC([H])([H])C([H])([H])[H]'
         """
@@ -160,14 +144,9 @@ class MoleculeInput(Maker):
             Response containing:
                 - structure: RDMolMolecule object
                 - files: MOL file representation
-
-        Examples:
-            >>> # Called internally by subclass make() methods
-            >>> maker = Smiles()
-            >>> response = maker._make("CCO")
         """
-        mol = self.get_structure(input)
-        mol = self.clean_structure(mol)
+        mol = self._get_structure(input)
+        mol = self._clean_structure(mol)
         mol = RDMolMolecule(mol)
         resp = Response(
             output=self._output_model(
@@ -175,120 +154,4 @@ class MoleculeInput(Maker):
                 files=rdmolfiles.MolToV3KMolBlock(mol),
             ),
         )
-        return resp
-
-
-@dataclass
-class PubChemCID(MoleculeInput):
-    """Retrieve molecules from PubChem database by compound ID.
-
-    Downloads molecular structures from the PubChem database using the
-    compound identifier (CID). The structure is retrieved in SDF format
-    from PubChem's REST API.
-
-    Attributes:
-        name: Name of the input method (default: "PubChem CID Input").
-        remove_salts: Inherited from MoleculeInput.
-        add_hydrogens: Inherited from MoleculeInput.
-
-    Examples:
-        >>> from jfchemistry.inputs import PubChemCID
-        >>>
-        >>> # Retrieve ethanol (CID: 702)
-        >>> pubchem = PubChemCID()
-        >>> job = pubchem.make(702)
-        >>> mol = job.output["structure"]
-        >>>
-        >>> # Retrieve without adding hydrogens
-        >>> pubchem_no_h = PubChemCID(add_hydrogens=False)
-        >>> job = pubchem_no_h.make(2244)  # Aspirin
-    """
-
-    name: str = "PubChem CID Input"
-
-    def get_structure(self, input: int | str) -> rdchem.Mol:
-        """Fetch the structure from PubChem database.
-
-        Downloads the molecular structure from PubChem using the compound ID
-        and converts it to an RDKit Mol object.
-
-        Args:
-            input: PubChem compound ID (CID) as integer or string.
-
-        Returns:
-            RDKit Mol object from PubChem SDF data.
-        """
-        import requests
-        from rdkit.Chem import rdmolfiles
-
-        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{input}/sdf"
-        resp = requests.get(url)
-        mol = rdmolfiles.MolFromMolBlock(resp.content.decode("utf-8"), removeHs=False)
-        return mol
-
-    @job(files="files", properties="properties")
-    def make(self, input: int) -> Response[Output]:
-        """Create a workflow job to retrieve a molecule from PubChem.
-
-        Args:
-            input: PubChem compound ID (CID).
-
-        Returns:
-            Response containing:
-                - structure: RDMolMolecule from PubChem
-                - files: MOL file representation
-
-        """
-        return super()._make(input)
-
-
-@dataclass
-class Smiles(MoleculeInput):
-    """Create molecules from SMILES strings.
-
-    Parses SMILES (Simplified Molecular Input Line Entry System) strings
-    and converts them to RDKit Mol objects. Supports standard SMILES
-    notation including stereochemistry and aromaticity.
-
-    Attributes:
-        name: Name of the input method (default: "SMILES Input").
-        remove_salts: Inherited from MoleculeInput.
-        add_hydrogens: Inherited from MoleculeInput.
-    """
-
-    name: str = "SMILES Input"
-
-    def get_structure(self, input: int | str) -> rdchem.Mol:
-        """Parse SMILES string and convert to RDKit molecule.
-
-        Args:
-            input: SMILES string representation of the molecule.
-
-        Returns:
-            RDKit Mol object parsed from SMILES.
-
-        Examples:
-            >>> smiles = Smiles()
-            >>> mol = smiles.get_structure("CCO")
-            >>> mol.GetNumAtoms()  # Without hydrogens
-            3
-        """
-        mol = rdmolfiles.MolFromSmiles(input)
-        if mol is None:
-            raise ValueError(f"Failed to parse SMILES string: {input}")
-        return mol
-
-    @job(files="files", properties="properties")
-    def make(self, input: str) -> Response[Output]:
-        """Create a workflow job to generate a molecule from SMILES.
-
-        Args:
-            input: SMILES string.
-
-        Returns:
-            Response containing:
-                - structure: RDMolMolecule from SMILES
-                - files: MOL file representation
-        """
-        resp = super()._make(input)
         return resp

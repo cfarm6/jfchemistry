@@ -34,7 +34,7 @@ class PolymerInput(Maker):
     _output_model: type[PolymerInputOutput] = PolymerInputOutput
     _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[BaseModel]):
+    def _make_output_model(self, properties_model: type[BaseModel]):
         """Make a properties model for the job."""
         fields = {}
         for f_name, f_info in self._output_model.model_fields.items():
@@ -60,7 +60,7 @@ class PolymerInput(Maker):
 
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
-        self.make_output_model(self._properties_model)
+        self._make_output_model(self._properties_model)
 
     @jfchem_job()
     def make(
@@ -76,5 +76,4 @@ class PolymerInput(Maker):
             monomer=RDMolMolecule(monomer_mol),
             tail=RDMolMolecule(tail_mol) if tail_mol else None,
         )
-        print(polymer)
         return Response(output=self._output_model(structure=polymer))

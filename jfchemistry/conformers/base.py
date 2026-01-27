@@ -44,7 +44,7 @@ class ConformerGeneration(SingleMoleculeMaker):
 
     name: str = "Conformer Generation"
 
-    def operation(
+    def _operation(
         self, molecule: Molecule
     ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate conformers from the input structure.

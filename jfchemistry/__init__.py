@@ -16,21 +16,34 @@ Main Features:
     - Property calculations with various quantum chemistry methods
 """
 
-from .core.makers.single_rdmolecule import SingleRDMoleculeMaker
-from .core.makers.single_structure import SingleStructureMaker
-from .core.properties import (
-    AtomicProperty,
-    BondProperty,
-    Property,
-    SystemProperty,
-)
+from pint import UnitRegistry, set_application_registry
+
+# from jfchemistry.core.makers.single_rdmolecule import SingleRDMoleculeMaker
+# from jfchemistry.core.makers.single_structure import SingleStructureMaker
+from jfchemistry.core.properties import AtomicProperty, BondProperty, Property, SystemProperty
+
+
+def setup_computational_chemistry_units():
+    """Creates a UnitRegistry with computational chemistry energy units."""
+    ureg = UnitRegistry(system="atomic")
+    ureg.define("wavenumber = planck_constant * speed_of_light / centimeter = cm^-1 = kayser")
+    ureg.define("kcal_per_mol = kilocalorie / avogadro_number")
+    ureg.define("kJ_per_mol = kJ / avogadro_number")
+    return ureg
+
+
+ureg = setup_computational_chemistry_units()
+set_application_registry(ureg)
+Q_ = ureg.Quantity
 
 __all__ = [
     "AtomicProperty",
     "BondProperty",
     "Property",
-    "RDMolMolecule",
-    "SingleRDMoleculeMaker",
-    "SingleStructureMaker",
+    # "RDMolMolecule",
+    # "SingleRDMoleculeMaker",
+    # "SingleStructureMaker",
     "SystemProperty",
+    "ureg",
+    "Q_",
 ]

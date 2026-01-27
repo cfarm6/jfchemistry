@@ -7,10 +7,12 @@ performing GFN-xTB semi-empirical quantum chemistry calculations.
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
+import numpy as np
 from ase import Atoms
 from ase.units import Bohr, Hartree
 from monty.json import MSONable
 
+from jfchemistry import ureg
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import SemiempiricalCalculator
 from jfchemistry.core.properties import (
@@ -58,7 +60,7 @@ class TBLiteAtomicProperties(PropertyClass):
     """Atomic properties of the TBLite calculator."""
 
     tblite_partial_charges: AtomicProperty
-    tblite_forces: AtomicProperty
+    tblite_forces: Optional[AtomicProperty] = None
 
 
 class TBLiteBondProperties(PropertyClass):
@@ -90,10 +92,10 @@ class TBLiteSystemProperties(PropertyClass):
 class TBLiteProperties(Properties):
     """Properties of the TBLite calculator."""
 
-    system: TBLiteSystemProperties
-    atomic: TBLiteAtomicProperties
-    bond: TBLiteBondProperties
-    orbital: TBLiteOrbitalProperties
+    system: Optional[TBLiteSystemProperties] = None
+    atomic: Optional[TBLiteAtomicProperties] = None
+    bond: Optional[TBLiteBondProperties] = None
+    orbital: Optional[TBLiteOrbitalProperties] = None
 
 
 @dataclass
@@ -170,7 +172,7 @@ class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
         default=None, metadata={"description": "The solvent to use"}
     )
 
-    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
+    def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the TBLite calculator on the atoms object.
 
         Configures and attaches a TBLite GFN-xTB calculator to the atoms object
@@ -221,12 +223,12 @@ class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
             initial_guess=self.initial_guess,
             mixer_damping=self.mixer_damping,
             verbosity=self.verbosity,
-            solvation=(self.solvation, self.solvent),
+            solvation=(self.solvation, self.solvent) if self.solvation and self.solvent else None,
         )
 
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> TBLiteProperties:
+    def _get_properties(self, atoms: Atoms) -> TBLiteProperties:
         """Extract comprehensive properties from the TBLite calculation.
 
         Computes and organizes a wide range of molecular properties from the
@@ -287,100 +289,87 @@ class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
         homo_lumo_gap = lumo_energy - homo_energy
         orbital_coefficients = props["orbital-coefficients"]
         density_matrix = props["density-matrix"]
-        wbo: list[float] = []
-        atoms_i: list[int] = []
-        atoms_j: list[int] = []
+        wbo = np.array([], dtype=float)
+        atoms_i = np.array([], dtype=int)
+        atoms_j = np.array([], dtype=int)
         for i in range(len(bond_orders)):
             for j in range(len(bond_orders[i])):
                 if bond_orders[i][j] > BOND_ORDER_THRESHOLD:
-                    wbo.append(bond_orders[i][j])
-                    atoms_i.append(i)
-                    atoms_j.append(j)
+                    wbo = np.append(wbo, bond_orders[i][j])
+                    atoms_i = np.append(atoms_i, i)
+                    atoms_j = np.append(atoms_j, j)
         system_properties = TBLiteSystemProperties(
             total_energy=SystemProperty(
                 name="Total Energy",
-                value=energy,
-                units="eV",
+                value=energy * ureg.eV,
                 description="Total energy of the system",
             ),
             dipole_moment=SystemProperty(
                 name="Dipole Moment",
-                value=dipole,
-                units="D",
+                value=dipole * ureg.D,
                 description="Dipole moment of the system",
             ),
             quadrupole_moment=SystemProperty(
                 name="Quadrupole Moment",
-                value=quadrupole,
-                units="D",
+                value=quadrupole * ureg.D * ureg.angstrom,
                 description="Quadrupole moment of the system",
             ),
             density_matrix=SystemProperty(
                 name="Density Matrix",
                 value=density_matrix,
-                units="",
                 description="Density matrix of the system",
             ),
             homo_lumo_gap=SystemProperty(
                 name="HOMO-LUMO Gap",
-                value=homo_lumo_gap,
-                units="eV",
+                value=homo_lumo_gap * ureg.eV,
                 description="HOMO-LUMO gap of the system",
             ),
             homo_energy=SystemProperty(
                 name="HOMO Energy",
-                value=homo_energy,
-                units="eV",
+                value=homo_energy * ureg.eV,
                 description="HOMO energy of the system",
             ),
             lumo_energy=SystemProperty(
                 name="LUMO Energy",
-                value=lumo_energy,
-                units="eV",
+                value=lumo_energy * ureg.eV,
                 description="LUMO energy of the system",
             ),
         )
         atomic_properties = TBLiteAtomicProperties(
             tblite_partial_charges=AtomicProperty(
                 name="Mulliken Partial Charges",
-                value=charges,
-                units="e",
+                value=(charges * ureg.e).tolist(),
                 description="Mulliken partial charges of the system",
             ),
             tblite_forces=AtomicProperty(
                 name="Forces",
-                value=forces,
-                units="eV/Å",
+                value=forces.tolist() * (ureg.eV / ureg.angstrom),
                 description="Forces of the system",
             ),
         )
         bond_properties = TBLiteBondProperties(
             tblite_wiberg_bond_orders=BondProperty(
                 name="Wiberg Bond Order",
-                value=wbo,
-                atoms1=atoms_i,
-                atoms2=atoms_j,
-                units="",
+                value=wbo.tolist(),
+                atoms1=atoms_i.tolist(),
+                atoms2=atoms_j.tolist(),
                 description="Wiberg bond order of the system",
             ),
         )
         orbital_properties = TBLiteOrbitalProperties(
             tblite_orbital_energies=OrbitalProperty(
                 name="Orbital Energies",
-                value=orbital_energies,
-                units="eV",
+                value=orbital_energies.tolist() * ureg.eV,
                 description="Orbital energies of the system",
             ),
             tblite_orbital_occupations=OrbitalProperty(
                 name="Orbital Occupations",
-                value=orbital_occupations,
-                units="",
+                value=orbital_occupations.tolist(),
                 description="Orbital occupations of the system",
             ),
             tblite_orbital_coefficients=OrbitalProperty(
                 name="Orbital Coefficients",
-                value=orbital_coefficients,
-                units="",
+                value=orbital_coefficients.tolist(),
                 description="Orbital coefficients of the system",
             ),
         )

@@ -16,7 +16,7 @@ class Calculator(MSONable):
     spin_multiplicity: Optional[int] = None
     _properties_model: type[Properties] = Properties
 
-    def get_properties(*args, **kwargs) -> Properties:
+    def _get_properties(*args, **kwargs) -> Properties:
         """Set the properties for the structure."""
         raise NotImplementedError
 

@@ -4,7 +4,7 @@ This module provides the abstract base class for implementing 3D structure
 generation methods from molecular representations.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from jfchemistry.core.makers.single_rdmolecule import SingleRDMoleculeMaker
 
@@ -23,8 +23,6 @@ class StructureGeneration(SingleRDMoleculeMaker):
 
     Attributes:
         name: Descriptive name for the structure generation method.
-        check_structure: Whether to validate the generated structure using
-            PoseBusters or similar validation tools (default: False).
 
     Examples:
         >>> # Subclass implementation
@@ -42,5 +40,3 @@ class StructureGeneration(SingleRDMoleculeMaker):
 
     # Input parameters
     name: str = "Structure Generation"
-    # Check the structure with PoseBusters
-    check_structure: bool = field(default=False)

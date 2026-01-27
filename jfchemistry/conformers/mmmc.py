@@ -16,13 +16,12 @@ from multiple_minimum_monte_carlo.conformer import Conformer
 from multiple_minimum_monte_carlo.conformer_ensemble import ConformerEnsemble
 from pymatgen.core.structure import Molecule
 
+from jfchemistry import ureg
 from jfchemistry.conformers.base import ConformerGeneration
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
 from jfchemistry.optimizers.ase import ASEOptimizer
 from jfchemistry.optimizers.torchsim import TorchSimOptimizer
-
-EV_TO_KCAL = 23.0605
 
 
 class MMMCSystemProperties(PropertyClass):
@@ -115,7 +114,7 @@ class MMMCConformers(ConformerGeneration):
     _properties_model: type[MMMCProperties] = MMMCProperties
     _output_model: type[MMMCOutput] = MMMCOutput
 
-    def operation(
+    def _operation(
         self, molecule: Molecule
     ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Operation of the MMMC conformer generation."""
@@ -125,7 +124,7 @@ class MMMCConformers(ConformerGeneration):
         conformer = Conformer(input_xyz=self._filename, charge=int(molecule.charge))
         # Create Optimizer
         if isinstance(self.optimizer, ASEOptimizer):
-            atoms = self.optimizer.calculator.set_calculator(
+            atoms = self.optimizer.calculator._set_calculator(
                 molecule.to_ase_atoms(),
                 charge=int(molecule.charge),
                 spin_multiplicity=int(molecule.spin_multiplicity),
@@ -183,7 +182,7 @@ class MMMCConformers(ConformerGeneration):
             MMMCProperties(
                 system=MMMCSystemProperties(
                     total_energy=SystemProperty(
-                        name="total_energy", value=energy / EV_TO_KCAL, units="eV"
+                        name="total_energy", value=energy * ureg.kcal_per_mol
                     )
                 )
             )

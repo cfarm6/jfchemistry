@@ -6,19 +6,21 @@ for generating low-energy tautomers at different sites.
 
 import os
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.crest import CRESTCalculator
-from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core import PymatgenBaseMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.modification.molbar_screening import molbar_screening
 from jfchemistry.modification.tautomers.base import TautomerMaker
 
 
 @dataclass
-class CRESTTautomers(TautomerMaker, CRESTCalculator, SingleMoleculeMaker):
+class CRESTTautomers[InputType: Molecule, OutputType: Molecule](
+    TautomerMaker, CRESTCalculator, PymatgenBaseMaker[InputType, OutputType]
+):
     """Generate tautomers using CREST.
 
     Uses CREST's automated tautomerization workflow to identify basic sites
@@ -61,22 +63,22 @@ class CRESTTautomers(TautomerMaker, CRESTCalculator, SingleMoleculeMaker):
     _runtype: Literal["tautomerize"] = "tautomerize"
     _output_filename: str = "tautomers.xyz"
 
-    def make_commands(self):
+    def _make_commands(self):
         """Make the CLI for the CREST input."""
-        super().make_commands()
+        super()._make_commands()
         self._commands.append(f"--{self._runtype}")
         self._commands.append("--newversion")
 
-    def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+    def _operation(
+        self, structure: InputType
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Generate protonated structures using CREST.
 
         Runs CREST's protonation workflow to identify basic sites and
         generate optimized protonated structures.
 
         Args:
-            molecule: Input molecular structure with 3D coordinates. The
+            structure: Input molecular structure with 3D coordinates. The
                 molecule's charge is used for the CREST calculation.
 
         Returns:
@@ -92,17 +94,17 @@ class CRESTTautomers(TautomerMaker, CRESTCalculator, SingleMoleculeMaker):
             >>> prot = CRESTTautomers(ewin=6.0, threads=4) # doctest: +SKIP
             >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
         """
-        molecule.to("input.xyz", fmt="xyz")
-        if self.charge is None and molecule.charge is not None:
-            self.charge = molecule.charge
-        super().make_dict()
-        super().write_toml()
-        self.make_commands()
-        super().run()
+        structure.to("input.xyz", fmt="xyz")
+        if self.charge is None and structure.charge is not None:
+            self.charge = structure.charge
+        super()._make_dict()
+        super()._write_toml()
+        self._make_commands()
+        super()._run()
         if not os.path.exists(self._output_filename):
             raise FileNotFoundError(
                 "No tautomers found. Please check your CREST settings and log file."
             ) from None
         molecules = molbar_screening(self._output_filename, self.threads)
         print("NUMBER OF TAUTOMERS: ", len(molecules))
-        return molecules, Properties()
+        return cast("list[OutputType]", molecules), cast("list[Properties]", Properties())

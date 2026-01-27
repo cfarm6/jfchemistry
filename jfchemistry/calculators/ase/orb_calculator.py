@@ -10,6 +10,7 @@ from typing import Literal
 from ase import Atoms
 from monty.json import MSONable
 
+from jfchemistry import ureg
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
 from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
@@ -18,7 +19,7 @@ from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClas
 class OrbAtomicProperties(PropertyClass):
     """Properties of the ORB model calculation."""
 
-    orb_forces: AtomicProperty
+    forces: AtomicProperty
 
 
 class OrbSystemProperties(PropertyClass):
@@ -71,7 +72,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
         >>>
         >>> # Setup on structure
         >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
-        >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+        >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
         >>>
         >>> # Get properties
         >>> props = calc.get_properties(atoms) # doctest: +SKIP
@@ -101,7 +102,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
 
     _properties_model: type[OrbProperties] = OrbProperties
 
-    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
+    def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the ORB model calculator on the atoms object.
 
         Loads the specified ORB model and attaches it as an ASE calculator to the
@@ -122,7 +123,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
         Examples:
             >>> calc = ORBModelCalculator(device="cuda", compile=True) # doctest: +SKIP
             >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
-            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
             >>> # Charge and spin are stored in atoms.info
             >>> print(atoms.info["charge"]) # doctest: +SKIP
             0
@@ -156,7 +157,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
         atoms.info["spin"] = spin_multiplicity
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> OrbProperties:
+    def _get_properties(self, atoms: Atoms) -> OrbProperties:
         """Extract computed properties from the ORB calculation.
 
         Retrieves the total energy from the ORB model calculation.
@@ -171,7 +172,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
 
         Examples:
             >>> calc = ORBModelCalculator() # doctest: +SKIP
-            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
             >>> atoms.get_potential_energy()  # Trigger calculation # doctest: +SKIP
             >>> props = calc.get_properties(atoms) # doctest: +SKIP
             >>> print(props["Global"]["Total Energy [eV]"]) # doctest: +SKIP
@@ -180,18 +181,16 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
         energy = atoms.get_total_energy()  # type: ignore
         forces = atoms.get_forces()  # type: ignore
         atomic_properties = OrbAtomicProperties(
-            orb_forces=AtomicProperty(
+            forces=AtomicProperty(
                 name="ORB Forces",
-                value=forces,
-                units="eV/Å",
+                value=forces * ureg.eV / ureg.angstrom,
                 description=f"Forces predicted by {self.model} model",
             ),
         )
         system_properties = OrbSystemProperties(
             total_energy=SystemProperty(
                 name="Total Energy",
-                value=energy,
-                units="eV",
+                value=energy * ureg.eV,
                 description=f"Total energy prediction from {self.model} model",
             ),
         )

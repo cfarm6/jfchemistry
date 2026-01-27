@@ -12,7 +12,7 @@ from jfchemistry.core.properties import Properties
 
 
 @dataclass
-class SingleMoleculeMaker(PymatgenBaseMaker):
+class SingleMoleculeMaker[T: Molecule](PymatgenBaseMaker[T]):
     """Base class for operations on structures with 3D geometry.
 
     This Maker processes Pymatgen SiteCollection objects (Molecule or Structure)
@@ -51,19 +51,18 @@ class SingleMoleculeMaker(PymatgenBaseMaker):
     """
 
     name: str = "Single Structure Maker"
+    _input_type = T
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+    def _operation(self, structure: T) -> tuple[T | list[T], Properties | list[Properties]]:
         """Perform the computational operation on a structure."""
         raise NotImplementedError
 
     @jfchem_job()
     def make(
         self,
-        structure: Molecule | list[Molecule],
+        structure: T | list[T],
     ) -> Response[_output_model]:
         """Create a workflow job for processing structure(s).
 
@@ -72,7 +71,6 @@ class SingleMoleculeMaker(PymatgenBaseMaker):
 
         Args:
             structure: Single Pymatgen SiteCollection or list of SiteCollections.
-            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -88,4 +86,4 @@ class SingleMoleculeMaker(PymatgenBaseMaker):
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        return self.run_job(structure)
+        return self._run_job(structure)

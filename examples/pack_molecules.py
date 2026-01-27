@@ -1,13 +1,13 @@
 """Example of using the PubChemCID node to get a molecule from PubChem."""
 
+from jfchemistry.polymers.generation import GenerateFinitePolymerChain
+from jfchemistry.polymers.input import PolymerInput
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
 from jfchemistry.calculators.torchsim import FairChemCalculator
 from jfchemistry.optimizers.torchsim import TorchSimOptimizer
 from jfchemistry.packing import PackmolPacking
-from jfchemistry.polymers.generation import GenerateFinitePolymerChain
-from jfchemistry.polymers.input import PolymerInput
 
 polymer_job = PolymerInput().make(head="C[*:0]", monomer="[*:0]CC(C1=CC=CC=N1)[*:1]", tail="C[*:1]")
 

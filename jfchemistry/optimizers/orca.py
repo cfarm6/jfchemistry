@@ -14,21 +14,22 @@ from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.orca.orca_calculator import ORCACalculator
 from jfchemistry.calculators.orca.orca_keywords import OptModelType
-from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.makers.base_maker import JFChemistryBaseMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class ORCAOptimizer(ORCACalculator, GeometryOptimization, SingleMoleculeMaker):
+class ORCAOptimizer[InputType: Molecule, OutputType: Molecule](
+    ORCACalculator, GeometryOptimization, JFChemistryBaseMaker[InputType, OutputType]
+):
     """Optimize molecular structures using ORCA DFT calculator.
 
     Inherits all attributes from ORCACalculator.
 
     Attributes:
         name: Name of the optimizer (default: "Orca Optimizer").
-        Additional attributes inherited from ORCACalculator.
-
+        opt: The ORCA optimizer to use for the calculation (default: ["OPT"]).
     """
 
     name: str = "Orca Optimizer"
@@ -38,12 +39,14 @@ class ORCAOptimizer(ORCACalculator, GeometryOptimization, SingleMoleculeMaker):
     )
     _basename: str = "orca_optimizer"
 
-    def operation(self, molecule: Molecule) -> tuple[Molecule, Properties]:
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Optimize a molecule using ORCA DFT calculator."""
         # Write to XYZ file
-        molecule.to("input.xyz", fmt="xyz")
+        structure.to("input.xyz", fmt="xyz")
         # Get the default calculator SK_list
-        sk_list = super().set_keywords()
+        sk_list = super()._set_keywords()
         # Add the optimizer keywords
         for opt_kw in self.opt or []:
             sk_list.append(getattr(Opt, opt_kw))  # type: ignore
@@ -57,7 +60,7 @@ class ORCAOptimizer(ORCACalculator, GeometryOptimization, SingleMoleculeMaker):
         calc.run()
         # Parse the output
         output = calc.get_output()
-        properties = super().parse_output(output)
+        properties = super()._parse_output(output)
         final_molecule = Molecule.from_file(output.get_file(".xyz"))
-        final_molecule = cast("Molecule", final_molecule)
+        final_molecule = cast("OutputType", final_molecule)
         return final_molecule, properties

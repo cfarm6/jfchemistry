@@ -5,8 +5,8 @@ import binascii
 import pickle
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, SerializeAsAny
-from rdkit.Chem import rdchem
+from pydantic import BaseModel, ConfigDict, SerializeAsAny, field_validator
+from rdkit.Chem import rdchem, rdmolfiles, rdmolops
 
 
 class RDMolMolecule(rdchem.Mol):
@@ -96,6 +96,18 @@ class Polymer(BaseModel):
     head: SerializeAsAny[Optional[RDMolMolecule]] = None
     monomer: SerializeAsAny[RDMolMolecule]
     tail: SerializeAsAny[Optional[RDMolMolecule]] = None
+
+    @field_validator("monomer", "head", "tail", mode="after")
+    @classmethod
+    def standardize_molecule(cls, mol: Optional[RDMolMolecule]) -> Optional[RDMolMolecule]:
+        if mol is None:
+            return None
+
+        # Standardize: remove Hs and round-trip through SMILES
+        standardized_mol = rdmolfiles.MolFromSmiles(rdmolfiles.MolToSmiles(rdmolops.RemoveHs(mol)))
+
+        # Wrap back in RDMolMolecule if needed
+        return RDMolMolecule(standardized_mol)  # Adjust based on your RDMolMolecule constructor
 
     def as_dict(self) -> dict[str, Any]:
         """Convert the polymer to a dictionary representation."""

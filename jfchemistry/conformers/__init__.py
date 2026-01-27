@@ -3,10 +3,6 @@
 This module provides tools for generating multiple conformations of molecular
 structures to explore conformational space and identify low-energy structures.
 
-Available Methods:
-    - ConformerGeneration: Base class for conformer generation
-    - CRESTConformers: CREST-based conformer search using metadynamics
-
 Examples:
     >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
     >>> from pymatgen.core import Molecule # doctest: +SKIP

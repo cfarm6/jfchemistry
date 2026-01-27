@@ -1,7 +1,6 @@
-"""Geometry optimization using FairChem neural network potential.
+"""Molecular dynamics simulation using TorchSim in NVE ensemble.
 
-This module provides fast geometry optimization using the FairChem neural
-network potential combined with TorchSim optimizers.
+This module provides molecular dynamics simulation using TorchSim in NVE ensemble.
 """
 
 from dataclasses import dataclass
@@ -17,8 +16,7 @@ class TorchSimMolecularDynamicsNVE(TorchSimMolecularDynamics):
     Inherits all attributes from TorchSimMolecularDynamics.
 
     Attributes:
-        name: Name of the calculator (default: "FairChem TorchSim Single Point Calculator").
-        Additional attributes inherited from FairChemTSCalculator and TorchSimSinglePointCalculator.
+        name: Name of the calculator (default: "TorchSim Molecular Dynamics NVE").
 
     Examples:
         >>> from ase.build import molecule # doctest: +SKIP

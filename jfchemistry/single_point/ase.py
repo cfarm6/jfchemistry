@@ -5,17 +5,21 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 from dataclasses import dataclass, field
+from typing import cast
 
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
-from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
+from jfchemistry.core.makers.single_maker import SingleJFChemistryMaker
 from jfchemistry.core.properties import Properties
-from jfchemistry.single_point.base import SinglePointEnergyCalculator
+from jfchemistry.single_point.base import SinglePointCalculation
 
 
 @dataclass
-class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
+class ASESinglePoint[InputType: Molecule | Structure, OutputType: Molecule | Structure](
+    SingleJFChemistryMaker[InputType, OutputType],
+    SinglePointCalculation,
+):
     """Base class for single point energy calculations using ASE calculators.
 
     Combines single point energy calculations with ASE calculator interfaces.
@@ -25,6 +29,7 @@ class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
 
     Attributes:
         name: Name of the calculator (default: "ASE Single Point Calculator").
+        calculator: The calculator to use for the calculation.
     """
 
     name: str = "ASE Single Point Calculator"
@@ -33,9 +38,14 @@ class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
         metadata={"description": "the calculator to use for the calculation"},
     )
 
-    def operation(
-        self, structure: Molecule | Structure
-    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
+    def __post_init__(self):
+        """Post initialization setup."""
+        self.name = f"{self.name} with {self.calculator.name}"
+        super().__post_init__()
+
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
@@ -47,6 +57,7 @@ class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
 
         Args:
             structure: Input molecular structure with 3D coordinates.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Tuple containing:
@@ -59,8 +70,7 @@ class ASESinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
             spin_multiplicity = int(structure.spin_multiplicity)
         else:
             spin_multiplicity = 1
-        atoms = self.calculator.set_calculator(
-            atoms, charge=charge, spin_multiplicity=spin_multiplicity
-        )
-        properties = self.calculator.get_properties(atoms)
-        return structure, properties
+        self.calculator._set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
+        print(atoms.get_potential_energy())
+        properties = self.calculator._get_properties(atoms)
+        return cast("OutputType", structure), properties

@@ -7,16 +7,15 @@ methods for generating 3D molecular structures from 2D representations.
 from dataclasses import dataclass, field
 from typing import Annotated, Literal, Optional
 
-from pymatgen.core.structure import Molecule, SiteCollection
+from pymatgen.core.structure import Molecule
 
-from jfchemistry.core.makers.single_rdmolecule import SingleRDMoleculeMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.core.structures import RDMolMolecule
 from jfchemistry.generation.base import StructureGeneration
 
 
 @dataclass
-class RDKitGeneration(StructureGeneration, SingleRDMoleculeMaker):
+class RDKitGeneration(StructureGeneration):
     """Generate 3D structures using RDKit distance geometry methods.
 
     This class uses RDKit's distance geometry embedding algorithms (ETKDG family)
@@ -220,9 +219,9 @@ class RDKitGeneration(StructureGeneration, SingleRDMoleculeMaker):
         },
     )
 
-    def operation(
+    def _operation(
         self, mol: RDMolMolecule
-    ) -> tuple[SiteCollection | list[SiteCollection], Properties | list[Properties]]:
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate 3D structure(s) using RDKit distance geometry embedding.
 
         Embeds 3D coordinates into the molecule using the specified ETKDG method
@@ -275,12 +274,13 @@ class RDKitGeneration(StructureGeneration, SingleRDMoleculeMaker):
                 continue
             setattr(params, camel_key, value)
         rdDistGeom.EmbedMultipleConfs(mol, self.num_conformers, params)
-        molecules: list[SiteCollection] = []
+        molecules: list[Molecule] = []
         for confId in range(mol.GetNumConformers()):
             molecule: Molecule = Molecule.from_str(
-                rdmolfiles.MolToV3KMolBlock(mol, confId=int(confId)),
-                fmt="sdf",  # type: ignore[arg-type]
+                rdmolfiles.MolToXYZBlock(mol, confId=int(confId)),
+                fmt="xyz",  # type: ignore[arg-type]
             )
+            molecule.to("input.xyz", fmt="xyz")
             charge = rdmolops.GetFormalCharge(mol)
             spin = int(2 * (abs(charge) // 2) + 1)
             molecule.set_charge_and_spin(charge, spin)

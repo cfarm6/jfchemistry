@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from ase import Atoms
 from monty.json import MSONable
 
+from jfchemistry import ureg
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
 from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
@@ -71,7 +72,7 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
     model: str = field(default="aimnet2", metadata={"description": "AimNet2 model to use"})
     _properties_model: type[AimNet2Properties] = AimNet2Properties
 
-    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
+    def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the AimNet2 calculator on the atoms object.
 
         Attaches the AimNet2 ASE calculator to the atoms object with the specified
@@ -119,7 +120,7 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
 
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> AimNet2Properties:
+    def _get_properties(self, atoms: Atoms) -> AimNet2Properties:
         """Extract computed properties from the AimNet2 calculation.
 
         Retrieves the total energy and atomic partial charges from the AimNet2
@@ -144,8 +145,7 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
         system_property = AimNet2SystemProperties(
             total_energy=SystemProperty(
                 name="Total Energy",
-                value=energy,
-                units="eV",
+                value=energy * ureg.eV,
                 description=f"Total energy prediction from {self.model} model",
             ),
         )
@@ -154,14 +154,12 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
         atomic_property = AimNet2AtomicProperties(
             aimnet2_partial_charges=AtomicProperty(
                 name="AimNet2 Partial Charges",
-                value=charge,
-                units="e",
+                value=charge * ureg.e,
                 description=f"Partial charges predicted by {self.model} model",
             ),
             forces=AtomicProperty(
                 name="AimNet2 Forces",
-                value=atoms.get_forces(),
-                units="eV/Å",
+                value=atoms.get_forces() * ureg.eV / ureg.angstrom,
                 description=f"Forces predicted by {self.model} model",
             ),
         )

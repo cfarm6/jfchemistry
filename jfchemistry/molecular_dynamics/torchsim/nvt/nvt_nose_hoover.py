@@ -20,33 +20,11 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
     Inherits all attributes from TorchSimMolecularDynamics.
 
     Attributes:
-        name: Name of the calculator (default: "FairChem TorchSim Single Point Calculator").
-        Additional attributes inherited from FairChemTSCalculator and TorchSimSinglePointCalculator.
-
-    Examples:
-        >>> from ase.build import molecule # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from jfchemistry.optimizers import AimNet2Optimizer # doctest: +SKIP
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
-        >>>
-        >>> # Fast optimization for screening
-        >>> opt_fast = AimNet2Optimizer( # doctest: +SKIP
-        ...     optimizer="LBFGS", # doctest: +SKIP
-        ...     fmax=0.1,  # Looser convergence # doctest: +SKIP
-        ...     steps=500 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = opt_fast.make(molecule) # doctest: +SKIP
-        >>>
-        >>> # Tight optimization
-        >>> opt_tight = AimNet2Optimizer( # doctest: +SKIP
-        ...     optimizer="LBFGS", # doctest: +SKIP
-        ...     fmax=0.01, # doctest: +SKIP
-        ...     charge=-1, # doctest: +SKIP
-        ...     multiplicity=1 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = opt_tight.make(molecule) # doctest: +SKIP
-        >>> optimized = job.output["structure"] # doctest: +SKIP
-        >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"] # doctest: +SKIP
+        name: Name of the calculator (default: "TorchSim Molecular Dynamics NVT Nose-Hoover").
+        tau: Thermostat relaxation time, defaults to 100*timestep
+        chain_length: Number of Nose-Hoover chains
+        chain_steps: Number of steps per chain
+        sy_steps: Number of Suzuki-Yoshida steps
     """
 
     name: str = "TorchSim Molecular Dynamics NVT Nose-Hoover"
@@ -61,7 +39,7 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
         default=3, metadata={"description": "Number of Suzuki-Yoshida steps"}
     )
 
-    def setup_dicts(self, model: ModelInterface):
+    def _setup_dicts(self, model: ModelInterface):
         """Post initialization hook."""
         device = model.device
         dtype = model.dtype

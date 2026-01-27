@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "workspace": {
+    "name": "jfchemistry",
+    "createdAt": 1768916800039,
+    "preset": "starter"
+  },
+  "authorizedRoots": [
+    "/home/carson/research/SoftwareDevelopment/jfchemistry"
+  ]
+}

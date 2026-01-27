@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from monty.json import MontyDecoder
 from pydantic import BaseModel, ConfigDict
+from pymatgen.core.structure import Molecule, Structure
 
 
 class Output(BaseModel):
@@ -25,3 +26,21 @@ class Output(BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """Convert the Output to a dictionary."""
         return self.model_dump(mode="json")
+
+
+class PolymerInfiniteChainOutput(Output):
+    """Polymer Infinite Chain Output."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    structure: Structure
+    files: Optional[Any] = None
+    properties: Optional[Any] = None
+
+
+class PolymerFiniteChainOutput(Output):
+    """Polymer Infinite Chain Output."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    structure: Molecule
+    files: Optional[Any] = None
+    properties: Optional[Any] = None

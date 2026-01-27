@@ -5,17 +5,20 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 from dataclasses import dataclass, field
+from typing import cast
 
 from pymatgen.core import Molecule, Structure
 
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
-from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
+from jfchemistry.core.makers.base_maker import JFChemistryBaseMaker
 from jfchemistry.core.properties import Properties
-from jfchemistry.single_point.base import SinglePointEnergyCalculator
+from jfchemistry.single_point.base import SinglePointCalculation
 
 
 @dataclass
-class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMaker):
+class TorchSimSinglePoint[InputType: Molecule | Structure, OutputType: Molecule | Structure](
+    SinglePointCalculation, JFChemistryBaseMaker[InputType, OutputType], TorchSimCalculator
+):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -33,9 +36,9 @@ class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMa
         metadata={"description": "the calculator to use for the calculation"},
     )
 
-    def operation(
-        self, structure: Molecule | Structure
-    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Calculate the single point energy of a structure using TorchSim.
 
         Performs geometry optimization by:
@@ -47,6 +50,7 @@ class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMa
 
         Args:
             structure: Input molecular structure with 3D coordinates.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Tuple containing:
@@ -54,5 +58,5 @@ class TorchSimSinglePoint(SinglePointEnergyCalculator, SingleStructureMoleculeMa
                 - Dictionary of computed properties from calculator
 
         """
-        properties = self.calculator.get_properties(structure)
-        return structure, properties
+        properties = self.calculator._get_properties(structure)
+        return cast("OutputType", structure), properties

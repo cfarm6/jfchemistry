@@ -3,14 +3,9 @@
 This module provides Maker classes for creating RDKit molecules from various
 chemical identifiers and representations.
 
-Available Input Types:
-    - Smiles: Create molecules from SMILES strings
-    - PubChemCID: Retrieve molecules from PubChem database by CID
-
 Examples:
     >>> from jfchemistry.inputs import Smiles, PubChemCID
     >>>
-    >>> # Create molecule from SMILES
     >>> smiles_maker = Smiles(add_hydrogens=True, remove_salts=True)
     >>> smiles_job = smiles_maker.make("CCO")
     >>> mol = smiles_job.output["structure"]
@@ -21,6 +16,8 @@ Examples:
     >>> mol = pubchem_job.output["structure"]
 """
 
-from .nodes import PubChemCID, Smiles
+from .polymer import PolymerInput
+from .pubchem import PubChemCID
+from .smiles import Smiles
 
-__all__ = ["PubChemCID", "Smiles"]
+__all__ = ["PolymerInput", "PubChemCID", "Smiles"]

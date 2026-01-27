@@ -9,7 +9,7 @@ import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.core.job import OutputReference, Response
 
-from jfchemistry import SingleStructureMaker, SystemProperty
+from jfchemistry import SingleStructureMaker, SystemProperty, ureg
 from jfchemistry.conformers import CRESTConformers
 from jfchemistry.conformers.base import ConformerGeneration
 from jfchemistry.core.jfchem_job import jfchem_job
@@ -154,14 +154,14 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
         ]
         alpha_energy = np.array(
             [
-                property.system.total_energy.value * 27.2114
+                property.system.total_energy.value.to(ureg.eV).magnitude
                 for property in _alpha_properties
                 if property.system is PropertyClass
             ]
         )
         beta_energy = np.array(
             [
-                property.system.total_energy.value * 27.2114
+                property.system.total_energy.value.to(ureg.eV).magnitude
                 for property in _beta_properties
                 if property.system is PropertyClass
             ]
@@ -190,8 +190,7 @@ class PartitionCoefficientCalculation(SingleStructureMaker):
                     system=PartitionCoefficientSystemProperty(
                         partition_coefficient=SystemProperty(
                             name=f"Partition Coefficient: {self.alpha_phase} - {self.beta_phase}",
-                            value=partition_coefficient,
-                            units="",
+                            value=partition_coefficient * ureg.dimensionless,
                         ),
                     )
                 )

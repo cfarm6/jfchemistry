@@ -5,22 +5,19 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 import glob
-import importlib
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Callable, Literal, Optional, cast
+from typing import Any, Callable, Literal, Optional, cast
 
 import torch
 import torch_sim as ts
 from ase.atoms import Atoms
-from jobflow.core.job import Response
-from jobflow.core.reference import OutputReference
-from pydantic import Field, create_model
-from pymatgen.core.structure import Molecule, SiteCollection, Structure
+from pymatgen.core.structure import Molecule, Structure
 from torch_sim.models.interface import ModelInterface
 from torch_sim.units import UnitConversion as Uc
 
+from jfchemistry import ureg
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
-from jfchemistry.core.jfchem_job import jfchem_job
+from jfchemistry.core import PymatgenBaseMaker
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
 from jfchemistry.molecular_dynamics.base import MolecularDynamics, MolecularDynamicsOutput
 
@@ -43,14 +40,10 @@ class TSMDProperties(Properties):
     system: TSMDSystemProperties
 
 
-class TorchSimMolecularDynamicsOutput(MolecularDynamicsOutput):
-    """Output for TorchSim Molecular Dynamics."""
-
-    properties: TSMDProperties | list[TSMDProperties]
-
-
 @dataclass
-class TorchSimMolecularDynamics(MolecularDynamics):
+class TorchSimMolecularDynamics[InputType: Structure | Molecule, OutputType: Structure | Molecule](
+    PymatgenBaseMaker[InputType, OutputType], MolecularDynamics
+):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -59,8 +52,22 @@ class TorchSimMolecularDynamics(MolecularDynamics):
     , semi-empirical, etc.).
 
     Attributes:
-        name: Name of the calculator (default: "ASE Single Point Calculator").
-
+        name: Name of the calculator (default: "TorchSim Molecular Dynamics").
+        calculator: The calculator to use for the calculation.
+        integrator: The integrator to use for the simulation.
+        duration: The duration of the simulation in fs.
+        timestep: The timestep of the simulation in fs.
+        temperature: The temperature of the simulation in K.
+        autobatcher: Whether to enable autobatching.
+        logfile: The filename prefix to log the trajectory of the simulation.
+        progress_bar: Whether to show a progress bar in the simulation.
+        log_interval: The interval at which to log the simulation in fs.
+        log_potential_energy: Whether to log the potential energy in the simulation.
+        log_kinetic_energy: Whether to log the kinetic energy in the simulation.
+        log_temperature: Whether to log the temperature in the simulation.
+        log_pressure: Whether to log the pressure in the simulation.
+        log_volume: Whether to log the volume in the simulation.
+        log_trajectory: Whether to log the trajectory in the simulation.
     """
 
     name: str = "TorchSim Molecular Dynamics"
@@ -120,60 +127,20 @@ class TorchSimMolecularDynamics(MolecularDynamics):
         metadata={"description": "Whether to log the trajectory in the simulation"},
     )
 
-    _output_model: type[TorchSimMolecularDynamicsOutput] = TorchSimMolecularDynamicsOutput
+    _output_model: type[MolecularDynamicsOutput] = MolecularDynamicsOutput
     _properties_model: type[TSMDProperties] = TSMDProperties
-
-    def make_output_model(self, properties_model: type[Properties]):
-        """Make a properties model for the job."""
-        fields = {}
-        if isinstance(self._output_model, dict):
-            module = self._output_model["@module"]
-            class_name = self._output_model["@callable"]
-            self._output_model = getattr(importlib.import_module(module), class_name)
-        for f_name, f_info in self._output_model.model_fields.items():
-            f_dict = f_info.asdict()  # type: ignore
-            annotation = f_dict["annotation"]
-            if f_name == "properties":
-                annotation = (
-                    properties_model
-                    | list[properties_model]  # type: ignore[type-arg]
-                    | OutputReference
-                    | list[OutputReference]
-                )  # type: ignore
-
-            fields[f_name] = (
-                Annotated[
-                    annotation | None,  # type: ignore
-                    *f_dict["metadata"],  # type: ignore
-                    Field(**f_dict["attributes"]),
-                ],  # type: ignore
-                None,
-            )
-
-        self._output_model = create_model(
-            f"{self._output_model.__name__}",
-            __base__=self._output_model,
-            **fields,
-        )
 
     def __post_init__(self):
         """Post initialization hook."""
         self.init_kwargs = {}
         self.step_kwargs = {}
-        self.make_output_model(self._properties_model)
+        self._make_output_model(self._properties_model)
 
-    def write_file(self, structure: Structure | Molecule) -> str | None:
-        """Write the structure to a file."""
-        if isinstance(structure, Structure):
-            return structure.to(fmt="cif")
-        else:
-            return structure.to(fmt="xyz")
-
-    def setup_dicts(self, model: ModelInterface):
+    def _setup_dicts(self, model: ModelInterface):
         """Setup the dictionaries for the integrator."""
         raise NotImplementedError("This method is not implemented for TorchSimMolecularDynamics")
 
-    def parse_properties(self) -> list[TSMDProperties]:
+    def _parse_properties(self) -> list[TSMDProperties]:
         """Parse the properties from the simulation."""
         logfiles = glob.glob("*.h5")
         if len(logfiles) == 0:
@@ -189,38 +156,36 @@ class TorchSimMolecularDynamics(MolecularDynamics):
                 if self.log_potential_energy:
                     properties["potential_energy"] = SystemProperty(
                         name="potential_energy",
-                        value=trajectory.get_array("potential_energy").flatten().tolist(),
-                        units="eV",
+                        value=trajectory.get_array("potential_energy").flatten().tolist() * ureg.eV,
                     )
                 if self.log_kinetic_energy:
                     properties["kinetic_energy"] = SystemProperty(
                         name="kinetic_energy",
-                        value=trajectory.get_array("kinetic_energy").flatten().tolist(),
-                        units="eV",
+                        value=trajectory.get_array("kinetic_energy").flatten().tolist() * ureg.eV,
                     )
                 if self.log_temperature:
                     properties["temperature"] = SystemProperty(
                         name="temperature",
-                        value=trajectory.get_array("temperature").flatten().tolist(),
-                        units="K",
+                        value=trajectory.get_array("temperature").flatten().tolist() * ureg.K,
                     )
                 if self.log_pressure:
                     properties["pressure"] = SystemProperty(
                         name="pressure",
-                        value=trajectory.get_array("pressure") * Uc.bar_to_pa / Uc.atm_to_pa,
-                        units="atm",
+                        value=trajectory.get_array("pressure")
+                        * Uc.bar_to_pa
+                        / Uc.atm_to_pa
+                        * ureg.atm,
                     )
                 if self.log_volume:
                     properties["volume"] = SystemProperty(
                         name="volume",
-                        value=trajectory.get_array("volume").flatten().tolist(),
-                        units="A^3",
+                        value=trajectory.get_array("volume").flatten().tolist() * ureg.angstrom**3,
                     )
             property = TSMDProperties(system=TSMDSystemProperties(**properties))
             property_objects.append(property)
         return property_objects
 
-    def parse_trajectory(self) -> list[list[Atoms]]:
+    def _parse_trajectory(self) -> list[list[Atoms]]:
         """Parse the trajectory from the simulation."""
         logfiles = glob.glob("*.h5")
         if len(logfiles) == 0:
@@ -237,7 +202,7 @@ class TorchSimMolecularDynamics(MolecularDynamics):
 
         return trajectories
 
-    def make_reporter(self) -> dict[str, Callable[[ts.SimState], Any]]:
+    def _make_reporter(self) -> dict[str, Callable[[ts.SimState], Any]]:
         """Make a reporter for the simulation."""
         log_dict: dict[str, Callable[[ts.SimState], Any]] = {}
 
@@ -265,13 +230,9 @@ class TorchSimMolecularDynamics(MolecularDynamics):
             log_dict["volume"] = lambda state: torch.det(state.cell) * UNITS.distance**3
         return log_dict
 
-    def operation(
-        self,
-        structure: Molecule | Structure | list[Molecule] | list[Structure],
-    ) -> tuple[
-        Molecule | Structure | list[Molecule] | list[Structure],
-        TSMDProperties | list[TSMDProperties],
-    ]:
+    def _operation(
+        self, structure: InputType
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Optimize molecular structure using ASE.
 
         Performs molecular dynamics simulation by:
@@ -288,25 +249,17 @@ class TorchSimMolecularDynamics(MolecularDynamics):
             Tuple containing:
                 - Optimized Pymatgen Molecule
                 - Dictionary of computed properties from calculator
-
-        Examples:
-            >>> from ase.build import molecule # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # doctest: +SKIP
-            >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
-            >>> ethane = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> opt = TBLiteOptimizer(optimizer="LBFGS", fmax=0.01) # doctest: +SKIP
-            >>> structures, properties = opt.operation(ethane) # doctest: +SKIP
         """
         if not isinstance(structure, list):
-            structure_list: list[Molecule | Structure] = [structure]
+            structure_list: list[InputType] = [structure]
         else:
             structure_list = structure
-        model = self.calculator.get_model()
+        model = self.calculator._get_model()
         dtype = model.dtype
         device = model.device
-        self.setup_dicts(model)
+        self._setup_dicts(model)
         log_interval = int(self.log_interval // self.timestep)
-        log_dict = self.make_reporter()
+        log_dict = self._make_reporter()
         trajectory_reporter = ts.TrajectoryReporter(
             [f"{self.logfile}_{i}.h5" for i in range(len(structure_list))],
             state_frequency=log_interval,
@@ -366,62 +319,13 @@ class TorchSimMolecularDynamics(MolecularDynamics):
             final_states = [ts.concatenate_states(reordered_states)]  # type: ignore
         else:
             final_states = _final_states
-        properties = self.parse_properties()
-        final_structures: list[Molecule | Structure] = []
+        properties = self._parse_properties()
+        final_structures = []
         for final_state in final_states:
             for atoms in final_state.to_atoms():
                 # print(len(atoms))
-                final_structures.append(type(structure_list[0]).from_ase_atoms(atoms))
+                final_structures.append(
+                    cast("OutputType", type(structure_list[0]).from_ase_atoms(atoms))
+                )
         # Return as list to match return type annotation
-        return cast("list[Molecule] | list[Structure]", final_structures), properties
-
-    @jfchem_job()
-    def make(
-        self,
-        structure: SiteCollection | list[SiteCollection],
-    ) -> Response[_output_model]:
-        """Create a workflow job for processing structure(s).
-
-        Automatically handles job distribution for lists of structures. Each
-        structure in a list is processed as a separate job for parallel execution.
-
-        Args:
-            structure: Single Pymatgen SiteCollection or list of SiteCollections.
-
-        Returns:
-            Response containing:
-                - structure: Processed structure(s)
-                - files: XYZ format file(s) of the structure(s)
-                - properties: Computed properties from the operation
-
-        Examples:
-            >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # dokctest: +SKIP
-            >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> # Generate conformers
-            >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
-            >>> job = conformer_gen.make(molecule) # doctest: +SKIP
-        """
-        if isinstance(structure, SiteCollection):
-            structure_list = [structure]
-        else:
-            structure_list = structure
-        structures, properties = self.operation(
-            cast("Molecule | Structure | list[Molecule] | list[Structure]", structure_list)
-        )
-        structures = cast("list[Molecule] | list[Structure]", structures)
-        files = [self.write_file(s) for s in structures]
-        if self.log_trajectory:
-            trajectories = self.parse_trajectory() if self.log_trajectory else None
-            trajectory: list[list[SiteCollection]] = [
-                [type(structures[i]).from_ase_atoms(atoms) for atoms in trajectory]
-                for i, trajectory in enumerate(trajectories)
-            ]
-        return Response(
-            output=self._output_model(
-                structure=structures,
-                files=files,
-                properties=properties,
-                trajectory=trajectory if self.log_trajectory else None,
-            ),
-        )
+        return cast("list[OutputType]", final_structures), cast("list[Properties]", properties)

@@ -6,11 +6,9 @@ in jfchemistry.
 
 from dataclasses import dataclass
 
-from jobflow.core.maker import Maker
-
 
 @dataclass
-class SinglePointEnergyCalculator(Maker):
+class SinglePointCalculation:
     """Base Maker for calculating the single point energy of a structure.
 
     This class serves as the base interface for all single point energy calculation

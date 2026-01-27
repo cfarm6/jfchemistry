@@ -10,7 +10,7 @@ from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
 from pyscf.scf import hf
 
-from jfchemistry import AtomicProperty, SystemProperty
+from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 from jfchemistry.core.properties import Properties, PropertyClass
 
@@ -45,7 +45,18 @@ xc_functionals = Literal[*list(XC_CODES.keys())]  # type: ignore
 
 @dataclass
 class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
-    """PySCF GPU DFT Calculator with full type support."""
+    """PySCF GPU DFT Calculator with full type support.
+
+    Attributes:
+        name: Name of the calculator (default: "PySCF GPU Calculator").
+        cores: The number of CPU cores to use for parallel calculations (default: 1).
+        basis_set: The basis set to use for the calculation (default: None).
+        xc_functional: The exchange-correlation functional to use for the calculation (default: None).
+        dispersion_correction: The dispersion correction to use for the calculation (default: None).
+        participation_ratio: Whether to calculate the per-atom participation ratio for a series of molecular orbitals (default: False).
+        homo_threshold: The threshold energies from the HOMO orbital to be considered for the participation ratio calculation in eV (default: None).
+        lumo_threshold: The threshold energies from the LUMO orbital to be considered for the participation ratio calculation in eV (default: None).
+    """
 
     name: str = "PySCF GPU Calculator"
     cores: int = field(
@@ -87,7 +98,7 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
     )
     _properties_model: type[PySCFProperties] = PySCFProperties
 
-    def get_properties(self, mf: hf.RHF) -> PySCFProperties:
+    def _get_properties(self, mf: hf.RHF) -> PySCFProperties:
         """Parse the properties from the output."""
         total_energy = mf.e_tot
         if self.participation_ratio:
@@ -127,15 +138,11 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
                     P_i = B @ S @ C_i
                     P_lumo.append(P_i)
         system_properties = PySCFSystemProperties(
-            total_energy=SystemProperty(value=total_energy, units="Ha", name="Total Energy")
+            total_energy=SystemProperty(value=total_energy * ureg.hartree, name="Total Energy")
         )
         atomic_properties = PySCFAtomicProperties(
-            homo_participation_ratio=AtomicProperty(
-                value=P_homo, units="", name="HOMO Participation Ratio"
-            ),
-            lumo_participation_ratio=AtomicProperty(
-                value=P_lumo, units="", name="LUMO Participation Ratio"
-            ),
+            homo_participation_ratio=AtomicProperty(value=P_homo, name="HOMO Participation Ratio"),
+            lumo_participation_ratio=AtomicProperty(value=P_lumo, name="LUMO Participation Ratio"),
         )
         properties = PySCFProperties(system=system_properties, atomic=atomic_properties)
         return properties

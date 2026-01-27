@@ -21,33 +21,12 @@ class TorchSimMolecularDynamicsNPTLangevin(TorchSimMolecularDynamics):
     Inherits all attributes from TorchSimMolecularDynamics.
 
     Attributes:
-        name: Name of the calculator (default: "FairChem TorchSim Single Point Calculator").
-        Additional attributes inherited from FairChemTSCalculator and TorchSimSinglePointCalculator.
+        name: Name of the calculator (default: "TorchSim Molecular Dynamics NPT Langevin").
+        alpha: Atom friction coefficient controlling noise strength.
+        cell_alpha: Cell friction coefficient controlling noise strength.
+        b_tau: Barostat time constant controlling how quickly the system responds to pressure differences.
+        external_pressure: External pressure applied to the system [atm] (default: 1 atm).
 
-    Examples:
-        >>> from ase.build import molecule # doctest: +SKIP
-        >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from jfchemistry.optimizers import AimNet2Optimizer # doctest: +SKIP
-        >>> molecule = Molecule.from_ase_atoms(molecule("CCH")) # doctest: +SKIP
-        >>>
-        >>> # Fast optimization for screening
-        >>> opt_fast = AimNet2Optimizer( # doctest: +SKIP
-        ...     optimizer="LBFGS", # doctest: +SKIP
-        ...     fmax=0.1,  # Looser convergence # doctest: +SKIP
-        ...     steps=500 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = opt_fast.make(molecule) # doctest: +SKIP
-        >>>
-        >>> # Tight optimization
-        >>> opt_tight = AimNet2Optimizer( # doctest: +SKIP
-        ...     optimizer="LBFGS", # doctest: +SKIP
-        ...     fmax=0.01, # doctest: +SKIP
-        ...     charge=-1, # doctest: +SKIP
-        ...     multiplicity=1 # doctest: +SKIP
-        ... ) # doctest: +SKIP
-        >>> job = opt_tight.make(molecule) # doctest: +SKIP
-        >>> optimized = job.output["structure"] # doctest: +SKIP
-        >>> energy = job.output["properties"]["Global"]["Total Energy [eV]"] # doctest: +SKIP
     """
 
     name: str = "TorchSim Molecular Dynamics NPT Langevin"
@@ -72,7 +51,7 @@ class TorchSimMolecularDynamicsNPTLangevin(TorchSimMolecularDynamics):
         metadata={"description": "External pressure applied to the system [atm] (default: 1 atm)"},
     )
 
-    def setup_dicts(self, model: ModelInterface):
+    def _setup_dicts(self, model: ModelInterface):
         """Post initialization hook."""
         # Init KWargs
         if self.alpha is None:

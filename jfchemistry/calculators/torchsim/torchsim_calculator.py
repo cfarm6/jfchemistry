@@ -47,32 +47,19 @@ class TorchSimCalculator(Calculator, MSONable):
         default="cpu", metadata={"description": "The device to use for the calculator"}
     )
 
-    def get_model(self) -> ModelInterface:
+    def _get_model(self) -> ModelInterface:
         """Set the calculator for the atoms.
 
         This method must be implemented by subclasses to attach a specific
         ASE calculator to the atoms object.
 
         Args:
-            atoms: ASE Atoms object representing the molecular structure.
-            charge: Total molecular charge.
-            spin_multiplicity: Spin multiplicity (2S+1 where S is total spin).
 
         Returns:
-            ASE Atoms object with the calculator attached.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-
-        Examples:
-            >>> # In a subclass
-            >>> def set_calculator(self, atoms, charge, spin_multiplicity):
-            ...     from ase.calculators.emt import EMT
-            ...     atoms.calc = EMT()
-            ...     return atoms
+            ModelInterface object representing the model.
         """
         raise NotImplementedError
 
-    def get_properties(self, system: SiteCollection) -> Properties:
+    def _get_properties(self, system: SiteCollection) -> Properties:
         """Get the properties for the atoms."""
         raise NotImplementedError

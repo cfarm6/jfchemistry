@@ -7,7 +7,7 @@ from jobflow.core.job import Response, job
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import Field, create_model
-from pymatgen.core.structure import SiteCollection
+from pymatgen.core.structure import Molecule
 from rdkit.Chem import rdchem
 
 from jfchemistry.core.outputs import Output
@@ -36,7 +36,7 @@ class SingleRDMoleculeMaker(Maker):
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def make_output_model(self, properties_model: type[Properties]):
+    def _make_output_model(self, properties_model: type[Properties]):
         """Make a properties model for the job."""
         fields = {}
         for f_name, f_info in self._output_model.model_fields.items():
@@ -67,11 +67,11 @@ class SingleRDMoleculeMaker(Maker):
 
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
-        self.make_output_model(self._properties_model)
+        self._make_output_model(self._properties_model)
 
-    def operation(
+    def _operation(
         self, mol: RDMolMolecule
-    ) -> tuple[SiteCollection | list[SiteCollection], Properties | list[Properties]]:
+    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Perform the computational operation on a molecule.
 
         This method must be implemented by subclasses to define the specific
@@ -98,7 +98,7 @@ class SingleRDMoleculeMaker(Maker):
         """
         raise NotImplementedError
 
-    def handle_conformers(self, structure: RDMolMolecule) -> Response[_output_model]:
+    def _handle_conformers(self, structure: RDMolMolecule) -> Response[_output_model]:
         """Distribute workflow jobs for each conformer in a molecule.
 
         Creates separate jobs for each conformer in an RDKit molecule, allowing
@@ -132,12 +132,14 @@ class SingleRDMoleculeMaker(Maker):
             detour=jobs,  # type: ignore
         )
 
-    def handle_list_of_structures(self, structures: list[RDMolMolecule]) -> Response[_output_model]:
+    def _handle_list_of_structures(
+        self, structures: list[RDMolMolecule]
+    ) -> Response[_output_model]:
         """Distribute workflow jobs for a list of RDKit molecules.
 
         Processes a list of RDMolMolecule structures by creating individual jobs for each molecule.
         If any molecule contains multiple conformers, those conformers are handled
-        separately using handle_conformers.
+        separately using _handle_conformers.
 
         Args:
             maker: A Maker instance that will process each structure.
@@ -157,12 +159,12 @@ class SingleRDMoleculeMaker(Maker):
             >>> opt = TBLiteOptimizer()  # doctest: +SKIP
             >>> structure = pubchem_cid.output["structure"] # doctest: +SKIP
             >>> structures = [structure, structure] # doctest: +SKIP
-            >>> results = handle_list_of_structures(opt, structures)  # doctest: +SKIP
+            >>> results = _handle_list_of_structures(opt, structures)  # doctest: +SKIP
         """
         jobs: list[Response] = []
         for structure in structures:
             if structure.GetNumConformers() > 1:
-                jobs.append(self.handle_conformers(structure))
+                jobs.append(self._handle_conformers(structure))
             else:
                 jobs.append(self.make(structure))  # type: ignore
 
@@ -175,7 +177,7 @@ class SingleRDMoleculeMaker(Maker):
             detour=jobs,  # type: ignore
         )
 
-    def handle_molecules(
+    def _handle_molecules(
         self, structure: RDMolMolecule | list[RDMolMolecule]
     ) -> Response[_output_model] | None:
         """Route RDKit molecules to appropriate job distribution handler.
@@ -193,9 +195,9 @@ class SingleRDMoleculeMaker(Maker):
 
         """
         if type(structure) is list:
-            return self.handle_list_of_structures(structure)
+            return self._handle_list_of_structures(structure)
         elif cast("RDMolMolecule", structure).GetNumConformers() > 1:
-            return self.handle_conformers(cast("RDMolMolecule", structure))
+            return self._handle_conformers(cast("RDMolMolecule", structure))
         else:
             return None
 
@@ -219,14 +221,15 @@ class SingleRDMoleculeMaker(Maker):
                 - files: MOL format file(s) of the structure(s)
                 - properties: Computed properties from the operation
         """
-        resp = self.handle_molecules(molecule)
+        resp = self._handle_molecules(molecule)
         if resp is not None:
             return resp
-        structures, properties = self.operation(cast("RDMolMolecule", molecule))
-        if isinstance(structures, SiteCollection):
-            files = [structures.to(fmt="cif")]
+        structures, properties = self._operation(cast("RDMolMolecule", molecule))
+        if isinstance(structures, list):
+            files = [molecule.to(fmt="xyz") for molecule in structures]
         else:
-            files = [m.to(fmt="cif") for m in structures]
+            files = [structures.to(fmt="xyz")]
+
         return Response(
             output=self._output_model(
                 structure=structures,

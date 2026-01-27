@@ -5,5 +5,4 @@ from jfchemistry.packing.packmol import PackmolPacking
 
 __all__ = [
     "PackmolPacking",
-    "StructurePacking",
 ]

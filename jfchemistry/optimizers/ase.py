@@ -5,7 +5,7 @@ ASE (Atomic Simulation Environment) optimizers with various calculators.
 """
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal, Optional, cast
 
 import ase.optimize
 from ase import filters
@@ -13,13 +13,15 @@ from ase.filters import Filter
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
-from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
+from jfchemistry.core.makers import SingleJFChemistryMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
+class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Molecule](
+    SingleJFChemistryMaker[InputType, OutputType], GeometryOptimization
+):
     """Base class for geometry optimization using ASE optimizers.
 
     Combines geometry optimization workflows with ASE calculator interfaces.
@@ -88,7 +90,14 @@ class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
         metadata={"description": "the log file to save the optimization"},
     )
 
-    def operation(self, structure: Molecule | Structure) -> tuple[Molecule | Structure, Properties]:
+    def __post_init__(self):
+        """Post-initialization hook."""
+        self.name = f"{self.name} with {self.calculator.name}"
+        super().__post_init__()
+
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
@@ -100,7 +109,7 @@ class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
 
         Args:
             structure: Input molecular structure with 3D coordinates.
-            calculator: Calculator to use for the calculation.
+            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Tuple containing:
@@ -121,7 +130,7 @@ class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
             spin_multiplicity = int(structure.spin_multiplicity)
         else:
             spin_multiplicity = 1
-        atoms = self.calculator.set_calculator(
+        atoms = self.calculator._set_calculator(
             atoms, charge=charge, spin_multiplicity=spin_multiplicity
         )
 
@@ -137,9 +146,15 @@ class ASEOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
             if self.unit_cell_optimizer is not None and isinstance(opt_atoms, Filter):
                 opt_atoms = opt_atoms.atoms
 
-        properties = self.calculator.get_properties(opt_atoms)
+        properties = self.calculator._get_properties(opt_atoms)
         from ase import io
 
         io.write("opt.cif", opt_atoms)
-        opt_structure = type(structure).from_ase_atoms(opt_atoms)
-        return opt_structure, properties
+        if isinstance(structure, Structure):
+            opt_structure = Structure.from_ase_atoms(opt_atoms)
+        elif isinstance(structure, Molecule):
+            opt_structure = Molecule.from_ase_atoms(opt_atoms)
+        else:
+            raise ValueError(f"Unsupported structure type: {type(structure)}")
+
+        return cast("OutputType", opt_structure), properties

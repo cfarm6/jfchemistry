@@ -6,7 +6,6 @@ in jfchemistry.
 
 from typing import Optional
 
-from jobflow import Maker
 from pymatgen.core.structure import SiteCollection
 
 from jfchemistry.core.outputs import Output
@@ -18,7 +17,7 @@ class MolecularDynamicsOutput(Output):
     trajectory: Optional[list[SiteCollection] | list[list[SiteCollection]]]
 
 
-class MolecularDynamics(Maker):
+class MolecularDynamics:
     """Base Maker for running molecular dynamics simulations.
 
     This class serves as the base interface for all molecular dynamics

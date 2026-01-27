@@ -54,7 +54,7 @@ class SingleStructureMaker(PymatgenBaseMaker):
     _output_model: type[Output] = Output
     _properties_model: type[Properties] = Properties
 
-    def operation(self, structure: Structure) -> tuple[Structure | list[Structure], Properties]:
+    def _operation(self, structure: Structure) -> tuple[Structure | list[Structure], Properties]:
         """Perform the computational operation on a structure."""
         raise NotImplementedError
 
@@ -70,7 +70,6 @@ class SingleStructureMaker(PymatgenBaseMaker):
 
         Args:
             structure: Single Pymatgen SiteCollection or list of SiteCollections.
-            **kwargs: Additional kwargs to pass to the operation.
 
         Returns:
             Response containing:
@@ -86,4 +85,4 @@ class SingleStructureMaker(PymatgenBaseMaker):
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP
             >>> job = conformer_gen.make(molecule) # doctest: +SKIP
         """
-        return self.run_job(structure)
+        return self._run_job(structure)

@@ -254,7 +254,7 @@ class CRESTConformers(ConformerGeneration):
     _xyz_filename: str = "input.xyz"
     _properties_model: type[CRESTProperties] = CRESTProperties
 
-    def make_dict(self):
+    def _make_dict(self):
         """Make the dictionary for the CREST input."""
         self._input_dict["threads"] = self.threads
         self._input_dict["runtype"] = self.runtype
@@ -287,13 +287,13 @@ class CRESTConformers(ConformerGeneration):
             "dump": self.dynamics_dump_frequency,
         }
 
-    def write_toml(self):
+    def _write_toml(self):
         """Write the TOML file for the CREST input."""
         # Create a copy of the input nested dictionary without an key-value pairs with None values
         with open(self._toml_filename, "wb") as f:
             tomli_w.dump(self._input_dict, f)
 
-    def make_commands(self):
+    def _make_commands(self):
         """Make the CLI for the CREST input."""
         self._commands.append(self.executable)
         self._commands.append("--input")
@@ -308,7 +308,7 @@ class CRESTConformers(ConformerGeneration):
             self._commands.append("--uhf")
             self._commands.append(str(self.spin_multiplicity))
 
-    def run(self):
+    def _run(self):
         """Run the CREST calculation."""
         # Save current working directory
         # original_dir = os.getcwd()
@@ -338,7 +338,7 @@ class CRESTConformers(ConformerGeneration):
         #     # Remove the temporary directory
         #     shutil.rmtree(tmp_dir)
 
-    def operation(
+    def _operation(
         self, molecule: Molecule
     ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
         """Generate conformers using CREST metadynamics search.
@@ -349,7 +349,7 @@ class CRESTConformers(ConformerGeneration):
 
         Args:
             molecule: Input molecular structure with 3D coordinates. The
-         1       structure's charge property is used if calculation charges
+                structure's charge property is used if calculation charges
                 are not explicitly set.
 
         Returns:
@@ -371,10 +371,10 @@ class CRESTConformers(ConformerGeneration):
 
         self.input = self._xyz_filename
 
-        self.make_dict()
-        self.write_toml()
-        self.make_commands()
-        self.run()
+        self._make_dict()
+        self._write_toml()
+        self._make_commands()
+        self._run()
 
         conformers = XYZ.from_file("crest_conformers.xyz").all_molecules
 

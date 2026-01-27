@@ -106,7 +106,7 @@ class CRESTCalculator(Calculator, MSONable):
     _toml_filename: str = "crest.toml"
     _xyz_filename: str = "input.xyz"
 
-    def make_dict(self):
+    def _make_dict(self):
         """Make the TOML dictionary for the CREST input."""
         self._input_dict["input"] = self._xyz_filename
         self._input_dict["threads"] = self.threads
@@ -118,12 +118,12 @@ class CRESTCalculator(Calculator, MSONable):
             "bthr": self.rotational_rms_threshold,
         }
 
-    def write_toml(self):
+    def _write_toml(self):
         """Write the TOML file for the CREST input."""
         with open(self._toml_filename, "wb") as f:
             tomli_w.dump(self._input_dict, f)
 
-    def make_commands(self):
+    def _make_commands(self):
         """Make the CLI for the CREST input."""
         self._commands.append(self.executable)
         self._commands.append("--input")
@@ -142,7 +142,7 @@ class CRESTCalculator(Calculator, MSONable):
         else:
             self._commands.append("--nosz")
 
-    def run(self):
+    def _run(self):
         """Run the CREST calculation."""
         # Save current working directory
         original_dir = os.getcwd()

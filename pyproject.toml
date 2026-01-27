@@ -6,90 +6,97 @@ version = "0.0.1"
 readme = "README.md"
 keywords = []
 authors = [{ name = "Carson Farmer" }]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "multiple-minimum-monte-carlo>=0.0.9,<0.0.10",
     "tomli-w>=1.2.0,<2",
     "icecream>=2.1.8,<3",
-    "orca-pi@git+https://github.com/faccts/opi.git",
+    "orca-pi>=1.0.1",
     "fireworks>=2.0.6,<3",
-    "molbar>=1.1.3,<2",
-    "prism-pruner@git+https://github.com/ntampellini/prism_pruner.git",
+    # "molbar@git+https://git.rwth-aachen.de/bannwarthlab/molbar.git@dev",
+    "prism-pruner",
     "periodictable>=2.0.2,<3",
     "fairchem-core>=2.11.0,<3",
-    "aimnet@git+https://github.com/cfarm6/aimnetcentral.git@numpy2.0",
-    "orb_models@git+https://github.com/orbital-materials/orb-models.git",
+    # "aimnet@git+https://github.com/cfarm6/aimnetcentral.git@numpy2.0",
+    "aimnet[ase]@git+https://github.com/isayevlab/aimnetcentral.git",
+    "orb-models>=0.5.5,<0.6",
     "torch>=2.7.0,<3",
     "torch-sim-atomistic>=0.4.0,<0.5",
-    "rdkit",
-    "gpu4pyscf-cuda12x>=1.5.1,<2",
-    "cutensor-cu12>=2.4.1,<3",
+    "gpu4pyscf-cuda13x>=1.5.1,<2",
+    "cutensor-cu13>=2.4.1,<3",
+    "ty",
+    "microsoft-skala>=1.1.0,<2",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.pixi.system-requirements]
+cuda = "13.0"
 
 [tool.pixi.workspace]
 channels = ["nvidia", "conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.dependencies]
+python = ">=3.13"
 ase = ">=3.26.0,<4"
 crest = ">=3.0.2,<4"
-icecream = ">=2.1.8,<3"
-jobflow = ">=0.2.0,<0.3"
+jobflow = ">=0.2.1,<0.3"
 networkx = "==3.1"
-openbabel = ">=3.1.1,<4"
 packmol = ">=21.1.2,<22"
-python = ">=3.12,<3.14"
 pymatgen = ">=2025.10.7,<2026"
-pip = ">=25.2,<26"
 rich = "<14"
-tblite = ">=0.4.0,<0.5"
-tblite-python = ">=0.4.0,<0.5"
-numpy = "==2.2.6"
-gcc = ">=14.3.0,<14.4"
+tblite = ">=0.5.0,<0.6"
+tblite-python = ">=0.5.0,<0.6"
 gfortran = ">=14.3.0,<14.4"
-cuda = ">=12,<13"
+rdkit = ">=2025.9.3,<2026"
+pint = ">=0.25.2,<0.26"
+cuda = ">=13, <14"
 cuda-nvrtc = ">=13.1.80,<14"
 cupy = ">=13.6.0,<14"
+numpy = "<2.4.0"
+nwchem = ">=7.3.1,<8"
 
+[tool.pixi.pypi-options.dependency-overrides]
+dm-tree = ">= 0.1.9,<0.2"
+gpu4pyscf-libxc-cuda13x = "==0.7"
+numpy = "<2.4.0"
+ase = ">=3.26.0,<4"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
-docs = { features = ["docs"], solve-group = "default" }
+development = { features = ["development"], solve-group = "default" }
+documentation = { features = ["documentation"], solve-group = "default" }
 
 
-[tool.pixi.feature.dev.tasks]
+[tool.pixi.feature.development.tasks]
 fmt = { cmd = "ruff format ." }
 lint = { cmd = "ruff check . --fix" }
 types = { cmd = "ty check" }
 test = { cmd = "pytest" }
 all = { depends-on = ["fmt", "lint", "types", "test"] }
 
-[tool.pixi.feature.dev.dependencies]
+[tool.pixi.feature.development.dependencies]
 pytest = ">=8.3"
 pytest-cov = ">=6.0"
 ruff = ">=0.11"
 pre-commit = ">=4.2"
 pytest-xdist = "*"
-
-
-[tool.pixi.feature.dev.pypi-dependencies]
-ty = "*"
 marimo = "*"
 
-[tool.pixi.feature.docs.pypi-dependencies]
-mkdocs-material = "*"
-mkdocs = ">=1.6.1,<2"
+[tool.pixi.feature.development.pypi-dependencies]
+ty = "*"
+pymatviz = "*"
+[tool.pixi.feature.documentation.pypi-dependencies]
+zensical = "*"
+mkdocstrings = "*"
 mkdocstrings-python = "*"
 
-[tool.pixi.feature.docs.tasks]
+[tool.pixi.feature.documentation.tasks]
 build_docs = { cmd = "mkdocs gh-deploy --config-file ./mkdocs.yml --force" }
 all = { depends-on = ["build_docs"] }
 
@@ -103,7 +110,7 @@ select = [
     "E",      # pycodestyle errors
     "F",      # pyflakes
     "I",      # isort
-    "N",      # pep8-naming conventions
+    "N",      # pep8-14naming conventions
     "W",      # pycodestyle warnings
     "C4",     # comprehensions
     "PL",     # pylint
@@ -141,6 +148,3 @@ doctest_optionflags = "NORMALIZE_WHITESPACE"
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
-
-[dependency-groups]
-dev = ["marimo[recommended]>=0.17.7,<0.18"]

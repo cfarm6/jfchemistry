@@ -6,11 +6,9 @@ in jfchemistry.
 
 from dataclasses import dataclass
 
-from jobflow.core.maker import Maker
-
 
 @dataclass
-class GeometryOptimization(Maker):
+class GeometryOptimization:
     """Base Maker for optimizing a structure.
 
     This class serves as the base interface for all geometry optimization

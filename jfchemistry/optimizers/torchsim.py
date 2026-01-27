@@ -11,13 +11,17 @@ import torch_sim as ts
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
-from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
+from jfchemistry.core.makers.single_maker import SingleJFChemistryMaker
+
+# from jfchemistry.core.makers.single_structure_molecule import SingleStructureMoleculeMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
 @dataclass
-class TorchSimOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
+class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | Structure](
+    SingleJFChemistryMaker[InputType, OutputType], GeometryOptimization
+):
     """Base class for single point energy calculations using TorchSim calculators.
 
     Combines single point energy calculations with TorchSim calculator interfaces.
@@ -63,9 +67,9 @@ class TorchSimOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
         },
     )
 
-    def operation(
-        self, structure: Molecule | Structure
-    ) -> tuple[Molecule | Structure | list[Molecule] | list[Structure], Properties]:
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:
@@ -92,8 +96,8 @@ class TorchSimOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
             >>> structures, properties = opt.operation(ethane) # doctest: +SKIP
         """
         optimizer = getattr(ts.Optimizer, self.optimizer.lower().replace(" ", "_"))
-        model = self.calculator.get_model()
-
+        model = self.calculator._get_model()
+        structure.to_ase_atoms().write("initial_structure.xyz")
         final_state = ts.optimize(
             system=structure.to_ase_atoms(),
             model=model,
@@ -101,5 +105,6 @@ class TorchSimOptimizer(SingleStructureMoleculeMaker, GeometryOptimization):
         )
         final_atoms = final_state.to_atoms()[0]
         final_structure = type(structure).from_ase_atoms(final_atoms)
-        properties = self.calculator.get_properties(final_structure)
+        properties = self.calculator._get_properties(final_structure)
+        final_structure.to_ase_atoms().write("final_structure.xyz")
         return final_structure, properties

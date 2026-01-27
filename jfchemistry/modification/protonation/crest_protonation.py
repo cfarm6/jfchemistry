@@ -6,19 +6,21 @@ for generating low-energy protonated structures at different sites.
 
 import os
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal, Optional, cast
 
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.crest import CRESTCalculator
-from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core import PymatgenBaseMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.modification.molbar_screening import molbar_screening
 from jfchemistry.modification.protonation.base import ProtonationMaker
 
 
 @dataclass
-class CRESTProtonation(ProtonationMaker, CRESTCalculator, SingleMoleculeMaker):
+class CRESTProtonation[InputType: Molecule, OutputType: Molecule](
+    ProtonationMaker, CRESTCalculator, PymatgenBaseMaker[InputType, OutputType]
+):
     """Generate protonated structures using CREST.
 
     Uses CREST's automated protonation workflow to identify basic sites
@@ -79,24 +81,24 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator, SingleMoleculeMaker):
     _runtype: Literal["protonate"] = "protonate"
     _output_filename: str = "protonated.xyz"
 
-    def make_commands(self):
+    def _make_commands(self):
         """Make the CLI for the CREST input."""
-        super().make_commands()
+        super()._make_commands()
         self._commands.append(f"--{self._runtype}")
         if self.ion is not None:
             self._commands.append(f"--swel {self.ion}{self.ion_charge}+")
         self._commands.append("--newversion")
 
-    def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+    def _operation(
+        self, structure: InputType
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Generate protonated structures using CREST.
 
         Runs CREST's protonation workflow to identify basic sites and
         generate optimized protonated structures.
 
         Args:
-            molecule: Input molecular structure with 3D coordinates. The
+            structure: Input molecular structure with 3D coordinates. The
                 structure's charge is used for the CREST calculation.
 
         Returns:
@@ -111,13 +113,13 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator, SingleMoleculeMaker):
             >>> prot = CRESTProtonation(ewin=6.0, threads=4) # doctest: +SKIP
             >>> structures, properties = prot.operation(molecule) # doctest: +SKIP
         """
-        molecule.to("input.xyz", fmt="xyz")
-        if self.charge is None and molecule.charge is not None:
-            self.charge = molecule.charge
-        super().make_dict()
-        super().write_toml()
-        self.make_commands()
-        super().run()
+        structure.to("input.xyz", fmt="xyz")
+        if self.charge is None and structure.charge is not None:
+            self.charge = structure.charge
+        super()._make_dict()
+        super()._write_toml()
+        self._make_commands()
+        super()._run()
         if not os.path.exists(self._output_filename):
             raise FileNotFoundError(
                 "No tautomers found. Please check your CREST settings and log file."
@@ -128,4 +130,4 @@ class CRESTProtonation(ProtonationMaker, CRESTCalculator, SingleMoleculeMaker):
                 charge=molecules[i].charge + 1,
                 spin_multiplicity=int(molecules[i].charge + 1) // 2 + 2,
             )
-        return molecules, Properties()
+        return cast("list[OutputType]", molecules), cast("list[Properties]", Properties())

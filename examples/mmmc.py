@@ -1,14 +1,14 @@
 """Example of using the PubChemCID node to get a molecule from PubChem."""
 
 import numpy as np
+from jfchemistry.polymers.generation import GenerateFinitePolymerChain
+from jfchemistry.polymers.input import PolymerInput
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
 from jfchemistry.calculators.torchsim import OrbCalculator
 from jfchemistry.conformers import MMMCConformers
 from jfchemistry.optimizers.torchsim import TorchSimOptimizer
-from jfchemistry.polymers.generation import GenerateFinitePolymerChain
-from jfchemistry.polymers.input import PolymerInput
 
 chain_length = 2
 rotation_angles = np.array([180] * (chain_length) + np.random.randn(chain_length) * 10)

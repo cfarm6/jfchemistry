@@ -1,4 +1,4 @@
-"""Base class for makers that process single structures."""
+"""Base class for makers in JFChemistry."""
 
 import importlib
 from dataclasses import dataclass, field
@@ -8,28 +8,21 @@ from jobflow.core.job import Response
 from jobflow.core.maker import Maker
 from jobflow.core.reference import OutputReference
 from pydantic import Field, create_model
-from pymatgen.core.structure import Molecule, SiteCollection, Structure
+from pymatgen.core.structure import Molecule, Structure
 
-from jfchemistry.calculators.base import Calculator
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties
 
+type RecursiveStructureList = Structure | list[RecursiveStructureList]
+type RecursiveMoleculeList = Molecule | list[RecursiveMoleculeList]
+
 
 @dataclass
-class PymatgenBaseMaker(Maker):
+class JFChemistryBaseMaker[
+    InputType: RecursiveMoleculeList | RecursiveStructureList,
+    OutputType: RecursiveMoleculeList | RecursiveStructureList,
+](Maker):
     """Base class for operations on structures with 3D geometry.
-
-    This Maker processes Pymatgen SiteCollection objects (Molecule or Structure)
-    that have assigned 3D coordinates. It handles automatic job distribution for
-    lists of structures and provides a common interface for geometry optimization,
-    conformer generation, and structure modifications.
-
-    Subclasses should implement the operation() method to define specific
-    computational tasks such as geometry optimization, property calculation,
-    or structure modification.
-
-    Attributes:
-        name: Descriptive name for the job/operation being performed.
 
     Examples:
         >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
@@ -55,11 +48,11 @@ class PymatgenBaseMaker(Maker):
     """
 
     name: str = "Single Structure Calculator Maker"
-    calculator: Calculator = field(default_factory=lambda: Calculator())
     _output_model: Type[Output] = Output
     _properties_model: Type[Properties] = Properties
+    _ensemble: bool = field(default=False)
 
-    def make_output_model(self, properties_model: type[Properties]):
+    def _make_output_model(self, properties_model: type[Properties]):
         """Make a properties model for the job."""
         fields = {}
         if isinstance(self._output_model, dict):
@@ -72,15 +65,16 @@ class PymatgenBaseMaker(Maker):
             if f_name == "properties":
                 annotation = (
                     properties_model
-                    | list[type[properties_model]]  # type: ignore
+                    | list[properties_model]  # type: ignore
                     | OutputReference
                     | list[OutputReference]
                 )  # type: ignore
-
+            elif f_name == "structure":
+                annotation = OutputType | list[OutputType] | OutputReference | list[OutputReference]
             fields[f_name] = (
                 Annotated[
                     annotation | None,  # type: ignore
-                    *f_dict["metadata"],  # type: ignore
+                    *f_dict["metadata"],
                     Field(**f_dict["attributes"]),
                 ],  # type: ignore
                 None,
@@ -95,11 +89,23 @@ class PymatgenBaseMaker(Maker):
 
     def __post_init__(self):
         """Post-initialization hook to make the output model."""
-        self.make_output_model(self.calculator._properties_model)
+        self._make_output_model(self._properties_model)
 
-    def handle_structures(
-        self,
-        structures: Structure | Molecule | list[Structure] | list[Molecule],
+    def _write_file(self, structure: Structure | Molecule) -> str | None:
+        """Write the structure to a file."""
+        if isinstance(structure, Structure):
+            return structure.to(fmt="cif")
+        elif isinstance(structure, Molecule):
+            return structure.to(fmt="xyz")
+
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+        """Perform the computational operation on a structure."""
+        raise NotImplementedError
+
+    def _handle_structures(
+        self, structures: InputType | list[InputType], **kwargs
     ) -> Response[_output_model]:
         """Distribute workflow jobs for Pymatgen structures.
 
@@ -116,22 +122,10 @@ class PymatgenBaseMaker(Maker):
         Returns:
             Response containing distributed jobs if structures is a list, None if
             structures is a single SiteCollection to be processed directly.
-
-        Examples:
-            >>> from jfchemistry.optimizers import ORBModelOptimizer # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # doctest: +SKIP
-            >>> from ase.build import molecule # doctest: +SKIP
-            >>> mol1 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> mol2 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> mol3 = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> structures = [mol1, mol2, mol3]  # doctest: +SKIP
-            >>> opt = ORBModelOptimizer() # doctest: +SKIP
-            >>> # Processes each structure in parallel
-            >>> result = handle_structures(opt, structures) # doctest: +SKIP
         """
         jobs: list[Response] = []
         for structure in structures:
-            jobs.append(self.make(structure))  # type: ignore
+            jobs.append(self.make(structure, **kwargs))  # type: ignore
 
         output = self._output_model(
             structure=[job.output.structure for job in jobs],
@@ -143,47 +137,15 @@ class PymatgenBaseMaker(Maker):
             detour=jobs,  # type: ignore
         )
 
-    def write_file(self, structure: SiteCollection) -> str | None:
-        """Write the structure to a file."""
-        if isinstance(structure, Structure):
-            return structure.to(fmt="cif")
-        elif isinstance(structure, Molecule):
-            return structure.to(fmt="xyz")
-
-    def operation(*args, **kwargs):
-        """Perform the computational operation on a structure.
-
-        This method must be implemented by subclasses to define the specific
-        operation to perform (e.g., optimization, property calculation).
-
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            Tuple containing:
-                - Processed structure(s) (single SiteCollection or list)
-                - Dictionary of computed properties (or None)
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        raise NotImplementedError
-
-    def run_job(
-        self, sitecollection: Structure | Molecule | list[Structure] | list[Molecule]
-    ) -> Response[_output_model]:
+    def _run_job(self, structure: InputType | list[InputType], **kwargs) -> Response[_output_model]:
         """Run the job for a single structure or a list of structures."""
-        if isinstance(sitecollection, list) and len(sitecollection) == 1:
-            sitecollection = sitecollection[0]
-        elif isinstance(sitecollection, list):
-            return self.handle_structures(sitecollection)
-
-        structures, properties = self.operation(sitecollection)
+        if (not self._ensemble) and isinstance(structure, list):
+            return self._handle_structures(structure, **kwargs)
+        structures, properties = self._operation(structure, **kwargs)
         if isinstance(structures, list):
-            files = [self.write_file(s) for s in structures]
+            files = [self._write_file(s) for s in structures]
         else:
-            files = [self.write_file(structures)]
+            files = [self._write_file(structures)]
         return Response(
             output=self._output_model(
                 structure=structures,

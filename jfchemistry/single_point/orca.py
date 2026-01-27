@@ -5,43 +5,45 @@ This module provides fast geometry optimization using the ORCA DFT calculator
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from opi.core import Calculator
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.calculators.orca.orca_calculator import ORCACalculator, ORCAProperties
-from jfchemistry.core.makers.single_molecule import SingleMoleculeMaker
+from jfchemistry.core.makers.base_maker import JFChemistryBaseMaker
 from jfchemistry.core.properties import Properties
-from jfchemistry.single_point.base import SinglePointEnergyCalculator
+from jfchemistry.single_point.base import SinglePointCalculation
 
 
 @dataclass
-class ORCASinglePointCalculator(SinglePointEnergyCalculator, SingleMoleculeMaker, ORCACalculator):
+class ORCASinglePointCalculator[InputType: Molecule, OutputType: Molecule](
+    SinglePointCalculation, JFChemistryBaseMaker[InputType, OutputType], ORCACalculator
+):
     """Calculate the single point energy of a structure using ORCA DFT calculator.
 
     Inherits all attributes from ORCACalculator.
 
     Attributes:
         name: Name of the calculator (default: "ORCA Single Point Calculator").
-        Additional attributes inherited from ORCACalculator.
-
+        basename: Basename of the calculator (default: "orca_single_point").
     """
 
     name: str = "ORCA Single Point Calculator"
-    _basename: str = "orca_single_point"
+    basename: str = "orca_single_point"
     _properties_model: type[ORCAProperties] = ORCAProperties
 
-    def operation(
-        self, molecule: Molecule
-    ) -> tuple[Molecule | list[Molecule], Properties | list[Properties]]:
+    def _operation(
+        self, structure: InputType, **kwargs
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
         """Calculate the single point energy of a molecule using ORCA."""
         # Write to XYZ file
-        molecule.to("input.xyz", fmt="xyz")
+        structure.to("input.xyz", fmt="xyz")
         # Get the default calculator SK_list
-        sk_list = super().set_keywords()
+        sk_list = super()._set_keywords()
         # Make the calculator
-        calc = Calculator(basename=self._basename, working_dir=Path("."))
+        calc = Calculator(basename=self.basename, working_dir=Path("."))
         calc.structure = Structure.from_xyz("input.xyz")
         calc.input.add_simple_keywords(*sk_list)
         calc.input.ncores = self.cores
@@ -50,5 +52,5 @@ class ORCASinglePointCalculator(SinglePointEnergyCalculator, SingleMoleculeMaker
         calc.run()
         # Parse the output
         output = calc.get_output()
-        properties = super().parse_output(output)
-        return molecule, properties
+        properties = super()._parse_output(output)
+        return cast("OutputType", structure), properties

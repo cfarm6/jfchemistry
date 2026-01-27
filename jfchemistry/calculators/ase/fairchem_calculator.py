@@ -7,12 +7,14 @@ force field models for molecular energy calculations.
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
+import torch
 from ase import Atoms
 from fairchem.core import FAIRChemCalculator, pretrained_mlip
 from fairchem.core.calculate.pretrained_mlip import _MODEL_CKPTS
 from fairchem.core.units.mlip_unit.api.inference import InferenceSettings, UMATask
 from monty.json import MSONable
 
+from jfchemistry import ureg
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.calculators.base import MachineLearnedInteratomicPotentialCalculator
 from jfchemistry.core.properties import AtomicProperty, Properties, PropertyClass, SystemProperty
@@ -26,7 +28,7 @@ task_type = Literal[*[x.value for x in list(UMATask)]]  # type: ignore
 class FairChemAtomicProperties(PropertyClass):
     """Properties of the FairChem model calculation."""
 
-    FairChem_forces: AtomicProperty
+    forces: AtomicProperty
 
 
 class FairChemSystemProperties(PropertyClass):
@@ -76,7 +78,7 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
         >>>
         >>> # Setup on structure
         >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
-        >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+        >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
         >>>
         >>> # Get properties
         >>> props = calc.get_properties(atoms) # doctest: +SKIP
@@ -85,11 +87,12 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
 
     name: str = "FairChem Model Calculator"
     model: model_types = field(
-        default="uma-s-1",
+        default="uma-s-1p1",
         metadata={"description": "The FairChem model to use"},
     )
     device: Literal["cpu", "cuda"] = field(
-        default="cpu", metadata={"description": "The device to use"}
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        metadata={"description": "The device to use"},
     )
     task: task_type = field(default="omol", metadata={"description": "The task to use"})
     workers: int = field(default=1, metadata={"description": "The number of workers to use"})
@@ -139,7 +142,7 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
 
     _properties_model: type[FairChemProperties] = FairChemProperties
 
-    def set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
+    def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the FairChem model calculator on the atoms object.
 
         Loads the specified FairChem model and attaches it as an ASE calculator to the
@@ -160,7 +163,7 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
         Examples:
             >>> calc = FairChemModelCalculator(device="cuda", compile=True) # doctest: +SKIP
             >>> atoms = molecule.to_ase_atoms() # doctest: +SKIP
-            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
             >>> # Charge and spin are stored in atoms.info
             >>> print(atoms.info["charge"]) # doctest: +SKIP
             0
@@ -185,7 +188,7 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
         atoms.calc = FAIRChemCalculator(predictor, task_name=self.task)
         return atoms
 
-    def get_properties(self, atoms: Atoms) -> FairChemProperties:
+    def _get_properties(self, atoms: Atoms) -> FairChemProperties:
         """Extract computed properties from the FairChem calculation.
 
         Retrieves the total energy from the FairChem model calculation.
@@ -200,29 +203,27 @@ class FairChemCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalcul
 
         Examples:
             >>> calc = FairChemModelCalculator() # doctest: +SKIP
-            >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
+            >>> atoms = calc._set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
             >>> atoms.get_potential_energy()  # Trigger calculation # doctest: +SKIP
             >>> props = calc.get_properties(atoms) # doctest: +SKIP
             >>> print(props["Global"]["Total Energy [eV]"]) # doctest: +SKIP
             -234.567
         """
-        print(atoms.info)
-        energy = atoms.get_total_energy()  # type: ignore
+        print(atoms.calc)
+        energy = atoms.get_potential_energy()  # type: ignore
         forces = atoms.get_forces()  # type: ignore
         atomic_properties = FairChemAtomicProperties(
-            FairChem_forces=AtomicProperty(
+            forces=AtomicProperty(
                 name="FairChem Forces",
-                value=forces,
-                units="eV/Å",
+                value=forces * ureg.eV / ureg.angstrom,
                 description=f"Forces predicted by {self.model} model and {self.task} task",
             ),
         )
         system_properties = FairChemSystemProperties(
             total_energy=SystemProperty(
-                name="Total Energy",
-                value=energy,
-                units="eV",
-                description=f"Total energy prediction from {self.model} model and {self.task} task",
+                name="Potential Energy",
+                value=energy * ureg.eV,
+                description=f"Potential energy prediction from {self.model} model and {self.task} task",
             ),
         )
         return FairChemProperties(

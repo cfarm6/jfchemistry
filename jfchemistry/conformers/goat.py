@@ -27,12 +27,12 @@ class GOATConformers(ORCACalculator, ConformerGeneration):
     )
     _basename: str = "goat_conformer_generation"
 
-    def operation(self, molecule: Molecule) -> tuple[list[Molecule], ORCAProperties]:
+    def _operation(self, molecule: Molecule) -> tuple[list[Molecule], ORCAProperties]:
         """Generate conformers using GOAT."""
         # Write to XYZ file
         molecule.to("input.xyz", fmt="xyz")
         # Get the default calculator SK_list
-        sk_list = super().set_keywords()
+        sk_list = super()._set_keywords()
         # Add the GOAT keywords
         sk_list.append(getattr(Goat, self.goat.upper()))  # type: ignore
 
@@ -46,6 +46,6 @@ class GOATConformers(ORCACalculator, ConformerGeneration):
         calc.run()
         # Parse the output
         output = calc.get_output()
-        properties = super().parse_output(output)
+        properties = super()._parse_output(output)
         conformers = XYZ.from_file(output.get_file(".xyz")).all_molecules
         return conformers, properties

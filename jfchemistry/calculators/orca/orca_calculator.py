@@ -16,7 +16,7 @@ from opi.input.simple_keywords.solvation_model import SolvationModel
 from opi.input.simple_keywords.solvent import Solvent
 from opi.output.core import Output
 
-from jfchemistry import AtomicProperty, SystemProperty
+from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 
 # Import fully typed Literal definitions
@@ -145,7 +145,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
     )
     _properties_model: type[ORCAProperties] = ORCAProperties
 
-    def set_keywords(self) -> list[SimpleKeyword]:
+    def _set_keywords(self) -> list[SimpleKeyword]:
         """Construct OPI simple keywords from calculator settings.
 
         Builds a list of SimpleKeyword objects from the configured calculator
@@ -154,12 +154,6 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
 
         Returns:
             List of SimpleKeyword objects ready for OPI input generation.
-
-        Examples:
-            >>> calc = ORCACalculator(basis_set="DEF2_SVP", xc_functional="B3LYP")
-            >>> keywords = calc.set_keywords()
-            >>> len(keywords)
-            2
         """
         keywords: list[SimpleKeyword] = []
 
@@ -188,7 +182,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
                 keywords.append(solvation_obj)
         return keywords
 
-    def parse_output(self, output: Output) -> ORCAProperties:  # noqa: PLR0915
+    def _parse_output(self, output: Output) -> ORCAProperties:  # noqa: PLR0915
         """Extract molecular properties from ORCA output.
 
         Parses the OPI Output object to extract computed molecular properties
@@ -217,16 +211,15 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         # Construct system property list
         total_energy = SystemProperty(
             name="Total Energy",
-            value=float(total_energy),
-            units="Hartree",
+            value=float(total_energy) * ureg.Hartree,
             description="Total electronic energy from ORCA calculation",
         )
         properties = ORCASystemProperties(total_energy=total_energy)
         if self.solvation_model is not None:
             solvation_energy = SystemProperty(
                 name="Solvation Energy",
-                value=float(solvation_energy) if solvation_energy is not None else 0.0,
-                units="Hartree",
+                value=(float(solvation_energy) if solvation_energy is not None else 0.0)
+                * ureg.Hartree,
                 description=f"Solvation energy contribution from  \
                 {self.solvation_model} {self.solvent} model with {self.solvation} solvation model",
             )
@@ -293,8 +286,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
                     participation_ratio["homo"].append(p)
                     homo_pr_property = AtomicProperty(
                         name="HOMO Participation Ratio",
-                        value=participation_ratio["homo"],
-                        units="",
+                        value=participation_ratio["homo"] * ureg.dimensionless,
                         description=f"Participation ratio of the HOMO atomic orbitals within\
                              {self.homo_threshold} eV of HOMO",
                     )
@@ -323,8 +315,7 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
                     participation_ratio["lumo"].append(p)
                     lumo_pr_property = AtomicProperty(
                         name="LUMO Participation Ratio",
-                        value=participation_ratio["lumo"],
-                        units="",
+                        value=participation_ratio["lumo"] * ureg.dimensionless,
                         description=f"Participation ratio of the LUMO atomic orbitals within\
                              {self.lumo_threshold} eV of LUMO",
                     )
