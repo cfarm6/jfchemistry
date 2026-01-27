@@ -1,5 +1,6 @@
 """Example of using the PubChemCID node to get a molecule from PubChem."""
 
+from jfchemistry.calculators.torchsim.fairchem_calculator import FairChemCalculator
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
@@ -30,13 +31,13 @@ optimize_job = TorchSimOptimizer(
 
 pack_job = PackmolPacking(
     packing_mode="box",
-    num_molecules=50,
+    num_molecules=20,
     density=0.1,  # g/cm^3
 ).make(optimize_job.output.structure)
 
 nvt_job = TorchSimMolecularDynamicsNVTNoseHoover(
-    calculator=OrbCalculator(device="cuda", model="orb_v3_direct_20_omat"),
-    duration=2_000,
+    calculator=FairChemCalculator(device="cuda"),
+    duration=20,
     timestep=1.0,
     temperature=300.0,
     log_temperature=True,
@@ -46,8 +47,8 @@ nvt_job = TorchSimMolecularDynamicsNVTNoseHoover(
 ).make(pack_job.output.structure)
 
 npt_job = TorchSimMolecularDynamicsNPTNoseHoover(
-    calculator=OrbCalculator(device="cuda", model="orb_v3_direct_20_omat"),
-    duration=2_000,
+    calculator=FairChemCalculator(device="cuda"),
+    duration=20,
     timestep=1.0,
     temperature=300.0,
     log_temperature=True,

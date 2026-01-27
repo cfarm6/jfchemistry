@@ -17,7 +17,7 @@ from torch_sim.units import UnitConversion as Uc
 
 from jfchemistry import ureg
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
-from jfchemistry.core import PymatgenBaseMaker
+from jfchemistry.core.makers.single_maker import SingleJFChemistryMaker
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
 from jfchemistry.molecular_dynamics.base import MolecularDynamics, MolecularDynamicsOutput
 
@@ -41,8 +41,8 @@ class TSMDProperties(Properties):
 
 
 @dataclass
-class TorchSimMolecularDynamics[InputType: Structure | Molecule, OutputType: Structure | Molecule](
-    PymatgenBaseMaker[InputType, OutputType], MolecularDynamics
+class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule | Structure](
+    SingleJFChemistryMaker[InputType, OutputType], MolecularDynamics
 ):
     """Base class for single point energy calculations using TorchSim calculators.
 

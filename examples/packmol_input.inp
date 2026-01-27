@@ -3,6 +3,6 @@ filetype xyz
 output /home/carson/research/SoftwareDevelopment/jfchemistry/examples/packed_structure.xyz
 
 structure /home/carson/research/SoftwareDevelopment/jfchemistry/examples/input_molecule.xyz
-  number 50
-  inside box 0. 0. 0. 101.90781962355173                         101.90781962355173 101.90781962355173
+  number 20
+  inside box 0. 0. 0. 75.08632349018549                         75.08632349018549 75.08632349018549
 end structure
