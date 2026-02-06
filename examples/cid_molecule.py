@@ -34,7 +34,7 @@ generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output.s
 #     calculator=OrbCalculator(model="orb_v3_direct_20_omat"),
 # ).make(opt_ase.output.structure)
 
-sp = PySCFGPUSinglePoint(xc_functional="B3LYP", basis_set="def2-svp").make(
+sp = PySCFGPUSinglePoint(xc_functional="B3LYP", basis_set="def2-svp", joltqc=True).make(
     generate_structure.output.structure[0]
 )
 

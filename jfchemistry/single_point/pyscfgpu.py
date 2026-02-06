@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from typing import cast
 
-from gpu4pyscf import dft
 from pymatgen.core import Molecule
 from pyscf import gto
 
@@ -46,7 +45,8 @@ class PySCFGPUSinglePoint[InputType: Molecule, OutputType: Molecule](
         mol.atom = self._filename
         mol.basis = self.basis_set
         mol.build()
-        mf = dft.RKS(mol)
+        mf = self._setup_mf(mol)
+        # mf = dft.RKS(mol)
         mf = mf.newton()
         mf.kernel()
         properties = self._get_properties(mf)

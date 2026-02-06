@@ -189,3 +189,6 @@ examples/**/*
 !examples/**/*.py
 # Environment
 .env
+
+# JoltQC
+JoltQC/

@@ -38,6 +38,10 @@ allow-direct-references = true
 [tool.pixi.system-requirements]
 cuda = "13.0"
 
+
+[tool.pixi.activation]
+scripts = ["setup/activate.sh"]
+
 [tool.pixi.workspace]
 channels = [ "conda-forge", "nvidia"]
 platforms = ["linux-64"]
@@ -55,6 +59,7 @@ tblite-python = ">=0.4.0,<0.5"
 cuda = ">=13, <14"
 cuda-nvrtc = ">=13.1.115,<14"
 cupy = ">=13.6.0,<14"
+pip = ">=26.0.1,<27"
 
 
 
