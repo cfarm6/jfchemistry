@@ -65,7 +65,7 @@ class CRESTDeprotonation[InputType: Molecule, OutputType: Molecule](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Generate deprotonated structures using CREST.
 
         Runs CREST's deprotonation workflow to identify acidic sites and

@@ -1,0 +1,59 @@
+# Pixi environment (should not be copied, will be built in container)
+.pixi
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Documentation
+site/
+docs/_build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Examples (if not needed in production)
+examples/
+
+# JoltQC (will be installed via pip)
+JoltQC/
+
+# Scratch files
+.scratch/
+
+# Lock files (pixi.lock should be copied, but we ignore other lock files)
+poetry.lock
+Pipfile.lock
+pdm.lock

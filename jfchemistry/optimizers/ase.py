@@ -97,7 +97,7 @@ class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Mole
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Optimize molecular structure using ASE.
 
         Performs geometry optimization by:

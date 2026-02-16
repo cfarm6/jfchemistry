@@ -3,47 +3,47 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
+from jfchemistry.calculators.ase import AimNet2Calculator
 from jfchemistry.generation import RDKitGeneration
-from jfchemistry.inputs import Smiles
-from jfchemistry.single_point import PySCFGPUSinglePoint
+from jfchemistry.inputs import PubChemCID
+from jfchemistry.optimizers import ASEOptimizer
+from jfchemistry.utilities import CombineMolecules, RotateMolecule, SaveToDisk, TranslateMolecule
 
-# Get all calculator classes
-pubchem_cid = Smiles().make("C(CO)Cl")
+# Select Calculator
+calculator = AimNet2Calculator(model="aimnet2_2025")
 
-generate_structure = RDKitGeneration(num_conformers=2).make(pubchem_cid.output.structure)
 
-# deprotonate = CRESTDeprotonation().make(generate_structure.output.structure[0])
-# protonate = CRESTProtonation().make(deprotonate.output.structure[0])
-# mmmc_conformer = MMMCConformers(optimizer=ASEOptimizer(calculator=TBLiteCalculator())).make(
-#     generate_structure.output.structure[0]
-# )
+# Pull molecules from PubChem by CID
+def generate_structure(cid):
+    """Generate a structure from a PubChem CID."""
+    jobs = []
+    jobs.append(PubChemCID().make(input=cid))
+    jobs.append(RDKitGeneration().make(jobs[-1].output.structure))
+    jobs.append(ASEOptimizer(calculator=calculator).make(jobs[-1].output.structure))
+    jobs.append(RotateMolecule(mode="principal_axes").make(jobs[-1].output.structure))
+    return jobs
 
-# prism_pruner = PrismPrunerFilter(energy_threshold=2.0).make(
-#     mmmc_conformer.output.structure, properties=mmmc_conformer.output.properties
-# )
 
-# energy_filter = EnergyFilter(threshold=0.1).make(
-#     prism_pruner.output.structure, properties=prism_pruner.output.properties
-# )
+jobs1 = generate_structure(2244)
+jobs2 = generate_structure(12)
 
-# opt_ase = ASEOptimizer(
-#     calculator=TBLiteCalculator(),
-# ).make(energy_filter.output.structure)
-
-# opt_torchsim = TorchSimOptimizer(
-#     calculator=OrbCalculator(model="orb_v3_direct_20_omat"),
-# ).make(opt_ase.output.structure)
-
-sp = PySCFGPUSinglePoint(xc_functional="B3LYP", basis_set="def2-svp", joltqc=True).make(
-    generate_structure.output.structure[0]
+translate_job = TranslateMolecule(mode="vector", translation=[0, 0, 10]).make(
+    jobs1[-1].output.structure
 )
 
+combine_job = CombineMolecules().make([translate_job.output.structure, jobs2[-1].output.structure])
+
+final_opt_job = ASEOptimizer(calculator=calculator).make(combine_job.output.structure)
+
+save_job = SaveToDisk().make(final_opt_job.output.structure, filename="final_opt.xyz")
 flow = Flow(
     [
-        pubchem_cid,
-        generate_structure,
-        sp,
+        *jobs1,
+        *jobs2,
+        combine_job,
+        translate_job,
+        final_opt_job,
+        save_job,
     ]
 )
-
 response = run_locally(flow)

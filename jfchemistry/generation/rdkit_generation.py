@@ -227,7 +227,7 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Generate 3D structure(s) using RDKit distance geometry embedding.
 
         Embeds 3D coordinates into the molecule using the specified ETKDG method

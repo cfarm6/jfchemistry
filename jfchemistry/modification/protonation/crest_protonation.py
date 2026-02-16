@@ -91,7 +91,7 @@ class CRESTProtonation[InputType: Molecule, OutputType: Molecule](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Generate protonated structures using CREST.
 
         Runs CREST's protonation workflow to identify basic sites and

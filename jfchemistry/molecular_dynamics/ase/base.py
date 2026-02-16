@@ -192,7 +192,7 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Run molecular dynamics simulation using ASE.
 
         Performs molecular dynamics simulation by:
@@ -275,5 +275,6 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
 
         # Return as list to match return type annotation
         return cast("list[OutputType]", final_structures), cast(
-            "list[Properties]", [Properties()] * len(final_structures)
+            "list[Properties]",
+            [ASEMDProperties(system=ASEMDSystemProperties())] * len(final_structures),
         )

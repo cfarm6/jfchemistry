@@ -343,7 +343,7 @@ class CRESTConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Generate conformers using CREST metadynamics search.
 
         Performs a conformational search using CREST with the configured

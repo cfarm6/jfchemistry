@@ -232,7 +232,7 @@ class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Mol
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Optimize molecular structure using ASE.
 
         Performs molecular dynamics simulation by:

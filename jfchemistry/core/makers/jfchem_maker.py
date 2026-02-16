@@ -53,7 +53,7 @@ class JFChemMaker[InputType, OutputType](CoreMaker):
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Perform the computational operation on a structure."""
         raise NotImplementedError
 
