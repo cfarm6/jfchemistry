@@ -10,6 +10,7 @@ nav = [
         "nodes/filters.md",
         "nodes/geometry_optimizers.md",
         "nodes/singlepoint.md",
+        "nodes/utilities.md",
         { "Molecular Dynamics" = [
             "nodes/molecular_dynamics/torchsim.md",
         ] },

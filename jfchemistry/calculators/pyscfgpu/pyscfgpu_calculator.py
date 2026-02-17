@@ -5,7 +5,9 @@ from typing import Literal, Optional
 
 import cupy as cp
 from ase import units
+from gpu4pyscf import dft
 from monty.json import MSONable
+from pyscf import gto
 from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
 from pyscf.scf import hf
@@ -67,6 +69,10 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         default=1,
         metadata={"description": "The number of CPU cores to use for parallel calculations"},
     )
+    joltqc: bool = field(
+        default=False,
+        metadata={"description": "Whether to use JoltQC for the calculation"},
+    )
     basis_set: Optional[basis_sets] = field(
         default=None,
         metadata={"description": "The basis set to use for the calculation"},
@@ -101,6 +107,22 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         },
     )
     _properties_model: type[PySCFProperties] = PySCFProperties
+
+    def _setup_mf(self, mol: gto.Mole) -> dft.RKS:
+        mf = dft.RKS(mol, xc=self.xc_functional)
+        if self.joltqc:
+            try:
+                import jqc.pyscf  # type: ignore  # Optional dependency, may not be available
+
+                mf = jqc.pyscf.apply(mf)
+            except ImportError as err:
+                raise ImportError(
+                    "JoltQC is not installed. Please install JoltQC to use JoltQC for\
+                    the calculation. See https://github.com/ByteDance-Seed/JoltQC\
+                    for more information."
+                ) from err
+            return mf
+        return mf
 
     def _get_properties(self, mf: hf.RHF) -> PySCFProperties:
         """Parse the properties from the output."""

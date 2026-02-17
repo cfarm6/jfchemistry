@@ -41,7 +41,7 @@ class ORCAOptimizer[InputType: Molecule, OutputType: Molecule](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Optimize a molecule using ORCA DFT calculator."""
         # Write to XYZ file
         input.to("input.xyz", fmt="xyz")

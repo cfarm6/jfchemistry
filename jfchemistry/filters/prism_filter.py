@@ -47,7 +47,7 @@ class PrismPrunerFilter[InputType: Molecule, OutputType: RecursiveMoleculeList](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Perform the energy filter operation on an ensemble."""
         properties = kwargs.get("properties", None)
         energies = None

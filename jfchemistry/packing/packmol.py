@@ -311,7 +311,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Pack a structure using Packmol.
 
         Args:

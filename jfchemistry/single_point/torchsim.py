@@ -38,7 +38,7 @@ class TorchSimSinglePoint[InputType: Molecule | Structure, OutputType: Molecule 
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Calculate the single point energy of a structure using TorchSim.
 
         Performs geometry optimization by:

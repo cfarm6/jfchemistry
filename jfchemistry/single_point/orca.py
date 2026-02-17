@@ -36,7 +36,7 @@ class ORCASinglePointCalculator[InputType: Molecule, OutputType: Molecule](
 
     def _operation(
         self, input: InputType, **kwargs
-    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties]]:
+    ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Calculate the single point energy of a molecule using ORCA."""
         # Write to XYZ file
         input.to("input.xyz", fmt="xyz")
