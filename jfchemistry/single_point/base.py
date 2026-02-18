@@ -16,7 +16,7 @@ class SinglePointCalculation:
     operation and get_properties methods.
 
     Attributes:
-        name: The name of the geometry optimization job.
+        name: The name of the single point energy job.
     """
 
     name: str = "Single Point Energy Calculator"

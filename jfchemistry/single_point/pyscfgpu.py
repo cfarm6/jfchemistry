@@ -1,4 +1,4 @@
-"""Base Class for ORCA DFT Calculations."""
+"""Single point energy calculations using PySCF GPU."""
 
 from dataclasses import dataclass
 from typing import cast

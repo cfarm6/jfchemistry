@@ -31,7 +31,10 @@ class TorchSimMolecularDynamicsNVTNoseHoover(TorchSimMolecularDynamics):
     integrator: Literal["nvt_nose_hoover"] = "nvt_nose_hoover"
     tau: Optional[float] = field(
         default=None,
-        metadata={"description": "Thermostat relaxation time, defaults to 100*timestep"},
+        metadata={
+            "description": "Thermostat relaxation time, defaults to 100*timestep",
+            "unit": "fs",
+        },
     )
     chain_length: int = field(default=3, metadata={"description": "Number of Nose-Hoover chains"})
     chain_steps: int = field(default=3, metadata={"description": "Number of steps per chain"})

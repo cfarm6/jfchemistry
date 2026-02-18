@@ -8,6 +8,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Annotated, Literal, Optional, cast
 
+from pint import Quantity
 from pymatgen.core.structure import Molecule
 from rdkit.Chem import rdDistGeom, rdmolfiles, rdmolops
 
@@ -15,6 +16,7 @@ from jfchemistry.core.input_types import RecursiveMoleculeList
 from jfchemistry.core.makers import RDKitMaker
 from jfchemistry.core.properties import Properties
 from jfchemistry.core.structures import RDMolMolecule
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.generation.base import StructureGeneration
 
 
@@ -33,6 +35,12 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
     control over the generation process including optimization settings, pruning
     criteria, and random seed control.
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - prune_rms_thresh: [Å]
+
     Attributes:
         name: Name of the job (default: "rdKit Generation").
         method: Distance geometry method to use:
@@ -42,7 +50,7 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
             - "ETDG": Experimental torsion distance geometry
             - "KDG": Basic distance geometry
             - "srETKDGv3": Small ring ETKDG version 3
-        basin_thresh: Energy threshold for basin hopping (default: None).
+        basin_thresh: Energy threshold for basin hopping (default: None). Accepts float.
         bounds_mat_force_scaling: Scaling factor for distance bounds (default: None).
         box_size_mult: Box size multiplier for embedding (default: None).
         clear_confs: Clear existing conformers before embedding (default: None).
@@ -56,12 +64,13 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
         num_zero_fail: Number of failures before reporting (default: None).
         only_heavy_atoms_for_rms: Use only heavy atoms for RMSD pruning (default: None).
         optimizer_force_tol: Force tolerance for optimization (default: None).
-        prune_rms_thresh: RMSD threshold for conformer pruning in Angstroms (default: None).
+        prune_rms_thresh: RMSD threshold for conformer pruning [Å] (default: None). \
+            Accepts float or pint Quantity.
         rand_neg_eig: Randomize negative eigenvalues (default: None).
         random_seed: Random seed for reproducibility (default: None).
         symmetrize_conjugated_terminal_groups_for_pruning: Symmetrize terminal groups
             for RMSD calculations (default: None).
-        timeout: Timeout in seconds for embedding (default: None).
+        timeout: Timeout [seconds] for embedding (default: None).
         track_failures: Track embedding failures (default: None).
         use_basic_knowledge: Use basic chemical knowledge (default: None).
         use_exp_torsion_angle_prefs: Use experimental torsion preferences (default: None).
@@ -86,9 +95,13 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
         default="ETKDGv3",
         metadata={"description": "The method to use for generating the structure"},
     )
-    basin_thresh: Optional[float] = field(
+    basin_thresh: Optional[float | Quantity] = field(
         default=None,
-        metadata={"description": "set the basin threshold for the DGeom force field."},
+        metadata={
+            "description": "set the basin threshold for the DGeom force field. \
+                Accepts float or pint Quantity.",
+            "unit": "kcal/mol",
+        },
     )
     bounds_mat_force_scaling: Optional[float] = field(
         default=None,
@@ -116,7 +129,7 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
     )
     enforce_chirality: Optional[bool] = field(
         default=None,
-        metadata={"description": "eenforce correct chirilaty if chiral centers are present"},
+        metadata={"description": "enforce correct chirality if chiral centers are present"},
     )
     force_trans_amides: Optional[bool] = field(
         default=None, metadata={"description": "force trans amide bonds"}
@@ -144,18 +157,20 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
         default=None,
         metadata={"description": "Only consider heavy atoms when doing RMS filtering"},
     )
-    optimizer_force_tol: Optional[float] = field(
+    optimizer_force_tol: Optional[float | Quantity] = field(
         default=None,
         metadata={
-            "description": "the tolerance to be used during the \
-                distance-geometry force field minimization"
+            "description": "the force tolerance during distance-geometry minimization. \
+                Accepts float or pint Quantity.",
+            "unit": "eV/Å",
         },
     )
-    prune_rms_thresh: Optional[float] = field(
+    prune_rms_thresh: Optional[float | Quantity] = field(
         default=None,
         metadata={
-            "description": "keep only conformations that are \
-                at least this far apart from each other"
+            "description": "keep only conformations at least this far apart [Å]. \
+                Accepts float in [Å] or pint Quantity.",
+            "unit": "Å",
         },
     )
     rand_neg_eig: Optional[bool] = field(
@@ -179,7 +194,7 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
     timeout: Optional[Annotated[int, "positive"]] = field(
         default=None,
         metadata={
-            "description": "maximum time in seconds to generate a conformer for a \
+            "description": "maximum time [seconds] to generate a conformer for a \
                 single molecule fragment. If set to 0, no timeout is set"
         },
     )
@@ -224,6 +239,18 @@ class RDKitGeneration[InputType: RDMolMolecule, OutputType: RecursiveMoleculeLis
                 Note that this option automatically also sets onlyHeavyAtomsForRMS to true."
         },
     )
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if self.prune_rms_thresh is not None and isinstance(self.prune_rms_thresh, Quantity):
+            object.__setattr__(
+                self, "prune_rms_thresh", to_magnitude(self.prune_rms_thresh, "angstrom")
+            )
+        if self.basin_thresh is not None and isinstance(self.basin_thresh, Quantity):
+            object.__setattr__(self, "basin_thresh", self.basin_thresh.magnitude)
+        if self.optimizer_force_tol is not None and isinstance(self.optimizer_force_tol, Quantity):
+            object.__setattr__(self, "optimizer_force_tol", self.optimizer_force_tol.magnitude)
+        super().__post_init__()
 
     def _operation(
         self, input: InputType, **kwargs

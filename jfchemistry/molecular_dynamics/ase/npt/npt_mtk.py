@@ -11,6 +11,7 @@ from ase import Atoms
 from ase.md.nose_hoover_chain import IsotropicMTKNPT
 from ase.units import fs
 
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.ase.base import ASEMolecularDynamics
 
 
@@ -23,27 +24,29 @@ class ASEMolecularDynamicsNPTBerendsen(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NPT Berendsen").
         integrator: The integrator type (fixed to "npt_berendsen").
-        external_pressure: External pressure in atm (default: 1.0).
-        ttime: Thermostat time constant in fs (default: None, uses 100*timestep).
-        ptime: Barostat time constant in fs (default: None, uses 1000*timestep).
+        external_pressure: External pressure [atm] (default: 1.0).
+        ttime: Thermostat time constant [fs] (default: None, uses 100*timestep).
+        ptime: Barostat time constant [fs] (default: None, uses 1000*timestep).
     """
 
     name: str = "ASE Molecular Dynamics NPT Berendsen"
     integrator: Literal["npt_berendsen"] = "npt_berendsen"
     external_pressure: float = field(
         default=1.0,
-        metadata={"description": "External pressure in atm"},
+        metadata={"description": "External pressure [atm]", "unit": "atm"},
     )
     ttime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Thermostat time constant in fs. Defaults to 100*timestep if None."
+            "description": "Thermostat time constant [fs]. Defaults to 100*timestep if None.",
+            "unit": "fs",
         },
     )
     ptime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Barostat time constant in fs. Defaults to 1000*timestep if None."
+            "description": "Barostat time constant [fs]. Defaults to 1000*timestep if None.",
+            "unit": "fs",
         },
     )
 
@@ -74,7 +77,7 @@ class ASEMolecularDynamicsNPTBerendsen(ASEMolecularDynamics):
         return IsotropicMTKNPT(
             atoms,
             timestep=self.timestep * fs,
-            temperature_K=self.temperature,
+            temperature_K=to_magnitude(self.temperature, "kelvin"),
             tdamp=ttime * fs,
             pdamp=ptime * fs,
             pressure_au=external_pressure_au,

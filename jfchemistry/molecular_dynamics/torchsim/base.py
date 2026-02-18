@@ -1,7 +1,7 @@
 """TorchSim-based molecular dynamics framework.
 
 This module provides the base framework for molecular dynamics using
-ASE (Atomic Simulation Environment) optimizers with various calculators.
+TorchSim with various calculators.
 """
 
 import glob
@@ -11,6 +11,7 @@ from typing import Any, Callable, Literal, Optional, cast
 import torch
 import torch_sim as ts
 from ase.atoms import Atoms
+from pint import Quantity
 from pymatgen.core.structure import Molecule, Structure
 from torch_sim.models.interface import ModelInterface
 from torch_sim.units import UnitConversion as Uc
@@ -19,6 +20,7 @@ from jfchemistry import ureg
 from jfchemistry.calculators.torchsim.torchsim_calculator import TorchSimCalculator
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.base import MolecularDynamics, MolecularDynamicsOutput
 
 UNITS = ts.units.UnitSystem.metal
@@ -44,24 +46,34 @@ class TSMDProperties(Properties):
 class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule | Structure](
     PymatGenMaker[InputType, OutputType], MolecularDynamics
 ):
-    """Base class for single point energy calculations using TorchSim calculators.
+    """Base class for molecular dynamics using TorchSim calculators.
 
-    Combines single point energy calculations with TorchSim calculator interfaces.
-    This class provides the framework for calculating the single point energy
-    of a structure using various TorchSim calculators (neural networks, machine learning
-    , semi-empirical, etc.).
+    Combines molecular dynamics with TorchSim calculator interfaces.
+    This class provides the framework for running MD simulations
+    of a structure using various TorchSim calculators (neural networks, machine learning,
+    semi-empirical, etc.).
+
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - duration: [fs]
+        - timestep: [fs]
+        - log_interval: [fs]
+        - temperature: [K]
 
     Attributes:
         name: Name of the calculator (default: "TorchSim Molecular Dynamics").
         calculator: The calculator to use for the calculation.
         integrator: The integrator to use for the simulation.
-        duration: The duration of the simulation in fs.
-        timestep: The timestep of the simulation in fs.
-        temperature: The temperature of the simulation in K.
+        duration: The duration of the simulation [fs]. Accepts float or pint Quantity.
+        timestep: The timestep of the simulation [fs]. Accepts float or pint Quantity.
+        temperature: The temperature of the simulation [K]. Accepts float or pint Quantity.
         autobatcher: Whether to enable autobatching.
         logfile: The filename prefix to log the trajectory of the simulation.
         progress_bar: Whether to show a progress bar in the simulation.
-        log_interval: The interval at which to log the simulation in fs.
+        log_interval: The interval at which to log the simulation [fs]. \
+            Accepts float or pint Quantity.
         log_potential_energy: Whether to log the potential energy in the simulation.
         log_kinetic_energy: Whether to log the kinetic energy in the simulation.
         log_temperature: Whether to log the temperature in the simulation.
@@ -78,14 +90,26 @@ class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Mol
     integrator: Literal[
         "nve", "nvt_nose_hoover", "nvt_langevin", "npt_langevin", "npt_nose_hoove"
     ] = field(default="nve", metadata={"description": "The integrator to use for the simulation"})
-    duration: float = field(
-        default=1.0, metadata={"description": "The duration of the simulation in fs"}
+    duration: float | Quantity = field(
+        default=1.0,
+        metadata={
+            "description": "The duration of the simulation [fs]. Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
-    timestep: float = field(
-        default=0.5, metadata={"description": "The timestep of the simulation in fs"}
+    timestep: float | Quantity = field(
+        default=0.5,
+        metadata={
+            "description": "The timestep of the simulation [fs]. Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
-    temperature: float = field(
-        default=300.0, metadata={"description": "The temperature of the simulation in K"}
+    temperature: float | Quantity = field(
+        default=300.0,
+        metadata={
+            "description": "The temperature of the simulation [K]. Accepts float or pint Quantity.",
+            "unit": "K",
+        },
     )
     autobatcher: bool = field(default=False, metadata={"description": "Enable autobatching"})
     logfile: str = field(
@@ -99,8 +123,13 @@ class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Mol
         default=True,
         metadata={"description": "Whether to show a progress bar in the simulation"},
     )
-    log_interval: float = field(
-        default=1.0, metadata={"description": "The interval at which to log the simulation in fs"}
+    log_interval: float | Quantity = field(
+        default=1.0,
+        metadata={
+            "description": "The interval at which to log the simulation [fs]. \
+                Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
     log_potential_energy: bool = field(
         default=False,
@@ -132,6 +161,14 @@ class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Mol
 
     def __post_init__(self):
         """Post initialization hook."""
+        if isinstance(self.duration, Quantity):
+            object.__setattr__(self, "duration", to_magnitude(self.duration, "fs"))
+        if isinstance(self.timestep, Quantity):
+            object.__setattr__(self, "timestep", to_magnitude(self.timestep, "fs"))
+        if isinstance(self.temperature, Quantity):
+            object.__setattr__(self, "temperature", to_magnitude(self.temperature, "kelvin"))
+        if isinstance(self.log_interval, Quantity):
+            object.__setattr__(self, "log_interval", to_magnitude(self.log_interval, "fs"))
         self.init_kwargs = {}
         self.step_kwargs = {}
         super().__post_init__()

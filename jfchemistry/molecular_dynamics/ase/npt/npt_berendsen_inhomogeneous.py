@@ -26,10 +26,10 @@ class ASEMolecularDynamicsNPTBerendsenInhomogeneous(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NPT Berendsen Inhomogeneous")
         integrator: The integrator type (fixed to "npt_berendsen_inhomogeneous").
-        external_pressure: External pressure in atm (default: 1.0).
+        external_pressure: External pressure [atm] (default: 1.0).
             Can be a scalar or a 3-tuple for different pressures along each axis.
-        ttime: Thermostat time constant in fs (default: None, uses 100*timestep).
-        ptime: Barostat time constant in fs (default: None, uses 1000*timestep).
+        ttime: Thermostat time constant [fs] (default: None, uses 100*timestep).
+        ptime: Barostat time constant [fs] (default: None, uses 1000*timestep).
     """
 
     name: str = "ASE Molecular Dynamics NPT Berendsen Inhomogeneous"
@@ -37,19 +37,22 @@ class ASEMolecularDynamicsNPTBerendsenInhomogeneous(ASEMolecularDynamics):
     external_pressure: float | tuple[float, float, float] = field(
         default=1.0,
         metadata={
-            "description": "External pressure in atm. Can be scalar or 3-tuple for each axis."
+            "description": "External pressure [atm]. Can be scalar or 3-tuple for each axis.",
+            "unit": "atm",
         },
     )
     ttime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Thermostat time constant in fs. Defaults to 100*timestep if None."
+            "description": "Thermostat time constant [fs]. Defaults to 100*timestep if None.",
+            "unit": "fs",
         },
     )
     ptime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Barostat time constant in fs. Defaults to 1000*timestep if None."
+            "description": "Barostat time constant [fs]. Defaults to 1000*timestep if None.",
+            "unit": "fs",
         },
     )
 

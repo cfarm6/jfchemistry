@@ -11,6 +11,7 @@ from ase import Atoms
 from ase.md import Langevin
 from ase.units import fs
 
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.ase.base import ASEMolecularDynamics
 
 
@@ -23,7 +24,7 @@ class ASEMolecularDynamicsNVTLangevin(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NVT Langevin").
         integrator: The integrator type (fixed to "nvt_langevin").
-        friction: Friction coefficient in fs^-1 (default: 0.01).
+        friction: Friction coefficient [fs^-1] (default: 0.01).
         fixcm: Whether to fix the center of mass (default: True).
     """
 
@@ -31,7 +32,7 @@ class ASEMolecularDynamicsNVTLangevin(ASEMolecularDynamics):
     integrator: Literal["nvt_langevin"] = "nvt_langevin"
     friction: float = field(
         default=0.01,
-        metadata={"description": "Friction coefficient in fs^-1"},
+        metadata={"description": "Friction coefficient [fs^-1]", "unit": "fs^-1"},
     )
     fixcm: bool = field(
         default=True,
@@ -50,7 +51,7 @@ class ASEMolecularDynamicsNVTLangevin(ASEMolecularDynamics):
         return Langevin(
             atoms,
             timestep=self.timestep * fs,
-            temperature_K=self.temperature,
+            temperature_K=to_magnitude(self.temperature, "kelvin"),
             friction=self.friction / fs,  # Convert from fs^-1 to s^-1
             fixcm=self.fixcm,
         )

@@ -23,7 +23,10 @@ class CombineMolecules(
     """
 
     name: str = "CombineMolecules"
-    _ensemble: bool = field(default=True)  # treat list as single input to combine
+    _ensemble: bool = field(
+        default=True,
+        metadata={"description": "Treat list as single input to combine (ensemble mode)."},
+    )
 
     def _operation(
         self,

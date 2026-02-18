@@ -30,7 +30,7 @@ class CRESTTautomerization[InputType: Molecule, OutputType: Molecule](
     Attributes:
         name: Name of the job (default: "CREST Tautomers").
         runtype: Workflow type (default: "tautomerize").
-        ewin: Energy window in kcal/mol for selecting tautomers
+        ewin: Energy window [kcal/mol] for selecting tautomers
             (default: None, uses CREST default).
         ffopt: Perform force field pre-optimization (default: True).
         freezeopt: Freeze constraint string for optimization (default: None).
@@ -72,10 +72,10 @@ class CRESTTautomerization[InputType: Molecule, OutputType: Molecule](
     def _operation(
         self, input: InputType, **kwargs
     ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
-        """Generate protonated structures using CREST.
+        """Generate tautomers using CREST.
 
-        Runs CREST's protonation workflow to identify basic sites and
-        generate optimized protonated structures.
+        Runs CREST's tautomerization workflow to identify tautomeric sites and
+        generate optimized tautomer structures.
 
         Args:
             input: Input molecular structure with 3D coordinates. The
@@ -84,7 +84,7 @@ class CRESTTautomerization[InputType: Molecule, OutputType: Molecule](
 
         Returns:
             Tuple containing:
-                - List of protonated structures sorted by energy
+                - List of tautomer structures sorted by energy
                 - None (no additional properties)
 
         Examples:

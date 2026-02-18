@@ -1,7 +1,7 @@
 """TorchSim-based geometry optimization framework.
 
 This module provides the base framework for geometry optimization using
-ASE (Atomic Simulation Environment) optimizers with various calculators.
+TorchSim calculators.
 """
 
 from dataclasses import dataclass, field
@@ -22,26 +22,26 @@ from jfchemistry.optimizers.base import GeometryOptimization
 class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | Structure](
     PymatGenMaker[InputType, OutputType], GeometryOptimization
 ):
-    """Base class for single point energy calculations using TorchSim calculators.
+    """Base class for geometry optimization using TorchSim calculators.
 
-    Combines single point energy calculations with TorchSim calculator interfaces.
-    This class provides the framework for calculating the single point energy
-    of a structure using various TorchSim calculators (neural networks, machine learning
-    , semi-empirical, etc.).
+    Combines geometry optimization with TorchSim calculator interfaces.
+    This class provides the framework for optimizing structures
+    using various TorchSim calculators (neural networks, machine learning,
+    semi-empirical, etc.).
 
     Attributes:
-        name: Name of the calculator (default: "ASE Single Point Calculator").
+        name: Name of the optimizer (default: "TorchSim Optimizer").
 
     Examples:
         >>> from ase.build import molecule # doctest: +SKIP
         >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> from jfchemistry.optimizers import ASEOptimizer # doctest: +SKIP
-        >>> from jfchemistry.calculators import TBLiteCalculator # doctest: +SKIP
+        >>> from jfchemistry.optimizers import TorchSimOptimizer # doctest: +SKIP
+        >>> from jfchemistry.calculators.torchsim import OrbCalculator # doctest: +SKIP
         >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
         >>> # Create custom optimizer by inheriting
-        >>> class MyOptimizer(ASEOptimizer, TBLiteCalculator): # doctest: +SKIP
+        >>> class MyOptimizer(TorchSimOptimizer, OrbCalculator): # doctest: +SKIP
         ...     pass # doctest: +SKIP
-        >>> opt = MyOptimizer(optimizer="LBFGS", fmax=0.01) # doctest: +SKIP
+        >>> opt = MyOptimizer(optimizer="FIRE") # doctest: +SKIP
         >>> job = opt.make(molecule) # doctest: +SKIP
     """
 
@@ -75,12 +75,12 @@ class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | 
     def _operation(
         self, input: InputType, **kwargs
     ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
-        """Optimize molecular structure using ASE.
+        """Optimize molecular structure using TorchSim.
 
         Performs geometry optimization by:
-        1. Converting structure to ASE Atoms
+        1. Converting structure to TorchSim state
         2. Setting up the calculator with charge and spin
-        3. Running the calculator
+        3. Running the optimizer
         4. Converting back to Pymatgen Molecule
         5. Extracting properties from the calculation
 
@@ -96,9 +96,9 @@ class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | 
         Examples:
             >>> from ase.build import molecule # doctest: +SKIP
             >>> from pymatgen.core import Molecule # doctest: +SKIP
-            >>> from jfchemistry.optimizers import TBLiteOptimizer # doctest: +SKIP
+            >>> from jfchemistry.optimizers import TorchSimOptimizer # doctest: +SKIP
             >>> ethane = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
-            >>> opt = TBLiteOptimizer(optimizer="LBFGS", fmax=0.01) # doctest: +SKIP
+            >>> opt = TorchSimOptimizer(optimizer="FIRE") # doctest: +SKIP
             >>> structures, properties = opt.operation(ethane) # doctest: +SKIP
         """
         optimizer = getattr(ts.Optimizer, self.optimizer.lower().replace(" ", "_"))

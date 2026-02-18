@@ -1,6 +1,6 @@
-"""Geometry optimization using ORCA DFT calculator.
+"""Single point energy calculations using ORCA DFT calculator.
 
-This module provides fast geometry optimization using the ORCA DFT calculator
+This module provides single point energy calculations using the ORCA DFT calculator.
 """
 
 from dataclasses import dataclass

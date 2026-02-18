@@ -27,7 +27,11 @@ class TorchSimMolecularDynamicsNVTLangevin(TorchSimMolecularDynamics):
     name: str = "TorchSim Molecular Dynamics NVT Langevin"
     integrator: Literal["nvt_langevin"] = "nvt_langevin"
     gamma: float = field(
-        default=1.0, metadata={"description": "Friction coefficient controlling noise strength"}
+        default=1.0,
+        metadata={
+            "description": "Friction coefficient controlling noise strength",
+            "unit": "fs^-1",
+        },
     )
 
     def _setup_dicts(self, model: ModelInterface):

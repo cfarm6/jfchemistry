@@ -1,7 +1,7 @@
-"""ASE-based geometry optimization framework.
+"""ASE-based single point energy calculations.
 
-This module provides the base framework for geometry optimization using
-ASE (Atomic Simulation Environment) optimizers with various calculators.
+This module provides single point energy calculations using
+ASE (Atomic Simulation Environment) calculators.
 """
 
 from dataclasses import dataclass, field

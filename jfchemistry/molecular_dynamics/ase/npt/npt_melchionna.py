@@ -10,8 +10,8 @@ from typing import Literal, Optional, Union
 import numpy as np
 from ase import Atoms
 from ase.md.melchionna import MelchionnaNPT
-from ase.units import fs
 
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.ase.base import ASEMolecularDynamics
 
 
@@ -26,8 +26,8 @@ class ASEMolecularDynamicsNPTMelchionna(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NPT Melchionna").
         integrator: The integrator type (fixed to "npt_melchionna").
-        external_pressure: External pressure in atm (default: 1.0).
-        ttime: Thermostat time constant in fs (default: None, uses 100*timestep).
+        external_pressure: External pressure [atm] (default: 1.0).
+        ttime: Thermostat time constant [fs] (default: None, uses 100*timestep).
         pfactor: Barostat coupling constant (default: None, calculated from bulk modulus).
         mask: Control which cell dimensions can change. Can be a 3-tuple (int, int, int)
             for isotropic control or a 3x3 numpy array for anisotropic strain control
@@ -38,12 +38,13 @@ class ASEMolecularDynamicsNPTMelchionna(ASEMolecularDynamics):
     integrator: Literal["npt_melchionna"] = "npt_melchionna"
     external_pressure: float = field(
         default=1.0,
-        metadata={"description": "External pressure in atm"},
+        metadata={"description": "External pressure [atm]", "unit": "atm"},
     )
     ttime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Thermostat time constant in fs. Defaults to 100*timestep if None."
+            "description": "Thermostat time constant [fs]. Defaults to 100*timestep if None.",
+            "unit": "fs",
         },
     )
     pfactor: Optional[float] = field(
@@ -93,9 +94,9 @@ class ASEMolecularDynamicsNPTMelchionna(ASEMolecularDynamics):
 
         return MelchionnaNPT(
             atoms,
-            timestep=self.timestep * fs,
-            temperature_K=self.temperature,
-            ttime=ttime * fs,
+            timestep=to_magnitude(self.timestep, "fs"),
+            temperature_K=to_magnitude(self.temperature, "kelvin"),
+            ttime=to_magnitude(ttime, "fs"),
             externalstress=external_stress,
             pfactor=self.pfactor,
             mask=mask_array,

@@ -19,7 +19,13 @@ class CoreMaker[InputType, OutputType](Maker):
     name: str = "Single Structure Calculator Maker"
     _output_model: Type[Output] = Output
     _properties_model: Type[Properties] = Properties
-    _ensemble: bool = field(default=False)
+    _ensemble: bool = field(
+        default=False,
+        metadata={
+            "description": "Whether the maker expects a list of inputs (ensemble) \
+                or a single input."
+        },
+    )
 
     def __post_init__(self):
         """Make a properties model for the job."""

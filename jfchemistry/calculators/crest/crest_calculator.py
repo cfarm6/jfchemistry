@@ -78,19 +78,29 @@ class CRESTCalculator(Calculator, MSONable):
     # CREGEN PARAMETERS
     # ------- TOML ------
     energy_window: Optional[float] = field(
-        default=6.0, metadata={"description": "The energy window to use [kcal/mol]"}
+        default=6.0,
+        metadata={"description": "The energy window to use [kcal/mol]", "unit": "kcal/mol"},
     )
     cartesian_rmsd_threshold: Optional[float] = field(
         default=0.125,
-        metadata={"description": "The Cartesian RMSD threshold for geometry optimization [Å]"},
+        metadata={
+            "description": "The Cartesian RMSD threshold for geometry optimization [Å]",
+            "unit": "Å",
+        },
     )
     energy_threshold: Optional[float] = field(
         default=0.05,
-        metadata={"description": "The energy threshold for geometry optimization [kcal/mol]"},
+        metadata={
+            "description": "The energy threshold for geometry optimization [kcal/mol]",
+            "unit": "kcal/mol",
+        },
     )
     rotational_rms_threshold: Optional[float] = field(
         default=0.01,
-        metadata={"description": "The rotational RMSD threshold for geometry optimization [°]"},
+        metadata={
+            "description": "The rotational RMSD threshold for geometry optimization [°]",
+            "unit": "°",
+        },
     )
     preoptimization: Optional[bool] = field(
         default=True, metadata={"description": "Whether to perform preoptimization"}
@@ -101,8 +111,14 @@ class CRESTCalculator(Calculator, MSONable):
     )
 
     # INTERNAL
-    _input_dict: dict[str, Any] = field(default_factory=dict)
-    _commands: list[str | int | float] = field(default_factory=list)
+    _input_dict: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={"description": "Internal CREST input dictionary (built from public options)."},
+    )
+    _commands: list[str | int | float] = field(
+        default_factory=list,
+        metadata={"description": "Internal list of command-line arguments for CREST."},
+    )
     _toml_filename: str = "crest.toml"
     _xyz_filename: str = "input.xyz"
 

@@ -11,6 +11,7 @@ from ase import Atoms
 from ase.md import Andersen
 from ase.units import fs
 
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.ase.base import ASEMolecularDynamics
 
 
@@ -30,7 +31,10 @@ class ASEMolecularDynamicsNVTAndersen(ASEMolecularDynamics):
     integrator: Literal["nvt_andersen"] = "nvt_andersen"
     andersen_prob: float = field(
         default=0.1,
-        metadata={"description": "Probability of collision per atom per timestep"},
+        metadata={
+            "description": "Probability of collision per atom per timestep",
+            "unit": "dimensionless",
+        },
     )
 
     def _create_dynamics(self, atoms: Atoms) -> Andersen:
@@ -45,6 +49,6 @@ class ASEMolecularDynamicsNVTAndersen(ASEMolecularDynamics):
         return Andersen(
             atoms,
             timestep=self.timestep * fs,
-            temperature_K=self.temperature,
+            temperature_K=to_magnitude(self.temperature, "kelvin"),
             andersen_prob=self.andersen_prob,
         )

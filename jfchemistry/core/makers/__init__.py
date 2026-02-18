@@ -1,4 +1,4 @@
-"""Makers respoonsible for performing operations."""
+"""Makers responsible for performing operations."""
 
 from .pymatgen_maker import PymatGenMaker
 from .rdkit_maker import RDKitMaker

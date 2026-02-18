@@ -38,19 +38,24 @@ class TorchSimMolecularDynamicsNPTNoseHoover(TorchSimMolecularDynamics):
         default=None,
         metadata={
             "description": "Barostat time constant controlling how quickly the system\
-                 responds to pressure differences. Defaults to 1000*timestep"
+                 responds to pressure differences. Defaults to 1000*timestep",
+            "unit": "fs",
         },
     )
     t_tau: Optional[float] = field(
         default=None,
         metadata={
             "description": "Thermostat time constant controlling how quickly the system\
-                 responds to temperature differences. Defaults to 100*timestep"
+                 responds to temperature differences. Defaults to 100*timestep",
+            "unit": "fs",
         },
     )
     external_pressure: float = field(
         default=1.0,
-        metadata={"description": "External pressure applied to the system [atm] (default: 1 atm)"},
+        metadata={
+            "description": "External pressure applied to the system [atm] (default: 1 atm)",
+            "unit": "atm",
+        },
     )
     chain_length: int = field(default=3, metadata={"description": "Number of Nose-Hoover chains"})
     chain_steps: int = field(default=3, metadata={"description": "Number of steps per chain"})

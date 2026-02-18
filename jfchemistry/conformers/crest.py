@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional, Union, cast
 
 import tomli_w
+from pint import Quantity
 from pymatgen.core.structure import Molecule
 from pymatgen.io.xyz import XYZ
 
@@ -17,6 +18,7 @@ from jfchemistry.conformers.base import ConformerGeneration
 from jfchemistry.core.input_types import RecursiveMoleculeList
 from jfchemistry.core.makers.pymatgen_maker import PymatGenMaker
 from jfchemistry.core.properties import Properties
+from jfchemistry.core.unit_utils import to_magnitude
 
 
 class CRESTProperties(Properties):
@@ -90,6 +92,15 @@ class CRESTConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
     extensive control over optimization settings, energy calculations, and
     conformer filtering.
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - ewin: [kcal/mol]
+        - ethr: [kcal/mol]
+        - rthr: [Å]
+        - bthr: [dimensionless]
+
     Attributes:
         name: Name of the job (default: "CREST Conformer Generation").
         runtype: Metadynamics protocol to use:
@@ -117,10 +128,10 @@ class CRESTConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
         converge_e: Energy convergence threshold (default: None, auto).
         converge_g: Gradient convergence threshold (default: None, auto).
         freeze: Freeze constraints string (default: None).
-        ewin: Energy window for conformer selection in kcal/mol (default: 6.0).
-        ethr: Energy threshold for duplicate detection in kcal/mol (default: 0.05).
-        rthr: RMSD threshold for structural similarity in Angstrom (default: 0.125).
-        bthr: Rotational constant threshold for duplicate detection (default: 0.01).
+        ewin: Energy window for conformer selection [kcal/mol] (default: 6.0).
+        ethr: Energy threshold for duplicate detection [kcal/mol] (default: 0.05).
+        rthr: RMSD threshold for structural similarity [Å] (default: 0.125).
+        bthr: Rotational constant threshold for duplicate detection [dimensionless] (default: 0.01).
         calculation_energy_method: Method for energy calculations:
             - "gfn2" (default), "gfn1", "gfn0", "gfnff"
         calculation_energy_calcspace: Calculation space setting (default: None).
@@ -231,31 +242,68 @@ class CRESTConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
     dynamics_dump_frequency: Optional[float] = field(
         default=100.0,
         metadata={
-            "description": "The dynamics trajectory dump frequency to use for the calculation"
+            "description": "The dynamics trajectory dump frequency (number of steps between dumps)"
         },
     )
 
     # CREGEN Block
-    ewin: float = field(
-        default=6.0, metadata={"description": "The energy window to use for the calculation"}
+    ewin: float | Quantity = field(
+        default=6.0,
+        metadata={
+            "description": "The energy window for conformer selection [kcal/mol]. \
+                Accepts float or pint Quantity.",
+            "unit": "kcal/mol",
+        },
     )
-    ethr: float = field(
-        default=0.05, metadata={"description": "The energy threshold to use for the calculation"}
+    ethr: float | Quantity = field(
+        default=0.05,
+        metadata={
+            "description": "The energy threshold for duplicate detection [kcal/mol]. \
+                Accepts float or pint Quantity.",
+            "unit": "kcal/mol",
+        },
     )
-    rthr: float = field(
-        default=0.125, metadata={"description": "The RMSD threshold to use for the calculation"}
+    rthr: float | Quantity = field(
+        default=0.125,
+        metadata={
+            "description": "The RMSD threshold for structural similarity [Å]. \
+                Accepts float or pint Quantity.",
+            "unit": "Å",
+        },
     )
-    bthr: float = field(
+    bthr: float | Quantity = field(
         default=0.01,
-        metadata={"description": "The rotational constant threshold to use for the calculation"},
+        metadata={
+            "description": "The rotational constant threshold for duplicate detection \
+                [dimensionless]. Accepts float or pint Quantity.",
+            "unit": "dimensionless",
+        },
     )
 
     # INTERNAL
-    _input_dict: dict[str, Any] = field(default_factory=dict)
-    _commands: list[str | int | float] = field(default_factory=list)
+    _input_dict: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={"description": "Internal CREST input dictionary (built from public options)."},
+    )
+    _commands: list[str | int | float] = field(
+        default_factory=list,
+        metadata={"description": "Internal list of command-line arguments for CREST."},
+    )
     _toml_filename: str = "crest.toml"
     _xyz_filename: str = "input.xyz"
     _properties_model: type[CRESTProperties] = CRESTProperties
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if isinstance(self.ewin, Quantity):
+            object.__setattr__(self, "ewin", to_magnitude(self.ewin, "kcal_per_mol"))
+        if isinstance(self.ethr, Quantity):
+            object.__setattr__(self, "ethr", to_magnitude(self.ethr, "kcal_per_mol"))
+        if isinstance(self.rthr, Quantity):
+            object.__setattr__(self, "rthr", to_magnitude(self.rthr, "angstrom"))
+        if isinstance(self.bthr, Quantity):
+            object.__setattr__(self, "bthr", to_magnitude(self.bthr, "dimensionless"))
+        super().__post_init__()
 
     def _make_dict(self):
         """Make the dictionary for the CREST input."""

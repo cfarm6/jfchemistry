@@ -30,7 +30,7 @@ class CRESTDeprotonation[InputType: Molecule, OutputType: Molecule](
 
     Attributes:
         name: Name of the job (default: "CREST Deprotonation").
-        ewin: Energy window in kcal/mol for selecting deprotonated structures
+        ewin: Energy window [kcal/mol] for selecting deprotonated structures
             (default: None, uses CREST default). Structures within ewin of the
             lowest energy structure are retained.
 
@@ -40,7 +40,7 @@ class CRESTDeprotonation[InputType: Molecule, OutputType: Molecule](
     Examples:
         >>> from jfchemistry.modification import CRESTDeprotonation # doctest: +SKIP
         >>> from pymatgen.core import Molecule # doctest: +SKIP
-        >>> >>> from ase.build import molecule # doctest: +SKIP
+        >>> from ase.build import molecule # doctest: +SKIP
         >>> ethane = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
         >>> # Deprotonate a ethane
         >>> deprot = CRESTDeprotonation(ewin=6.0) # doctest: +SKIP

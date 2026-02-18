@@ -10,11 +10,13 @@ from typing import Literal, Optional, cast
 import ase.optimize
 from ase import filters
 from ase.filters import Filter
+from pint import Quantity
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.optimizers.base import GeometryOptimization
 
 
@@ -29,6 +31,12 @@ class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Mole
     using various ASE optimization algorithms (LBFGS, BFGS, FIRE, etc.) and
     different calculators (neural networks, machine learning, semi-empirical).
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - fmax: [eV/Å]
+
     Subclasses should inherit from both a specific ASECalculator implementation
     and ASEOptimizer to create complete optimization workflows.
 
@@ -42,7 +50,8 @@ class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Mole
             - "FIRE": Fast Inertial Relaxation Engine
             - "FIRE2": FIRE version 2
             - "QuasiNewton": Quasi-Newton method
-        fmax: Maximum force convergence criterion in eV/Angstrom (default: 0.05).
+        fmax: Maximum force convergence criterion [eV/Å] (default: 0.05).
+            Accepts float in [eV/Å] or pint Quantity.
         steps: Maximum number of optimization steps (default: 250000).
 
     Examples:
@@ -73,9 +82,13 @@ class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Mole
         default=None,
         metadata={"description": "the ASE unit cell optimizer to use for the calculation"},
     )
-    fmax: float = field(
+    fmax: float | Quantity = field(
         default=0.05,
-        metadata={"description": "the maximum force convergence criterion in eV/Angstrom"},
+        metadata={
+            "description": "the maximum force convergence criterion [eV/Å]. "
+            "Accepts float in [eV/Å] or pint Quantity.",
+            "unit": "eV/Å",
+        },
     )
     steps: int = field(
         default=250000,
@@ -92,6 +105,8 @@ class ASEOptimizer[InputType: Structure | Molecule, OutputType: Structure | Mole
 
     def __post_init__(self):
         """Post-initialization hook."""
+        if isinstance(self.fmax, Quantity):
+            object.__setattr__(self, "fmax", to_magnitude(self.fmax, "eV/angstrom"))
         self.name = f"{self.name} with {self.calculator.name}"
         super().__post_init__()
 

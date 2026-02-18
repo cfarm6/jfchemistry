@@ -133,14 +133,16 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         default=None,
         metadata={
             "description": "The threshold energies from the HOMO orbital to be considered for the \
-                participation ratio calculation in eV"
+                participation ratio calculation [eV]",
+            "unit": "eV",
         },
     )
     lumo_threshold: Optional[float] = field(
         default=None,
         metadata={
             "description": "The threshold energies from the LUMO orbital to be considered for the \
-                participation ratio calculation in eV"
+                participation ratio calculation [eV]",
+            "unit": "eV",
         },
     )
     _properties_model: type[ORCAProperties] = ORCAProperties

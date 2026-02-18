@@ -29,6 +29,7 @@ def setup_computational_chemistry_units():
     ureg.define("wavenumber = planck_constant * speed_of_light / centimeter = cm^-1 = kayser")
     ureg.define("kcal_per_mol = kilocalorie / avogadro_number")
     ureg.define("kJ_per_mol = kJ / avogadro_number")
+    ureg.define("fs = femtosecond")
     return ureg
 
 

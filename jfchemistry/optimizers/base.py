@@ -1,8 +1,4 @@
-"""Base class for structure generation.
-
-This module provides the base Maker class for geometry optimization workflows
-in jfchemistry.
-"""
+"""This module provides the base Maker class for geometry optimization workflows in jfchemistry."""
 
 from dataclasses import dataclass
 

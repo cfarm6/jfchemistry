@@ -11,6 +11,7 @@ from ase import Atoms
 from ase.md.nose_hoover_chain import NoseHooverChainNVT
 from ase.units import fs
 
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.ase.base import ASEMolecularDynamics
 
 
@@ -23,7 +24,7 @@ class ASEMolecularDynamicsNVTNoseHoover(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NVT Nose-Hoover").
         integrator: The integrator type (fixed to "nvt_nose_hoover").
-        ttime: Thermostat time constant in fs (default: None, uses 100*timestep).
+        ttime: Thermostat time constant [fs] (default: None, uses 100*timestep).
     """
 
     name: str = "ASE Molecular Dynamics NVT Nose-Hoover"
@@ -31,7 +32,8 @@ class ASEMolecularDynamicsNVTNoseHoover(ASEMolecularDynamics):
     ttime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Thermostat time constant in fs. Defaults to 100*timestep if None."
+            "description": "Thermostat time constant [fs]. Defaults to 100*timestep if None.",
+            "unit": "fs",
         },
     )
 
@@ -52,6 +54,6 @@ class ASEMolecularDynamicsNVTNoseHoover(ASEMolecularDynamics):
         return NoseHooverChainNVT(
             atoms,
             timestep=self.timestep * fs,
-            temperature_K=self.temperature,
+            temperature_K=to_magnitude(self.temperature, "kelvin"),
             tdamp=ttime * fs,
         )

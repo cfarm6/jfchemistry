@@ -154,7 +154,11 @@ class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
     )
     accuracy: float = field(default=1.0, metadata={"description": "The accuracy to use"})
     electronic_temperature: float = field(
-        default=300.0, metadata={"description": "The electronic temperature to use"}
+        default=300.0,
+        metadata={
+            "description": "The electronic temperature to use",
+            "unit": "K",
+        },
     )
     max_iterations: int = field(
         default=250, metadata={"description": "The maximum number of iterations to use"}

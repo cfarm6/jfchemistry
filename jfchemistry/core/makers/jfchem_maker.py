@@ -42,7 +42,13 @@ class JFChemMaker[InputType, OutputType](CoreMaker):
     name: str = "Single Structure Calculator Maker"
     _output_model: Type[Output] = Output
     _properties_model: Type[Properties] = Properties
-    _ensemble: bool = field(default=False)
+    _ensemble: bool = field(
+        default=False,
+        metadata={
+            "description": "Whether the maker expects a list of inputs (ensemble) \
+                or a single input."
+        },
+    )
 
     def _write_file(self, structure: Structure | Molecule) -> str | None:
         """Write the structure to a file."""
@@ -125,7 +131,7 @@ class JFChemMaker[InputType, OutputType](CoreMaker):
 
         Examples:
             >>> from jfchemistry.conformers import CRESTConformers # doctest: +SKIP
-            >>> from pymatgen.core import Molecule # dokctest: +SKIP
+            >>> from pymatgen.core import Molecule # doctest: +SKIP
             >>> molecule = Molecule.from_ase_atoms(molecule("C2H6")) # doctest: +SKIP
             >>> # Generate conformers
             >>> conformer_gen = CRESTConformers(ewin=6.0) # doctest: +SKIP

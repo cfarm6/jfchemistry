@@ -12,11 +12,13 @@ from ase import Atoms
 from ase.io import Trajectory
 from ase.md import MDLogger
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+from pint import Quantity
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.molecular_dynamics.base import MolecularDynamics, MolecularDynamicsOutput
 
 
@@ -47,16 +49,26 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
     of a structure using various ASE calculators (neural networks, machine learning,
     semi-empirical, etc.).
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - duration: [fs]
+        - timestep: [fs]
+        - log_interval: [fs]
+        - temperature: [K]
+
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics").
         calculator: The calculator to use for the calculation.
         integrator: The integrator to use for the simulation.
-        duration: The duration of the simulation in fs.
-        timestep: The timestep of the simulation in fs.
-        temperature: The temperature of the simulation in K.
+        duration: The duration of the simulation [fs]. Accepts float or pint Quantity.
+        timestep: The timestep of the simulation [fs]. Accepts float or pint Quantity.
+        temperature: The temperature of the simulation [K]. Accepts float or pint Quantity.
         logfile: The filename prefix to log the trajectory of the simulation.
         progress_bar: Whether to show a progress bar in the simulation.
-        log_interval: The interval at which to log the simulation in fs.
+        log_interval: The interval at which to log the simulation [fs]. \
+            Accepts float or pint Quantity.
         log_potential_energy: Whether to log the potential energy in the simulation.
         log_kinetic_energy: Whether to log the kinetic energy in the simulation.
         log_temperature: Whether to log the temperature in the simulation.
@@ -73,14 +85,26 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
     integrator: str = field(
         default="nve", metadata={"description": "The integrator to use for the simulation"}
     )
-    duration: float = field(
-        default=1.0, metadata={"description": "The duration of the simulation in fs"}
+    duration: float | Quantity = field(
+        default=1.0,
+        metadata={
+            "description": "The duration of the simulation [fs]. Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
-    timestep: float = field(
-        default=0.5, metadata={"description": "The timestep of the simulation in fs"}
+    timestep: float | Quantity = field(
+        default=0.5,
+        metadata={
+            "description": "The timestep of the simulation [fs]. Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
-    temperature: float = field(
-        default=300.0, metadata={"description": "The temperature of the simulation in K"}
+    temperature: float | Quantity = field(
+        default=300.0,
+        metadata={
+            "description": "The temperature of the simulation [K]. Accepts float or pint Quantity.",
+            "unit": "K",
+        },
     )
     logfile: str = field(
         default="md",
@@ -93,8 +117,13 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
         default=True,
         metadata={"description": "Whether to show a progress bar in the simulation"},
     )
-    log_interval: float = field(
-        default=1.0, metadata={"description": "The interval at which to log the simulation in fs"}
+    log_interval: float | Quantity = field(
+        default=1.0,
+        metadata={
+            "description": "The interval at which to log the simulation [fs]. \
+                Accepts float or pint Quantity.",
+            "unit": "fs",
+        },
     )
     log_potential_energy: bool = field(
         default=False,
@@ -126,6 +155,14 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
 
     def __post_init__(self):
         """Post initialization hook."""
+        if isinstance(self.duration, Quantity):
+            object.__setattr__(self, "duration", to_magnitude(self.duration, "fs"))
+        if isinstance(self.timestep, Quantity):
+            object.__setattr__(self, "timestep", to_magnitude(self.timestep, "fs"))
+        if isinstance(self.temperature, Quantity):
+            object.__setattr__(self, "temperature", to_magnitude(self.temperature, "kelvin"))
+        if isinstance(self.log_interval, Quantity):
+            object.__setattr__(self, "log_interval", to_magnitude(self.log_interval, "fs"))
         super().__post_init__()
 
     def _create_dynamics(self, atoms: Atoms) -> Any:
@@ -226,7 +263,7 @@ class ASEMolecularDynamics[InputType: Molecule | Structure, OutputType: Molecule
         # Set up calculator
         self.calculator._set_calculator(atoms, charge=charge, spin_multiplicity=spin_multiplicity)
         # Initialize velocities
-        MaxwellBoltzmannDistribution(atoms, temperature_K=self.temperature)
+        MaxwellBoltzmannDistribution(atoms, temperature_K=to_magnitude(self.temperature, "kelvin"))
         # Set up trajectory and logging
         traj_file = None
         if self.log_trajectory:

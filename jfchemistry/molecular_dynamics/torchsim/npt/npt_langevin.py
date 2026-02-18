@@ -34,22 +34,32 @@ class TorchSimMolecularDynamicsNPTLangevin(TorchSimMolecularDynamics):
     integrator: Literal["npt_langevin"] = "npt_langevin"
     alpha: Optional[float] = field(
         default=None,
-        metadata={"description": "Atom friction coefficient controlling noise strength"},
+        metadata={
+            "description": "Atom friction coefficient controlling noise strength",
+            "unit": "fs^-1",
+        },
     )
     cell_alpha: Optional[float] = field(
         default=None,
-        metadata={"description": "Cell friction coefficient controlling noise strength"},
+        metadata={
+            "description": "Cell friction coefficient controlling noise strength",
+            "unit": "fs^-1",
+        },
     )
     b_tau: Optional[float] = field(
         default=None,
         metadata={
             "description": "Barostat time constant controlling how\
-                 quickly the system responds to pressure differences"
+                 quickly the system responds to pressure differences",
+            "unit": "fs",
         },
     )
     external_pressure: float = field(
         default=1.0,
-        metadata={"description": "External pressure applied to the system [atm] (default: 1 atm)"},
+        metadata={
+            "description": "External pressure applied to the system [atm] (default: 1 atm)",
+            "unit": "atm",
+        },
     )
 
     def _setup_dicts(self, model: ModelInterface):

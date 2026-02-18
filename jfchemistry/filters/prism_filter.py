@@ -1,9 +1,10 @@
-"""Base class for energy filters."""
+"""PrismPruner-based structural and energy filtering."""
 
 from dataclasses import dataclass, field
 from typing import ClassVar, Literal, Optional, cast
 
 import numpy as np
+from pint import Quantity
 from prism_pruner.pruner import prune
 from pymatgen.core.structure import Molecule
 
@@ -11,6 +12,7 @@ from jfchemistry import Q_, ureg
 from jfchemistry.core.input_types import RecursiveMoleculeList
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.filters.base import Filter
 
 type PruningOptions = Literal["MOI", "RMSD", "RMSD_RC"]
@@ -21,14 +23,39 @@ class PrismPrunerFilter[InputType: Molecule, OutputType: RecursiveMoleculeList](
     Filter,
     PymatGenMaker[InputType, OutputType],
 ):
-    """PrismPrunerFilter."""
+    """PrismPruner-based structural and energy filter for molecular ensembles.
+
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - energy_threshold: [kcal/mol]
+
+    Attributes:
+        name: The name of the filter (default: "PrismPruner Structural Filter").
+        structural_threshold: The threshold for the structural filter (default: 0.0).
+            Accepts float or pint Quantity.
+        energy_threshold: The threshold for the energy filter [kcal/mol] (default: None).
+            Accepts float in [kcal/mol] or pint Quantity.
+        methods: Pruning methods to apply: "MOI", "RMSD", "RMSD_RC" (default: ["MOI", "RMSD"]).
+    """
 
     name: str = "PrismPruner Structural Filter"
-    structural_threshold: float = field(
-        default=0.0, metadata={"description": "The threshold for the structural filter."}
+    structural_threshold: float | Quantity = field(
+        default=0.0,
+        metadata={
+            "description": "The threshold for the structural filter. "
+            "Accepts float or pint Quantity.",
+            "unit": "dimensionless",
+        },
     )
-    energy_threshold: Optional[float] = field(
-        default=None, metadata={"description": "The threshold for the energy filter [kcal/mol]."}
+    energy_threshold: Optional[float | Quantity] = field(
+        default=None,
+        metadata={
+            "description": "The threshold for the energy filter [kcal/mol]. "
+            "Accepts float in [kcal/mol] or pint Quantity.",
+            "unit": "kcal/mol",
+        },
     )
     methods: list[type[PruningOptions]] = field(
         default_factory=lambda: ["MOI", "RMSD"],
@@ -41,7 +68,17 @@ class PrismPrunerFilter[InputType: Molecule, OutputType: RecursiveMoleculeList](
     }
 
     def __post_init__(self):
-        """Ensure _ensemble is set to True for ensemble processing."""
+        """Normalize unit-bearing attributes and set _ensemble."""
+        if isinstance(self.structural_threshold, Quantity):
+            object.__setattr__(
+                self,
+                "structural_threshold",
+                to_magnitude(self.structural_threshold, "dimensionless"),
+            )
+        if self.energy_threshold is not None and isinstance(self.energy_threshold, Quantity):
+            object.__setattr__(
+                self, "energy_threshold", to_magnitude(self.energy_threshold, "kcal_per_mol")
+            )
         super().__post_init__()
         self._ensemble = True
 

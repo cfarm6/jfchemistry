@@ -14,6 +14,7 @@ from multiple_minimum_monte_carlo.batch_calculation import TorchSimCalculation
 from multiple_minimum_monte_carlo.calculation import ASEOptimization
 from multiple_minimum_monte_carlo.conformer import Conformer
 from multiple_minimum_monte_carlo.conformer_ensemble import ConformerEnsemble
+from pint import Quantity
 from pymatgen.core.structure import Molecule
 
 from jfchemistry import ureg
@@ -22,6 +23,7 @@ from jfchemistry.core.input_types import RecursiveMoleculeList
 from jfchemistry.core.makers.pymatgen_maker import PymatGenMaker
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass, SystemProperty
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.optimizers.ase import ASEOptimizer
 from jfchemistry.optimizers.torchsim import TorchSimOptimizer
 
@@ -49,16 +51,29 @@ class MMMCOutput(Output):
 class MMMCConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
     ConformerGeneration, PymatGenMaker[InputType, OutputType]
 ):
-    """Generate conformers with the multiple minimum monte carlo method."""
+    """Generate conformers with the multiple minimum monte carlo method.
+
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - energy_window: [kcal/mol]
+        - angle_step: [degrees]
+        - rmsd_threshold: [Å]
+    """
 
     name: str = "Multiple Minimum Monte Carlo Conformer Generation"
     optimizer: ASEOptimizer | TorchSimOptimizer = field(
         default_factory=lambda: ASEOptimizer,
         metadata={"description": "the calculator to use for the calculation"},
     )
-    energy_window: float = field(
+    energy_window: float | Quantity = field(
         default=10.0,
-        metadata={"description": "the energy window for the conformer ensemble [kcal/mol]"},
+        metadata={
+            "description": "the energy window for the conformer ensemble [kcal/mol]. \
+                Accepts float in [kcal/mol] or pint Quantity.",
+            "unit": "kcal/mol",
+        },
     )
     max_bonds_rotate: int = field(
         default=3,
@@ -70,11 +85,21 @@ class MMMCConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
             "description": "Maximum number of times to try and rotate dihedrals per iteration"
         },
     )
-    angle_step: float = field(
-        default=30.0, metadata={"description": "Step size for bond rotation [degrees]"}
+    angle_step: float | Quantity = field(
+        default=30.0,
+        metadata={
+            "description": "Step size for bond rotation [degrees]. \
+                Accepts float in [degrees] or pint Quantity.",
+            "unit": "degrees",
+        },
     )
-    rmsd_threshold: float = field(
-        default=0.3, metadata={"description": "RMSD threshold for conformer selection [Angstrom]"}
+    rmsd_threshold: float | Quantity = field(
+        default=0.3,
+        metadata={
+            "description": "RMSD threshold for conformer selection [Å]. \
+                Accepts float in [Å] or pint Quantity.",
+            "unit": "Å",
+        },
     )
     initial_optimization: bool = field(
         default=True,
@@ -114,9 +139,26 @@ class MMMCConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
     )
 
     _filename: str = "molecule.xyz"
-    _optimizer: Optional[ASEOptimizer | TorchSimOptimizer] = field(default=None)
+    _optimizer: Optional[ASEOptimizer | TorchSimOptimizer] = field(
+        default=None,
+        metadata={"description": "Cached optimizer instance (set internally after validation)."},
+    )
     _properties_model: type[MMMCProperties] = MMMCProperties
     _output_model: type[MMMCOutput] = MMMCOutput
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if isinstance(self.energy_window, Quantity):
+            object.__setattr__(
+                self, "energy_window", to_magnitude(self.energy_window, "kcal_per_mol")
+            )
+        if isinstance(self.angle_step, Quantity):
+            object.__setattr__(self, "angle_step", to_magnitude(self.angle_step, "degree"))
+        if isinstance(self.rmsd_threshold, Quantity):
+            object.__setattr__(
+                self, "rmsd_threshold", to_magnitude(self.rmsd_threshold, "angstrom")
+            )
+        super().__post_init__()
 
     def _operation(
         self, input: Molecule, **kwargs
@@ -136,7 +178,7 @@ class MMMCConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
             calc = ASEOptimization(
                 atoms.calc,
                 optimizer=getattr(optimize, self.optimizer.optimizer),
-                fmax=self.optimizer.fmax,
+                fmax=to_magnitude(self.optimizer.fmax, "eV/angstrom"),
                 max_cycles=self.optimizer.steps,
             )
         elif isinstance(self.optimizer, TorchSimOptimizer):
@@ -151,11 +193,11 @@ class MMMCConformers[InputType: Molecule, OutputType: RecursiveMoleculeList](
         conformer_ensemble = ConformerEnsemble(
             conformer=conformer,
             calc=calc,
-            energy_window=self.energy_window,
+            energy_window=to_magnitude(self.energy_window, "kcal_per_mol"),
             max_bonds_rotate=self.max_bonds_rotate,
             max_attempts=self.max_attempts,
-            angle_step=self.angle_step,
-            rmsd_threshold=self.rmsd_threshold,
+            angle_step=to_magnitude(self.angle_step, "degree"),
+            rmsd_threshold=to_magnitude(self.rmsd_threshold, "angstrom"),
             initial_optimization=self.initial_optimization,
             random_walk=self.random_walk,
             reduce_angle=self.reduce_angle,

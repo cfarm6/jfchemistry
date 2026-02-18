@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional, cast
 import numpy as np
 from jobflow.core.flow import Flow
 from jobflow.core.job import OutputReference, Response
+from pint import Quantity
 
 from jfchemistry import SystemProperty, ureg
 from jfchemistry.conformers import CRESTConformers
@@ -16,6 +17,7 @@ from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.filters import EnergyFilter, PrismPrunerFilter
 from jfchemistry.modification.tautomerization import CRESTTautomerization
 from jfchemistry.modification.tautomerization.base import TautomerMaker
@@ -118,10 +120,23 @@ class PartitionCoefficientProperties(Properties):
 
 @dataclass
 class PartitionCoefficientCalculation(PymatGenMaker):
-    """Perform a partition coefficient calculation."""
+    """Perform a partition coefficient calculation.
+
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - temperature: [K]
+    """
 
     name: str = "Partition Coefficient Calculation"
-    temperature: float = field(default=298.15, metadata={"description": "The temperature [K]."})
+    temperature: float | Quantity = field(
+        default=298.15,
+        metadata={
+            "description": "The temperature [K]. Accepts float in [K] or pint Quantity.",
+            "unit": "K",
+        },
+    )
     alpha_phase: PartitionCoefficientSolventType = field(
         default="octanol", metadata={"description": "The alpha phase."}
     )
@@ -130,6 +145,12 @@ class PartitionCoefficientCalculation(PymatGenMaker):
     )
     _properties_model: type[PartitionCoefficientProperties] = PartitionCoefficientProperties
     _output_model: type[Output] = Output
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if isinstance(self.temperature, Quantity):
+            object.__setattr__(self, "temperature", to_magnitude(self.temperature, "kelvin"))
+        super().__post_init__()
 
     @jfchem_job()
     def make(

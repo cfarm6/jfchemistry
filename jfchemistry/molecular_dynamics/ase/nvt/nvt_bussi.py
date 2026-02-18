@@ -23,7 +23,7 @@ class ASEMolecularDynamicsNVTBussi(ASEMolecularDynamics):
     Attributes:
         name: Name of the calculator (default: "ASE Molecular Dynamics NVT Bussi").
         integrator: The integrator type (fixed to "nvt_bussi").
-        ttime: Thermostat time constant in fs (default: None, uses 100*timestep).
+        ttime: Thermostat time constant [fs] (default: None, uses 100*timestep).
     """
 
     name: str = "ASE Molecular Dynamics NVT Bussi"
@@ -31,7 +31,8 @@ class ASEMolecularDynamicsNVTBussi(ASEMolecularDynamics):
     ttime: Optional[float] = field(
         default=None,
         metadata={
-            "description": "Thermostat time constant in fs. Defaults to 100*timestep if None."
+            "description": "Thermostat time constant [fs]. Defaults to 100*timestep if None.",
+            "unit": "fs",
         },
     )
 

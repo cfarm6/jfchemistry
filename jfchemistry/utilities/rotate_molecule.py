@@ -4,10 +4,12 @@ from dataclasses import dataclass
 from typing import Literal, cast
 
 import numpy as np
+from pint import Quantity
 from pymatgen.core.structure import Molecule
 
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties
+from jfchemistry.core.unit_utils import to_magnitude
 
 # Type for 3x3 rotation matrix (list of lists for JSON serialization)
 RotationMatrix = list[list[float]]
@@ -118,8 +120,14 @@ class RotateMolecule(PymatGenMaker[Molecule, Molecule]):
 
     Only supports pymatgen Molecule (not Structure). Modes:
     - "matrix": apply a user-provided 3x3 rotation matrix.
-    - "axis_angle": rotate by angle (degrees) around an axis (e.g. "z" or [0,0,1]).
+    - "axis_angle": rotate by angle [degrees] around an axis (e.g. "z" or [0,0,1]).
     - "principal_axes": align principal moments of inertia with lab axes (e.g. largest along z).
+
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - angle_deg: [degrees]
 
     Set rotation parameters as instance attributes; then call make(molecule) or make([mol1, mol2]).
     """
@@ -130,9 +138,15 @@ class RotateMolecule(PymatGenMaker[Molecule, Molecule]):
     mode: Literal["matrix", "axis_angle", "principal_axes"] = "principal_axes"
     rotation_matrix: RotationMatrix | None = None
     axis: AxisSpec | None = None
-    angle_deg: float | None = None
+    angle_deg: float | Quantity | None = None
     axis_order: str = "largest_z"
     center: tuple[float, float, float] | None = None
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if self.angle_deg is not None and isinstance(self.angle_deg, Quantity):
+            object.__setattr__(self, "angle_deg", to_magnitude(self.angle_deg, "degree"))
+        super().__post_init__()
 
     def _operation(self, input: Molecule, **kwargs: object) -> _OpResult:
         """Rotate a molecule using this instance's mode and rotation parameters."""

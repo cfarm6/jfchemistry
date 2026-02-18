@@ -10,7 +10,7 @@ Examples:
     >>> # Generate conformers using CREST
     >>> conformer_gen = CRESTConformers( # doctest: +SKIP
     ...     runtype="imtd-gc", # doctest: +SKIP
-    ...     ewin=6.0,  # Energy window in kcal/mol # doctest: +SKIP
+    ...     ewin=6.0,  # Energy window [kcal/mol] # doctest: +SKIP
     ...     calculation_energy_method="gfnff", # doctest: +SKIP
     ...     calculation_dynamics_method="gfnff" # doctest: +SKIP
     ... ) # doctest: +SKIP

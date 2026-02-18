@@ -1,4 +1,4 @@
-"""Base Class for    DFT Calculations."""
+"""PySCF GPU DFT calculator and related classes."""
 
 from dataclasses import dataclass, field
 from typing import Literal, Optional
@@ -8,6 +8,7 @@ import numpy as np
 from ase import units
 from gpu4pyscf import dft
 from monty.json import MSONable
+from pint import Quantity
 from pyscf import gto
 from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
@@ -16,6 +17,7 @@ from pyscf.scf import hf
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 from jfchemistry.core.properties import OrbitalProperty, Properties, PropertyClass
+from jfchemistry.core.unit_utils import to_magnitude
 
 
 class PySCFOrbitalProperties(PropertyClass):
@@ -59,6 +61,13 @@ xc_functionals = Literal[*list(XC_CODES.keys())]  # type: ignore
 class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
     """PySCF GPU DFT Calculator with full type support.
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``):
+
+        - homo_threshold: [eV]
+        - lumo_threshold: [eV]
+
     Attributes:
         name: Name of the calculator (default: "PySCF GPU Calculator").
         cores: The number of CPU cores to use for parallel calculations (default: 1).
@@ -69,9 +78,9 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         participation_ratio: Whether to calculate the per-atom participation ratio for a series of \
             molecular orbitals (default: False).
         homo_threshold: The threshold energies from the HOMO orbital to be considered for the \
-            participation ratio calculation in eV (default: None).
+            participation ratio calculation [eV] (default: None). Accepts float or pint Quantity.
         lumo_threshold: The threshold energies from the LUMO orbital to be considered for the \
-            participation ratio calculation in eV (default: None).
+            participation ratio calculation [eV] (default: None). Accepts float or pint Quantity.
     """
 
     name: str = "PySCF GPU Calculator"
@@ -102,21 +111,30 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
                 participation ratio for a series of molecular orbitals"
         },
     )
-    homo_threshold: Optional[float] = field(
+    homo_threshold: Optional[float | Quantity] = field(
         default=None,
         metadata={
-            "description": "The threshold energies from the HOMO orbital to be considered for the \
-                participation ratio calculation in eV"
+            "description": "The threshold energies from the HOMO orbital to be considered for the "
+            "participation ratio calculation [eV]. Accepts float or pint Quantity.",
+            "unit": "eV",
         },
     )
-    lumo_threshold: Optional[float] = field(
+    lumo_threshold: Optional[float | Quantity] = field(
         default=None,
         metadata={
-            "description": "The threshold energies from the LUMO orbital to be considered for the \
-                participation ratio calculation in eV"
+            "description": "The threshold energies from the LUMO orbital to be considered for the "
+            "participation ratio calculation [eV]. Accepts float or pint Quantity.",
+            "unit": "eV",
         },
     )
     _properties_model: type[PySCFProperties] = PySCFProperties
+
+    def __post_init__(self):
+        """Normalize unit-bearing attributes."""
+        if self.homo_threshold is not None and isinstance(self.homo_threshold, Quantity):
+            object.__setattr__(self, "homo_threshold", to_magnitude(self.homo_threshold, "eV"))
+        if self.lumo_threshold is not None and isinstance(self.lumo_threshold, Quantity):
+            object.__setattr__(self, "lumo_threshold", to_magnitude(self.lumo_threshold, "eV"))
 
     def _setup_mf(self, mol: gto.Mole) -> dft.RKS:
         mf = dft.RKS(mol, xc=self.xc_functional)

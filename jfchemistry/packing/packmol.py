@@ -9,10 +9,12 @@ import subprocess
 from dataclasses import dataclass, field
 from typing import Any, Literal, Optional, cast
 
+from pint import Quantity
 from pymatgen.core.structure import Molecule, Structure
 
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.properties import Properties
+from jfchemistry.core.unit_utils import to_magnitude
 from jfchemistry.packing.base import StructurePacking
 
 
@@ -40,19 +42,30 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
     - Box packing: Pack multiple copies of a molecule into a defined box
     - Fixed packing: Place molecules at fixed positions
 
+    Units:
+        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
+        or ``jfchemistry.Q_``). For tuples (e.g. box_dimensions), each component
+        may be a float or Quantity:
+
+        - tolerance: [Å]
+        - box_dimensions: [Å] (per component)
+        - fixed_positions: [Å] (per component)
+        - density: [g/cm³]
+
     Attributes:
         name: Name of the packing job (default: "Packmol Packing").
         packing_mode: Packing strategy to use:
             - "box": Pack molecules into a box (requires num_molecules and either
               box_dimensions or density)
             - "fixed": Place molecules at fixed positions (requires fixed_positions)
-        box_dimensions: Box size in Angstroms as (x, y, z) tuple. Required for box mode
+        box_dimensions: Box size [Å] as (x, y, z) tuple. Required for box mode
             if density is not specified.
-        density: Target density in g/cm^3. If specified, box dimensions are automatically
+        density: Target density [g/cm³]. If specified, box dimensions are automatically
             calculated for a cubic box. Cannot be used together with box_dimensions.
         num_molecules: Number of molecule copies to pack. Required for box mode.
         fixed_positions: List of (x, y, z) positions for fixed packing. Required for fixed mode.
-        tolerance: Minimum distance between molecules in Angstroms (default: 2.0).
+        tolerance: Minimum distance between molecules [Å] (default: 2.0). \
+            Accepts float or pint Quantity.
         packmol_path: Path to packmol executable (default: "packmol").
         filetype: Input/output file format (default: "xyz").
     """
@@ -62,25 +75,43 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
         default="box",
         metadata={"description": "the packing strategy to use"},
     )
-    box_dimensions: Optional[tuple[float, float, float]] = field(
+    box_dimensions: Optional[tuple[float | Quantity, float | Quantity, float | Quantity]] = field(
         default=None,
-        metadata={"description": "box size in Angstroms as (x, y, z) tuple"},
+        metadata={
+            "description": "box size [Å] as (x, y, z) tuple. \
+                Accepts float or pint Quantity per component.",
+            "unit": "Å",
+        },
     )
-    density: Optional[float] = field(
+    density: Optional[float | Quantity] = field(
         default=None,
-        metadata={"description": "target density in g/cm^3 (alternative to box_dimensions)"},
+        metadata={
+            "description": "target density [g/cm³] (alternative to box_dimensions). \
+                Accepts float or pint Quantity.",
+            "unit": "g/cm³",
+        },
     )
     num_molecules: list[int] | int = field(
         default=1,
         metadata={"description": "number of molecule copies to pack"},
     )
-    fixed_positions: Optional[list[tuple[float, float, float]]] = field(
-        default=None,
-        metadata={"description": "list of (x, y, z) positions for fixed packing"},
+    fixed_positions: Optional[list[tuple[float | Quantity, float | Quantity, float | Quantity]]] = (
+        field(
+            default=None,
+            metadata={
+                "description": "list of (x, y, z) positions [Å] for fixed packing. \
+                    Accepts float or pint Quantity per component.",
+                "unit": "Å",
+            },
+        )
     )
-    tolerance: float = field(
+    tolerance: float | Quantity = field(
         default=2.0,
-        metadata={"description": "minimum distance between molecules in Angstroms"},
+        metadata={
+            "description": "minimum distance between molecules [Å]. \
+                Accepts float or pint Quantity.",
+            "unit": "Å",
+        },
     )
     packmol_path: str = field(
         default="packmol",
@@ -94,6 +125,31 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
         """Post-initialization hook to make the output model."""
         if isinstance(self.num_molecules, int):
             self.num_molecules = [self.num_molecules]
+        if isinstance(self.tolerance, Quantity):
+            object.__setattr__(self, "tolerance", to_magnitude(self.tolerance, "angstrom"))
+        if self.box_dimensions is not None:
+            object.__setattr__(
+                self,
+                "box_dimensions",
+                tuple(
+                    to_magnitude(x, "angstrom") if isinstance(x, Quantity) else float(x)
+                    for x in self.box_dimensions
+                ),
+            )
+        if self.density is not None and isinstance(self.density, Quantity):
+            object.__setattr__(self, "density", to_magnitude(self.density, "g/cm**3"))
+        if self.fixed_positions is not None:
+            object.__setattr__(
+                self,
+                "fixed_positions",
+                [
+                    tuple(
+                        to_magnitude(v, "angstrom") if isinstance(v, Quantity) else float(v)
+                        for v in pos
+                    )
+                    for pos in self.fixed_positions
+                ],
+            )
 
     def _calculate_box_dimensions_from_density(
         self, structures: InputType
@@ -104,7 +160,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
             structures: Input molecule structure.
 
         Returns:
-            Box dimensions as (x, y, z) tuple in Angstroms for a cubic box.
+            Box dimensions as (x, y, z) tuple [Å] for a cubic box.
 
         Raises:
             ValueError: If num_molecules or density is not set.
@@ -256,9 +312,17 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
             # For fixed mode, we can return as Molecule or Structure
             if self.packing_mode == "box":
                 # Use provided box_dimensions or fall back to self.box_dimensions
-                if box_dimensions is None:
-                    box_dimensions = self.box_dimensions
-
+                raw_dims = box_dimensions if box_dimensions is not None else self.box_dimensions
+                if raw_dims is not None:
+                    box_dimensions = cast(
+                        "tuple[float, float, float]",
+                        tuple(
+                            to_magnitude(d, "angstrom") if isinstance(d, Quantity) else float(d)
+                            for d in raw_dims
+                        ),
+                    )
+                else:
+                    box_dimensions = None
                 if box_dimensions is not None:
                     # Create a Structure with the box as the lattice
                     from pymatgen.core import Lattice
@@ -332,13 +396,12 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
         output_file = os.path.abspath(f"packed_structure.{self._filetype}")
 
         # Get box dimensions (either specified or calculated from density)
+        box_dims: Optional[tuple[float | Quantity, float | Quantity, float | Quantity]] = None
         if self.packing_mode == "box":
             if self.density is not None:
                 box_dims = self._calculate_box_dimensions_from_density(input)
             else:
                 box_dims = self.box_dimensions
-        else:
-            box_dims = None
 
         # Write packmol input file (this may calculate box_dimensions from density)
         packmol_input = self._write_packmol_input(output_file, input)
@@ -348,7 +411,17 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
 
         # Read packed structure (use absolute path)
         abs_output_file = os.path.abspath(output_file)
-        packed_structure = self._read_packed_structure(abs_output_file, box_dims)
+        if box_dims is not None:
+            box_dims_normalized: tuple[float, float, float] = cast(
+                "tuple[float, float, float]",
+                tuple(
+                    to_magnitude(d, "angstrom") if isinstance(d, Quantity) else float(d)
+                    for d in box_dims
+                ),
+            )
+        else:
+            box_dims_normalized = None
+        packed_structure = self._read_packed_structure(abs_output_file, box_dims_normalized)
 
         # Convert Structure to Molecule if needed (remove lattice for non-periodic representation)
         # For packed structures, we typically want to keep them as Structures,

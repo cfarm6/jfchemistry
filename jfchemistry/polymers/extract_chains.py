@@ -142,7 +142,7 @@ def extract_chains_from_structure(
 
     Args:
         structure: Periodic structure (e.g. from MD) containing one or more chains.
-        bond_cutoff: Maximum distance (Angstrom) for two atoms to be considered bonded.
+        bond_cutoff: Maximum distance [Å] for two atoms to be considered bonded.
 
     Returns:
         List of Molecules, one per chain, with coordinates unwrapped (no PBC).
@@ -191,13 +191,16 @@ class ExtractPolymerChains(
 
     Attributes:
         name: Job name (default: "Extract Polymer Chains").
-        bond_cutoff: Maximum distance (Angstrom) for a bond (default: 2.0).
+        bond_cutoff: Maximum distance [Å] for a bond (default: 2.0).
     """
 
     name: str = "Extract Polymer Chains"
     bond_cutoff: float = field(
         default=2.0,
-        metadata={"description": "Maximum distance (Angstrom) for two atoms to be bonded."},
+        metadata={
+            "description": "Maximum distance [Å] for two atoms to be bonded.",
+            "unit": "Å",
+        },
     )
     _output_model: type[Output] = Output
 
