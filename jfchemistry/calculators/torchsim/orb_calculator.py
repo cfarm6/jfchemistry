@@ -55,7 +55,7 @@ class OrbCalculator(TorchSimCalculator, MachineLearnedInteratomicPotentialCalcul
         "orb_v3_direct_20_mpa",
         "orb_v3_direct_inf_omat",
         "orb_v3_direct_inf_mpa",
-        "orb_v3_conservative_20-omat",
+        "orb_v3_conservative_20_omat",
         "orb_v3_conservative_20_mpa",
         "orb_v3_conservative_inf_omat",
         "orb_v3_conservative_inf_mpa",
