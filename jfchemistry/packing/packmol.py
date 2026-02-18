@@ -169,7 +169,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
         with open(input_file, "w") as f:
             f.write(f"tolerance {self.tolerance}\n")
             f.write(f"filetype {self._filetype}\n")
-            f.write(f"output {abs_output_file}\n")
+            f.write(f'output "{abs_output_file}"\n')
             f.write("\n")
 
             if self.packing_mode == "box":
@@ -186,7 +186,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
                         f"{self._structure_prefix}_{i}.{self._filetype}"
                     )
                     molecule.to(filename=input_mol_file, fmt=self._filetype)
-                    f.write(f"structure {input_mol_file}\n")
+                    f.write(f'structure "{input_mol_file}"\n')
                     f.write(f"  number {num_molecule}\n")
                     f.write(
                         f"  inside box 0. 0. 0. {self.box_dimensions[0]} \

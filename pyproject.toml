@@ -152,3 +152,6 @@ packages = ["jfchemistry"]
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
+[dependency-groups]
+development = ["marimo>=0.19.11,<0.20", "altair>=6.0.0,<7", "matplotlib>=3.10.8,<4"]
