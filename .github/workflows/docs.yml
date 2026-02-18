@@ -24,8 +24,8 @@ jobs:
               with:
                   pixi-version: v0.63.2
                   cache: true
-                  environments: docs
-            - run: pixi run -e docs zensical build --clean
+                  environments: documentation
+            - run: pixi run -e documentation zensical build --clean
             - uses: actions/upload-pages-artifact@v4
               with:
                   path: site
