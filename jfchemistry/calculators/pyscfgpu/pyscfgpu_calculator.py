@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional
 
 import cupy as cp
+import numpy as np
 from ase import units
 from gpu4pyscf import dft
 from monty.json import MSONable
@@ -14,17 +15,25 @@ from pyscf.scf import hf
 
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
-from jfchemistry.core.properties import Properties, PropertyClass
+from jfchemistry.core.properties import OrbitalProperty, Properties, PropertyClass
+
+
+class PySCFOrbitalProperties(PropertyClass):
+    """Orbital properties of the PySCF calculation."""
+
+    mo_coefficients: OrbitalProperty
+    mo_energies: OrbitalProperty
+    mo_occupations: OrbitalProperty
 
 
 class PySCFSystemProperties(PropertyClass):
-    """System properties of the ORCA calculation."""
+    """System properties of the PySCF calculation."""
 
     total_energy: SystemProperty
 
 
 class PySCFAtomicProperties(PropertyClass):
-    """Atomic properties of the ORCA calculation."""
+    """Atomic properties of the PySCF calculation."""
 
     homo_participation_ratio: Optional[AtomicProperty] = None
     lumo_participation_ratio: Optional[AtomicProperty] = None
@@ -35,6 +44,7 @@ class PySCFProperties(Properties):
 
     system: PySCFSystemProperties
     atomic: PySCFAtomicProperties
+    orbital: PySCFOrbitalProperties
 
 
 basis_sets = Literal[
@@ -174,5 +184,27 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
             if self.participation_ratio
             else None,
         )
-        properties = PySCFProperties(system=system_properties, atomic=atomic_properties)
+        mo_coeff = np.asarray(mf.mo_coeff)
+        mo_energy = np.asarray(mf.mo_energy)
+        mo_occ = np.asarray(mf.mo_occ)
+        orbital_properties = PySCFOrbitalProperties(
+            mo_coefficients=OrbitalProperty(
+                name="Molecular Orbital Coefficients",
+                value=mo_coeff.tolist(),
+                description="Coefficients of molecular orbitals in the basis set",
+            ),
+            mo_energies=OrbitalProperty(
+                name="Orbital Energies",
+                value=(mo_energy * ureg.hartree).tolist(),
+                description="Orbital energies",
+            ),
+            mo_occupations=OrbitalProperty(
+                name="Orbital Occupations",
+                value=mo_occ.tolist(),
+                description="Orbital occupation numbers",
+            ),
+        )
+        properties = PySCFProperties(
+            system=system_properties, atomic=atomic_properties, orbital=orbital_properties
+        )
         return properties
