@@ -195,7 +195,7 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
             ),
             mo_energies=OrbitalProperty(
                 name="Orbital Energies",
-                value=(mo_energy * ureg.hartree).tolist(),
+                value=(mo_energy * ureg.hartree).to(ureg.eV),
                 description="Orbital energies",
             ),
             mo_occupations=OrbitalProperty(
