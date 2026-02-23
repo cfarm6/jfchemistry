@@ -64,12 +64,15 @@ class SaveToDisk[
         name: Maker name for jobflow.
         suffix_fmt: Format string for list indices, e.g. "_{i}" -> output_0.xyz.
             Must contain exactly one "{i}" placeholder.
+        filename: Base filename for saving.
+        fmt: Format to save as.
     """
 
     name: str = "SaveToDisk"
     suffix_fmt: str = "_{i}"
     filename: str | None = None
     fmt: FormatLiteral | None = None
+    _ensemble: bool = True
 
     @staticmethod
     def _write_one(

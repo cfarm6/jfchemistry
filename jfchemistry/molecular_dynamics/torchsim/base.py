@@ -332,7 +332,7 @@ class TorchSimMolecularDynamics[InputType: Molecule | Structure, OutputType: Mol
             # set up trajectory reporters
             if self.autobatcher and trajectory_reporter is not None and og_filenames is not None:
                 # we must remake the trajectory reporter for each system
-                trajectory_reporter.load_new_trajectories(
+                trajectory_reporter.load_new_trajectories(  # type: ignore[attr-defined]
                     filenames=[og_filenames[i] for i in system_indices]
                 )
             # run the simulation

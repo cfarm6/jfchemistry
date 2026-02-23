@@ -41,7 +41,6 @@ class GenerateFinitePolymerChain(Maker):
             [degrees] or pint Quantity.
         monomer_dihedral: Dihedral angle of the monomer [degrees]. Accepts float in [degrees] or \
             pint Quantity.
-        outfile: Output file name.
 
     Returns:
         A Finite Polymer Chain Model.
@@ -78,9 +77,6 @@ class GenerateFinitePolymerChain(Maker):
                  pint Quantity.",
             "unit": "degrees",
         },
-    )
-    outfile: str = field(
-        default="generated_chain.xyz", metadata={"description": "Output file name."}
     )
     _output_model: type[PolymerFiniteChainOutput] = PolymerFiniteChainOutput
     _properties_model: type[Properties] = Properties
@@ -171,5 +167,4 @@ class GenerateFinitePolymerChain(Maker):
             monomer_dihedral=to_magnitude(self.monomer_dihedral, "degree"),
         )
         file = chain.to(fmt="xyz")
-        chain.to(self.outfile)
         return Response(output=self._output_model(structure=chain, files={"chain.xyz": file}))

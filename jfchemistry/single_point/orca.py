@@ -4,10 +4,8 @@ This module provides single point energy calculations using the ORCA DFT calcula
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import cast
 
-from opi.core import Calculator
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
 
@@ -38,19 +36,14 @@ class ORCASinglePointCalculator[InputType: Molecule, OutputType: Molecule](
         self, input: InputType, **kwargs
     ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Calculate the single point energy of a molecule using ORCA."""
-        # Write to XYZ file
         input.to("input.xyz", fmt="xyz")
-        # Get the default calculator SK_list
         sk_list = super()._set_keywords()
-        # Make the calculator
-        calc = Calculator(basename=self.basename, working_dir=Path("."))
+        calc = super()._build_calculator(self.basename)
         calc.structure = Structure.from_xyz("input.xyz")
-        calc.input.add_simple_keywords(*sk_list)
-        calc.input.ncores = self.cores
+        super()._set_structure_charge_and_spin(calc, input.charge, input.spin_multiplicity)
+        super()._configure_calculator_input(calc, sk_list)
         calc.write_input()
-        # Run the calculator
         calc.run()
-        # Parse the output
         output = calc.get_output()
         properties = super()._parse_output(output)
         return cast("OutputType", input), properties

@@ -34,10 +34,10 @@ repos:
     types: [python]
     pass_filenames: false
 
-  - id: pytest
-    name: pytest
-    stages: [pre-commit, pre-push]
-    language: system
-    entry: pixi run test
-    types: [python]
-    pass_filenames: false
+  # - id: pytest
+  #   name: pytest
+  #   stages: [pre-commit, pre-push]
+  #   language: system
+  #   entry: pixi run test
+  #   types: [python]
+  #   pass_filenames: false

@@ -5,7 +5,7 @@ TorchSim calculators.
 """
 
 from dataclasses import dataclass, field
-from typing import Literal, cast
+from typing import Literal, Optional, cast
 
 import torch_sim as ts
 from pymatgen.core.structure import Molecule, Structure
@@ -56,8 +56,15 @@ class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | 
     autobatcher: bool = field(
         default=True, metadata={"description": "Whether to use the autobatcher"}
     )
-    max_steps: int = field(
-        default=10_000, metadata={"description": "The maximum number of steps to take"}
+    steps: int = field(
+        default=10_000,
+        metadata={
+            "description": "The maximum number of steps to take. Set to 0 for fixed geometry."
+        },
+    )
+    max_steps: Optional[int] = field(
+        default=None,
+        metadata={"description": "Deprecated alias for steps; if set, overrides steps."},
     )
     steps_between_swaps: int = field(
         default=5,
@@ -69,6 +76,9 @@ class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | 
 
     def __post_init__(self):
         """Post-initialization hook."""
+        if self.max_steps is not None:
+            self.steps = self.max_steps
+        self.max_steps = self.steps
         self.name = f"{self.name} with {self.calculator.name}"
         super().__post_init__()
 
@@ -104,11 +114,21 @@ class TorchSimOptimizer[InputType: Molecule | Structure, OutputType: Molecule | 
         optimizer = getattr(ts.Optimizer, self.optimizer.lower().replace(" ", "_"))
         model = self.calculator._get_model()
         input.to_ase_atoms().write("initial_structure.xyz")
-        final_state = ts.optimize(
-            system=input.to_ase_atoms(), model=model, optimizer=optimizer, pbar=True
-        )
-        final_atoms = final_state.to_atoms()[0]
-        final_structure = type(input).from_ase_atoms(final_atoms)
-        properties = self.calculator._get_properties(final_structure)
+        if self.steps == 0:
+            final_structure = input
+            properties = self.calculator._get_properties(final_structure)
+        else:
+            final_state = ts.optimize(
+                system=input.to_ase_atoms(),
+                model=model,
+                optimizer=optimizer,
+                max_steps=self.steps,
+                steps_between_swaps=self.steps_between_swaps,
+                autobatcher=self.autobatcher,
+                pbar=True,
+            )
+            final_atoms = final_state.to_atoms()[0]
+            final_structure = type(input).from_ase_atoms(final_atoms)
+            properties = self.calculator._get_properties(final_structure)
         final_structure.to_ase_atoms().write("final_structure.xyz")
         return cast("OutputType", final_structure), properties

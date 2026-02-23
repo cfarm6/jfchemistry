@@ -1,10 +1,8 @@
 """GOAT Conformer Generation."""
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Literal
 
-from opi.core import Calculator
 from opi.input.simple_keywords.goat import Goat
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
@@ -29,22 +27,17 @@ class GOATConformers(ORCACalculator, ConformerGeneration):
 
     def _operation(self, molecule: Molecule) -> tuple[list[Molecule], ORCAProperties]:
         """Generate conformers using GOAT."""
-        # Write to XYZ file
         molecule.to("input.xyz", fmt="xyz")
-        # Get the default calculator SK_list
         sk_list = super()._set_keywords()
-        # Add the GOAT keywords
         sk_list.append(getattr(Goat, self.goat.upper()))
-
-        # Make the calculator
-        calc = Calculator(basename=self._basename, working_dir=Path("."))
+        calc = super()._build_calculator(self._basename)
         calc.structure = Structure.from_xyz("input.xyz")
-        calc.input.add_simple_keywords(*sk_list)
-        calc.input.ncores = self.cores
+        super()._set_structure_charge_and_spin(
+            calc, int(molecule.charge), int(molecule.spin_multiplicity)
+        )
+        super()._configure_calculator_input(calc, sk_list)
         calc.write_input()
-        # Run the calculator
         calc.run()
-        # Parse the output
         output = calc.get_output()
         properties = super()._parse_output(output)
         conformers = XYZ.from_file(output.get_file(".xyz")).all_molecules

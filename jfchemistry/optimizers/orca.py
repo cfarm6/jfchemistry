@@ -4,10 +4,8 @@ This module provides fast geometry optimization using the ORCA DFT calculator
 """
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional, cast
 
-from opi.core import Calculator
 from opi.input.simple_keywords.opt import Opt
 from opi.input.structures.structure import Structure
 from pymatgen.core.structure import Molecule
@@ -37,28 +35,29 @@ class ORCAOptimizer[InputType: Molecule, OutputType: Molecule](
         default_factory=lambda: ["OPT"],
         metadata={"description": "the ORCA optimizer to use for the calculation"},
     )
+    steps: int = field(
+        default=250000,
+        metadata={
+            "description": "Maximum optimization steps. Set to 0 for fixed-geometry evaluation."
+        },
+    )
     _basename: str = "orca_optimizer"
 
     def _operation(
         self, input: InputType, **kwargs
     ) -> tuple[OutputType | list[OutputType], Properties | list[Properties] | None]:
         """Optimize a molecule using ORCA DFT calculator."""
-        # Write to XYZ file
         input.to("input.xyz", fmt="xyz")
-        # Get the default calculator SK_list
         sk_list = super()._set_keywords()
-        # Add the optimizer keywords
-        for opt_kw in self.opt or []:
-            sk_list.append(getattr(Opt, opt_kw))
-        # Make the calculator
-        calc = Calculator(basename=self._basename, working_dir=Path("."))
+        if self.steps != 0:
+            for opt_kw in self.opt or []:
+                sk_list.append(getattr(Opt, opt_kw))
+        calc = super()._build_calculator(self._basename)
         calc.structure = Structure.from_xyz("input.xyz")
-        calc.input.add_simple_keywords(*sk_list)
-        calc.input.ncores = self.cores
+        super()._set_structure_charge_and_spin(calc, input.charge, input.spin_multiplicity)
+        super()._configure_calculator_input(calc, sk_list)
         calc.write_input()
-        # Run the calculator
         calc.run()
-        # Parse the output
         output = calc.get_output()
         properties = super()._parse_output(output)
         final_molecule = Molecule.from_file(output.get_file(".xyz"))

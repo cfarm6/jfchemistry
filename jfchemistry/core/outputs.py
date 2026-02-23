@@ -6,13 +6,15 @@ from monty.json import MontyDecoder
 from pydantic import BaseModel, ConfigDict
 from pymatgen.core.structure import Molecule, Structure
 
+from jfchemistry.core.properties import Properties
+
 
 class Output(BaseModel):
     """Output of the job."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     structure: Optional[Any] = None
-    properties: Optional[Any] = None
+    properties: Optional[Properties | list[Properties]] = None
     files: Optional[Any] = None
 
     @classmethod
