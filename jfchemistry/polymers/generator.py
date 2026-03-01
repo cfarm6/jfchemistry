@@ -284,7 +284,10 @@ def rotate_monomer(
         indices=range(len(new), len(atoms)),
     )
 
-    return Molecule.from_ase_atoms(atoms[len(new) :])
+    # Return only the transformed "new" monomer block.
+    # Important: when copolymer monomers have different sizes, slicing must
+    # be based on len(old), not len(new).
+    return Molecule.from_ase_atoms(atoms[len(old) :])
 
 
 def add_cap(p: Polymer, last_monomer: Molecule, head: bool = True) -> Molecule:  # noqa: PLR0915
@@ -504,4 +507,160 @@ def make_finite_chain(
         _c += mer.to_ase_atoms()[1:-1]
     _c += T.to_ase_atoms()
     return Molecule.from_ase_atoms(_c)
-    # return [H] + C + [T]
+
+
+def generate_alternating_sequence(chain_length: int, units: list[int]) -> list[int]:
+    """Generate an alternating sequence from a set/order of unit indices."""
+    if chain_length < 1:
+        raise ValueError("chain_length must be >= 1")
+    minimum_units = 2
+    if len(units) < minimum_units:
+        raise ValueError("alternating units must include at least two entries")
+    return [units[i % len(units)] for i in range(chain_length)]
+
+
+def generate_periodic_sequence(chain_length: int, motif: list[int]) -> list[int]:
+    """Generate a periodic sequence by repeating a motif."""
+    if chain_length < 1:
+        raise ValueError("chain_length must be >= 1")
+    if len(motif) < 1:
+        raise ValueError("motif must contain at least one unit index")
+    return [motif[i % len(motif)] for i in range(chain_length)]
+
+
+def generate_block_sequence(
+    block_units: list[int],
+    block_lengths: list[int],
+    chain_length: int | None = None,
+) -> list[int]:
+    """Generate a block copolymer sequence from unit IDs and block lengths."""
+    if len(block_units) < 1 or len(block_lengths) < 1:
+        raise ValueError("block_units and block_lengths must be non-empty")
+    if len(block_units) != len(block_lengths):
+        raise ValueError("block_units and block_lengths must have same length")
+    if any(x < 1 for x in block_lengths):
+        raise ValueError("all block lengths must be >= 1")
+    seq: list[int] = []
+    for u, n in zip(block_units, block_lengths, strict=False):
+        seq.extend([u] * n)
+    if chain_length is not None:
+        if chain_length < 1:
+            raise ValueError("chain_length must be >= 1")
+        if len(seq) < chain_length:
+            raise ValueError("block sequence shorter than requested chain_length")
+        seq = seq[:chain_length]
+    return seq
+
+
+def generate_weighted_random_sequence(
+    chain_length: int,
+    unit_weights: list[float],
+    seed: int | None = None,
+) -> list[int]:
+    """Generate a weighted random sequence of monomer indices.
+
+    Args:
+        chain_length: Number of monomer units in the chain.
+        unit_weights: Relative weights for each monomer type.
+        seed: Optional RNG seed for reproducibility.
+
+    Returns:
+        List of monomer indices of length ``chain_length``.
+    """
+    if chain_length < 1:
+        raise ValueError("chain_length must be >= 1")
+    if len(unit_weights) < 1:
+        raise ValueError("unit_weights must contain at least one weight")
+    weights = np.array(unit_weights, dtype=float)
+    if np.any(weights < 0):
+        raise ValueError("unit_weights must be non-negative")
+    if float(weights.sum()) <= 0:
+        raise ValueError("unit_weights must have positive total weight")
+    probs = weights / weights.sum()
+    rng = np.random.default_rng(seed)
+    return rng.choice(len(unit_weights), size=chain_length, p=probs).astype(int).tolist()
+
+
+def make_finite_copolymer_chain(  # noqa: PLR0913
+    polymers: list[Polymer],
+    sequence: list[int],
+    dihedrals: list[float],
+    dihedral_cutoff: float = 10,
+    number_conformers: int = 100,
+    monomer_dihedral: float | None = None,
+) -> Molecule:
+    """Construct a finite capped co-polymer chain from a sequence of monomer templates.
+
+    This implementation builds a connected molecular graph by remapping dummy atom
+    labels and using RDKit ``molzip`` to stitch head cap, monomer sequence, and
+    tail cap together. 3D coordinates are then generated with ETKDG + UFF.
+
+    Notes:
+        ``dihedrals``, ``dihedral_cutoff``, ``number_conformers``, and
+        ``monomer_dihedral`` are currently accepted for API compatibility, but
+        the graph-first co-polymer path does not yet enforce target torsions.
+    """
+    if len(sequence) < 1:
+        raise ValueError("sequence must contain at least one monomer index")
+    if len(dihedrals) != len(sequence) - 1:
+        raise ValueError("dihedrals length must equal len(sequence)-1")
+
+    del dihedral_cutoff, number_conformers, monomer_dihedral
+    if max(sequence) >= len(polymers):
+        raise ValueError("sequence includes polymer index out of range")
+
+    def _dummy_labels(smiles: str) -> list[int]:
+        labels = re.findall(r"\[\*:(\d+)\]", smiles)
+        if not labels:
+            raise ValueError("Expected monomer/cap smiles with mapped dummy atoms [*:n]")
+        return [int(x) for x in labels]
+
+    def _remap_dummy_labels(smiles: str, mapping: dict[int, int]) -> str:
+        out = smiles
+        for old, new in mapping.items():
+            out = out.replace(f"[*:{old}]", f"[*:{new}]")
+        return out
+
+    first_polymer = polymers[sequence[0]]
+    last_polymer = polymers[sequence[-1]]
+
+    if first_polymer.head is None or last_polymer.tail is None:
+        raise ValueError("Copolymer generation requires head cap on first and tail cap on last")
+
+    head_smiles = rdmolfiles.MolToSmiles(first_polymer.head)
+    tail_smiles = rdmolfiles.MolToSmiles(last_polymer.tail)
+
+    parts: list[str] = []
+    head_label = _dummy_labels(head_smiles)[0]
+    parts.append(_remap_dummy_labels(head_smiles, {head_label: 1000}))
+
+    expected_dummy_count = 2
+    for i, polymer_idx in enumerate(sequence):
+        monomer_smiles = rdmolfiles.MolToSmiles(polymers[polymer_idx].monomer)
+        labels = sorted(_dummy_labels(monomer_smiles))
+        if len(labels) != expected_dummy_count:
+            raise ValueError("Each monomer must contain exactly two mapped dummy atoms")
+        mapping = {labels[0]: 1000 + i, labels[1]: 1000 + i + 1}
+        parts.append(_remap_dummy_labels(monomer_smiles, mapping))
+
+    tail_label = _dummy_labels(tail_smiles)[0]
+    parts.append(_remap_dummy_labels(tail_smiles, {tail_label: 1000 + len(sequence)}))
+
+    zipped_input = rdmolfiles.MolFromSmiles(".".join(parts))
+    if zipped_input is None:
+        raise ValueError("Failed to build RDKit input molecule for copolymer zipping")
+
+    mol = rdmolops.molzip(zipped_input)
+    # Ensure internal caches (e.g. ring info) are initialized before force-field use.
+    mol.UpdatePropertyCache(strict=False)
+    rdmolops.SanitizeMol(mol)
+    mol = rdmolops.AddHs(mol)
+
+    params = rdDistGeom.ETKDGv3()
+    params.randomSeed = 7
+    if rdDistGeom.EmbedMolecule(mol, params) != 0:
+        raise ValueError("RDKit embedding failed for generated copolymer")
+    rdForceFieldHelpers.UFFOptimizeMolecule(mol)
+
+    return Molecule.from_str(rdmolfiles.MolToXYZBlock(mol), fmt="xyz")
+
