@@ -663,4 +663,3 @@ def make_finite_copolymer_chain(  # noqa: PLR0913
     rdForceFieldHelpers.UFFOptimizeMolecule(mol)
 
     return Molecule.from_str(rdmolfiles.MolToXYZBlock(mol), fmt="xyz")
-
