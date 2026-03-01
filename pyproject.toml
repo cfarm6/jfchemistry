@@ -23,6 +23,7 @@ dependencies = [
     "fairchem-core>=2.14,<3",
     "aimnet[ase]",
     "orb-models>=0.5.5,<0.6",
+    "mace-torch>=0.3.15,<0.4",
     "torch-sim-atomistic>=0.5.0,<0.6",
     "gpu4pyscf-cuda13x>=1.5.1,<2",
     "orca-pi>=1.0.1",
@@ -67,6 +68,7 @@ setuptools = "<81.0.0"
 dm-tree = ">= 0.1.9,<0.2"
 numpy = "<2.5"
 gpu4pyscf-libxc-cuda13x = "==0.7"
+e3nn = "==0.4.4"
 
 [tool.pixi.pypi-dependencies]
 jfchemistry = { path = ".", editable = true }
