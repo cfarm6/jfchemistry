@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
 
@@ -297,8 +298,7 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
         """Create PySCF mean-field object in selected mode."""
         backend = self._selected_backend()
         if backend == "gpu":
-            from gpu4pyscf import dft as gpu4pyscf_dft
-
+            gpu4pyscf_dft = importlib.import_module("gpu4pyscf.dft")
             mf = gpu4pyscf_dft.RKS(mol, xc=self.xc_functional)
         else:
             mf = pyscf_dft.RKS(mol, xc=self.xc_functional)
