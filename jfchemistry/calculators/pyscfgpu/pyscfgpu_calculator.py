@@ -628,4 +628,3 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
             system=system_properties, atomic=atomic_properties, orbital=orbital_properties
         )
         return properties
-
