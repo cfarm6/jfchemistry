@@ -12,6 +12,7 @@ import tomli_w
 from monty.json import MSONable
 
 from jfchemistry.calculators.base import Calculator
+from jfchemistry.core.solvation import ImplicitSolventConfig, to_crest
 
 type SolvationType = Union[
     tuple[
@@ -75,6 +76,10 @@ class CRESTCalculator(Calculator, MSONable):
     solvation: Optional[SolvationType] = field(
         default=None, metadata={"description": "The solvation type and solvent selection"}
     )  # CLI
+    implicit_solvent: Optional[ImplicitSolventConfig] = field(
+        default=None,
+        metadata={"description": "Unified implicit-solvent configuration override."},
+    )
     # CREGEN PARAMETERS
     # ------- TOML ------
     energy_window: Optional[float] = field(
@@ -121,6 +126,13 @@ class CRESTCalculator(Calculator, MSONable):
     )
     _toml_filename: str = "crest.toml"
     _xyz_filename: str = "input.xyz"
+
+    def __post_init__(self):
+        """Apply unified implicit-solvent overrides when provided."""
+        if self.implicit_solvent is None:
+            return
+        mapped = to_crest(self.implicit_solvent)
+        self.solvation = mapped  # type: ignore[assignment]
 
     def _make_dict(self):
         """Make the TOML dictionary for the CREST input."""

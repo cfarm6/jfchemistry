@@ -23,6 +23,7 @@ from jfchemistry.core.properties import (
     PropertyClass,
     SystemProperty,
 )
+from jfchemistry.core.solvation import ImplicitSolventConfig, to_tblite
 
 BOND_ORDER_THRESHOLD = 0.1
 
@@ -175,6 +176,18 @@ class TBLiteCalculator(ASECalculator, SemiempiricalCalculator, MSONable):
     solvent: Optional[TBLiteSolventType] = field(
         default=None, metadata={"description": "The solvent to use"}
     )
+    implicit_solvent: Optional[ImplicitSolventConfig] = field(
+        default=None,
+        metadata={"description": "Unified implicit-solvent configuration override."},
+    )
+
+    def __post_init__(self):
+        """Apply unified implicit-solvent overrides when provided."""
+        if self.implicit_solvent is None:
+            return
+        mapped_solvation, mapped_solvent = to_tblite(self.implicit_solvent)
+        self.solvation = mapped_solvation  # type: ignore[assignment]
+        self.solvent = mapped_solvent  # type: ignore[assignment]
 
     def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
         """Set the TBLite calculator on the atoms object.

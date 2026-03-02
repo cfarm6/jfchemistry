@@ -17,6 +17,7 @@ from pyscf.scf import hf
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 from jfchemistry.core.properties import OrbitalProperty, Properties, PropertyClass
+from jfchemistry.core.solvation import ImplicitSolventConfig, to_pyscfgpu
 from jfchemistry.core.unit_utils import to_magnitude
 
 
@@ -135,6 +136,13 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         default=None,
         metadata={"description": "The dispersion correction to use for the calculation"},
     )
+    implicit_solvent: Optional[ImplicitSolventConfig] = field(
+        default=None,
+        metadata={
+            "description": "Unified implicit-solvent config. PySCF-GPU adapter currently "
+            "supports only model='none'."
+        },
+    )
     participation_ratio: bool = field(
         default=False,
         metadata={
@@ -251,11 +259,13 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
     _properties_model: type[PySCFProperties] = PySCFProperties
 
     def __post_init__(self):
-        """Normalize unit-bearing attributes."""
+        """Normalize unit-bearing attributes and validate solvent support."""
         if self.homo_threshold is not None and isinstance(self.homo_threshold, Quantity):
             object.__setattr__(self, "homo_threshold", to_magnitude(self.homo_threshold, "eV"))
         if self.lumo_threshold is not None and isinstance(self.lumo_threshold, Quantity):
             object.__setattr__(self, "lumo_threshold", to_magnitude(self.lumo_threshold, "eV"))
+        if self.implicit_solvent is not None:
+            to_pyscfgpu(self.implicit_solvent)
 
     def _setup_mf(self, mol: gto.Mole) -> dft.RKS:
         mf = dft.RKS(mol, xc=self.xc_functional)
