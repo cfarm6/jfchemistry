@@ -629,6 +629,3 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
         )
         return properties
 
-
-# Backward compatibility alias
-PySCFGPUCalculator = PySCFCalculator
