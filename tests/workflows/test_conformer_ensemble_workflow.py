@@ -35,9 +35,7 @@ def test_boltzmann_weights_normalize() -> None:
 
 def test_ensemble_energetics_bounds() -> None:
     """Weighted mean/free energy should not exceed the lowest conformer energy."""
-    weighted, free, _ = ConformerEnsembleCalculation._ensemble_energetics(
-        [0.0, 0.04, 0.08], 298.15
-    )
+    weighted, free, _ = ConformerEnsembleCalculation._ensemble_energetics([0.0, 0.04, 0.08], 298.15)
     assert weighted >= 0.0
     assert free <= weighted
     assert free <= 0.0 + 1e-12

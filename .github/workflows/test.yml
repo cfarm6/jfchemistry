@@ -26,8 +26,8 @@ jobs:
         with:
           pixi-version: v0.56.0
           cache: true
-          environments: development
 
+      - run: pixi install -e development
       - run: pixi run fmt
       - run: pixi run lint
       - run: pixi run types

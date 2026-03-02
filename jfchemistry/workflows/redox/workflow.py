@@ -97,12 +97,8 @@ class RedoxPropertyCalculation(PymatGenMaker):
         en = cls._extract_total_energy_ev(neutral_relaxed, "neutral_relaxed")
         ec_relaxed = cls._extract_total_energy_ev(cation_relaxed, "cation_relaxed")
         ea_relaxed = cls._extract_total_energy_ev(anion_relaxed, "anion_relaxed")
-        ec_vertical = cls._extract_total_energy_ev(
-            cation_on_neutral_geom, "cation_on_neutral_geom"
-        )
-        ea_vertical = cls._extract_total_energy_ev(
-            anion_on_neutral_geom, "anion_on_neutral_geom"
-        )
+        ec_vertical = cls._extract_total_energy_ev(cation_on_neutral_geom, "cation_on_neutral_geom")
+        ea_vertical = cls._extract_total_energy_ev(anion_on_neutral_geom, "anion_on_neutral_geom")
 
         vertical_ip = ec_vertical - en
         vertical_ea = en - ea_vertical
