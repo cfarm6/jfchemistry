@@ -14,20 +14,14 @@ from pyscf import gto, lo
 from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
 
-try:
-    from gpu4pyscf import dft as gpu4pyscf_dft
-except Exception as _gpu4pyscf_import_error:  # pragma: no cover - environment-dependent
-    gpu4pyscf_dft = None
-else:
-    _gpu4pyscf_import_error = None
-if TYPE_CHECKING:
-    from pyscf.scf import hf
-
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 from jfchemistry.core.properties import OrbitalProperty, Properties, PropertyClass
 from jfchemistry.core.solvation import ImplicitSolventConfig, to_pyscfgpu
 from jfchemistry.core.unit_utils import to_magnitude
+
+if TYPE_CHECKING:
+    from pyscf.scf import hf
 
 
 class PySCFOrbitalProperties(PropertyClass):
@@ -282,7 +276,11 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
 
     def _gpu_available(self) -> bool:
         """Return True when gpu4pyscf backend is importable/available."""
-        return gpu4pyscf_dft is not None
+        try:
+            from gpu4pyscf import dft as _  # noqa: F401
+        except Exception:
+            return False
+        return True
 
     def _selected_backend(self) -> str:
         """Resolve runtime backend from requested mode."""
@@ -299,7 +297,8 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
         """Create PySCF mean-field object in selected mode."""
         backend = self._selected_backend()
         if backend == "gpu":
-            assert gpu4pyscf_dft is not None
+            from gpu4pyscf import dft as gpu4pyscf_dft
+
             mf = gpu4pyscf_dft.RKS(mol, xc=self.xc_functional)
         else:
             mf = pyscf_dft.RKS(mol, xc=self.xc_functional)
