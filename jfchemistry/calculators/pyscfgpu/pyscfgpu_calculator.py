@@ -1,18 +1,34 @@
 """PySCF GPU DFT calculator and related classes."""
 
-from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Optional
+from __future__ import annotations
 
-import cupy as cp
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
+
+try:
+    import cupy as cp
+except Exception as _cupy_import_error:  # pragma: no cover - environment-dependent
+    cp = None
+else:
+    _cupy_import_error = None
+
 import numpy as np
 from ase import units
-from gpu4pyscf import dft
+
+try:
+    from gpu4pyscf import dft
+except Exception as _gpu4pyscf_import_error:  # pragma: no cover - environment-dependent
+    dft = None
+else:
+    _gpu4pyscf_import_error = None
 from monty.json import MSONable
 from pint import Quantity
 from pyscf import gto, lo
 from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
-from pyscf.scf import hf
+
+if TYPE_CHECKING:
+    from pyscf.scf import hf
 
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
