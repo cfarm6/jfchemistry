@@ -38,7 +38,7 @@ class FreeEnergyDifferenceOutput(Output):
     """Output of the free energy difference workflow."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    structure: list[Molecule]
+    structure: list[Any]
     files: Optional[Any] = None
     properties: FreeEnergyDifferenceProperties
 

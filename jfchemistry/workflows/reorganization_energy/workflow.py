@@ -38,7 +38,7 @@ class ReorganizationEnergyOutput(Output):
     """Output of the reorganization energy workflow."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    structure: list[Molecule]
+    structure: list[Any]
     files: Optional[Any] = None
     properties: Optional[ReorganizationEnergyProperties] = None
 
