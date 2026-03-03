@@ -1,32 +1,76 @@
-"""Example workflow for calculating partition coefficients."""
+"""Example: partition coefficient workflow (new molecule-first interface).
 
-# from fireworks import LaunchPad
+This example assumes you already provide a 3D molecule (here via XYZ file).
+"""
+
+from pathlib import Path
 
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
+from pymatgen.core.structure import Molecule
 
-# from jobflow.managers.fireworks import flow_to_workflow
-from jfchemistry.generation import RDKitGeneration
-from jfchemistry.inputs import Smiles
+from jfchemistry.conformers import CRESTConformers
+from jfchemistry.filters import EnergyFilter, PrismPrunerFilter
+from jfchemistry.optimizers import ORCAOptimizer
+from jfchemistry.single_point import ORCASinglePointCalculator
 from jfchemistry.workflows.partition_coefficient import PartitionCoefficientWorkflow
 
-SMILES = "C(=O)(C(F)(F)F)O"
-pubchem_cid = Smiles(remove_salts=False).make(input=SMILES)
 
-generate_structure = RDKitGeneration(num_conformers=1).make(pubchem_cid.output.structure)
+def load_structure() -> Molecule:
+    """Load a 3D molecule from local XYZ file."""
+    xyz_path = Path("examples/ibuprofen.xyz")
+    if not xyz_path.exists():
+        raise FileNotFoundError(
+            f"Expected input structure at {xyz_path}. Provide a 3D XYZ molecule first."
+        )
+    return Molecule.from_file(str(xyz_path))
 
-pc_calculation = PartitionCoefficientWorkflow(
-    threads=16,
-    alpha_phase="chloroform",
-    crest_executable="/home/carson/Downloads/crest-gnu-12-ubuntu-latest/crest/crest",
-).make(
-    generate_structure.output.structure,
-)
 
-## ----- FLOW -------
-flow = Flow(
-    [pubchem_cid, generate_structure, pc_calculation],
-    name="Partition Coefficient - TFA - Octanol/Water",
-)
+def main() -> None:
+    """Run partition workflow from one 3D structure across two phases."""
+    structure = load_structure()
 
-response = run_locally(flow)
+    conformer_generator = CRESTConformers(
+        threads=8,
+        crest_executable="crest",
+        energy_window=6.0,
+    )
+
+    optimizer = ORCAOptimizer(
+        cores=8,
+        xc_functional="r2scan-3c",
+        basis_set="def2-mTZVPP",
+        solvent=None,  # workflow assigns per-phase solvent
+    )
+
+    single_point = ORCASinglePointCalculator(
+        cores=8,
+        xc_functional="r2scan-3c",
+        basis_set="def2-mTZVPP",
+        solvent=None,  # workflow assigns per-phase solvent
+    )
+
+    workflow = PartitionCoefficientWorkflow(
+        name="Partition Coefficient Workflow (molecule-first)",
+        threads=8,
+        temperature=298.15,
+        alpha_phase="OCTANOL",
+        beta_phase="WATER",
+        tautomer_generator=None,
+        conformer_generator=conformer_generator,
+        geometry_optimizer=optimizer,
+        single_point=single_point,
+        conformer_energy_filter=EnergyFilter(energy_window=6.0),
+        conformer_structural_filter=PrismPrunerFilter(max_n_confs=30),
+        optimized_energy_filter=EnergyFilter(energy_window=4.0),
+        optimized_structural_filter=PrismPrunerFilter(max_n_confs=15),
+    )
+
+    partition_job = workflow.make(structure)
+    flow = Flow([partition_job], name="partition_coefficient_new_interface")
+
+    run_locally(flow, create_folders=True)
+
+
+if __name__ == "__main__":
+    main()
