@@ -1,46 +1,37 @@
-"""Example: conformer ensemble thermochemistry reduction."""
+"""Example: conformer ensemble workflow from a single Molecule."""
 
-from jfchemistry import SystemProperty, ureg
-from jfchemistry.core.properties import Properties, PropertyClass
+from jobflow.core.flow import Flow
+from jobflow.managers.local import run_locally
+
+from jfchemistry.calculators.ase import AimNet2Calculator
+from jfchemistry.generation import RDKitGeneration
+from jfchemistry.inputs import Smiles
+from jfchemistry.single_point.ase import ASESinglePoint
 from jfchemistry.workflows.conformer_ensemble import ConformerEnsembleWorkflow
 
-
-class _SystemProperties(PropertyClass):
-    total_energy: SystemProperty
-
-
-class _EnergyProperties(Properties):
-    system: _SystemProperties
-
-
-def energy_properties(energy_ev: float) -> _EnergyProperties:
-    """Build a minimal properties object with total energy in eV."""
-    return _EnergyProperties(
-        system=_SystemProperties(
-            total_energy=SystemProperty(name="Total Energy", value=energy_ev * ureg.eV)
-        )
-    )
+SMILES = "CCO"  # ethanol
 
 
 def main() -> None:
-    """Run conformer ensemble workflow on synthetic conformer energies."""
-    conformers = [
-        energy_properties(-10.00),
-        energy_properties(-9.98),
-        energy_properties(-9.95),
-    ]
+    """Build and run conformer ensemble workflow using RDKit + single point."""
+    smiles_job = Smiles(remove_salts=False).make(input=SMILES)
+    structure_job = RDKitGeneration(num_conformers=1).make(smiles_job.output.structure)
 
-    wf = ConformerEnsembleWorkflow(temperature=298.15)
-    response = wf.make.original(wf, conformer_properties=conformers)
-    out = response.output
+    conformer_generator = RDKitGeneration(num_conformers=5)
+    single_point = ASESinglePoint(calculator=AimNet2Calculator(model="aimnet2_2025"))
 
-    print("Conformer ensemble results")
-    print("- Ensemble free energy (eV):", out.properties.system.ensemble_free_energy.value)
-    print(
-        "- Boltzmann-weighted energy (eV):",
-        out.properties.system.boltzmann_weighted_energy.value,
+    ensemble_job = ConformerEnsembleWorkflow(
+        conformer_generator=conformer_generator,
+        single_point=single_point,
+        temperature=298.15,
+    ).make(structure_job.output.structure)
+
+    flow = Flow(
+        [smiles_job, structure_job, ensemble_job],
+        name="Conformer Ensemble Workflow (single molecule)",
     )
-    print("- Boltzmann weights:", out.files["boltzmann_weights"])
+    responses = run_locally(flow)
+    print("Ran flow with", len(responses), "responses")
 
 
 if __name__ == "__main__":

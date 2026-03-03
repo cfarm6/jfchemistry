@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
+from jobflow.core.flow import Flow
 from jobflow.core.job import OutputReference, Response
 from pydantic import ConfigDict
 
@@ -14,6 +15,9 @@ from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass
+
+if TYPE_CHECKING:
+    from pymatgen.core.structure import Molecule
 
 KB_EV_PER_K = 8.617333262145e-5
 
@@ -36,7 +40,31 @@ class ConformerEnsembleOutput(Output):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     files: Optional[Any] = None
-    properties: Optional[ConformerEnsembleProperties] = None
+    properties: Optional[Any] = None
+
+
+@dataclass
+class ConformerSinglePointEvaluationCalculation(PymatGenMaker):
+    """Evaluate a single-point maker over a conformer list."""
+
+    name: str = "Conformer Single Point Evaluation"
+    single_point: PymatGenMaker | None = None
+    _output_model: type[Output] = Output
+
+    @jfchem_job()
+    def make(self, conformers: list[Molecule]) -> Response[_output_model]:
+        """Run single-point calculations on each conformer and collect properties."""
+        if self.single_point is None:
+            raise ValueError(
+                "ConformerSinglePointEvaluationCalculation requires `single_point`."
+            )
+        properties: list[Properties] = []
+        files: list[Any] = []
+        for conformer in conformers:
+            job = self.single_point.make.original(self.single_point, conformer)
+            properties.append(job.output.properties)
+            files.append(job.output.files)
+        return Response(output=Output(structure=conformers, properties=properties, files=files))
 
 
 @dataclass
@@ -124,15 +152,54 @@ class ConformerEnsembleCalculation(PymatGenMaker):
 
 @dataclass
 class ConformerEnsembleWorkflow(PymatGenMaker):
-    """Simple wrapper exposing conformer-ensemble reduction as a workflow maker."""
+    """Conformer-ensemble workflow from a single Molecule input."""
 
     name: str = "Conformer Ensemble Workflow"
+    conformer_generator: PymatGenMaker | None = None
+    single_point: PymatGenMaker | None = None
     temperature: float = 298.15
     _properties_model: type[ConformerEnsembleProperties] = ConformerEnsembleProperties
     _output_model: type[ConformerEnsembleOutput] = ConformerEnsembleOutput
 
-    @jfchem_job()
-    def make(self, conformer_properties: list[Properties]) -> Response[_output_model]:
-        """Create conformer ensemble output from conformer energies."""
+    def _build_flow(self, molecule: Molecule) -> tuple[Flow, ConformerEnsembleOutput]:
+        if self.conformer_generator is None:
+            raise ValueError(
+                "ConformerEnsembleWorkflow requires a `conformer_generator` attribute."
+            )
+
+        conformer_job = self.conformer_generator.make(molecule)
+
         calc = ConformerEnsembleCalculation(temperature=self.temperature)
-        return calc.make.original(calc, conformer_properties)
+
+        if self.single_point is not None:
+            sp_eval_job = ConformerSinglePointEvaluationCalculation(
+                single_point=self.single_point
+            ).make(conformer_job.output.structure)
+            reducer_job = calc.make(sp_eval_job.output.properties)
+            jobs = [conformer_job, sp_eval_job, reducer_job]
+            files = {
+                "conformers": conformer_job.output.files,
+                "single_point": sp_eval_job.output.files,
+                "boltzmann_weights": reducer_job.output.files["boltzmann_weights"],
+            }
+        else:
+            reducer_job = calc.make(conformer_job.output.properties)
+            jobs = [conformer_job, reducer_job]
+            files = {
+                "conformers": conformer_job.output.files,
+                "boltzmann_weights": reducer_job.output.files["boltzmann_weights"],
+            }
+
+        flow = Flow(jobs, name=self.name)
+        output = ConformerEnsembleOutput(
+            structure=conformer_job.output.structure,
+            properties=reducer_job.output.properties,
+            files=files,
+        )
+        return flow, output
+
+    @jfchem_job()
+    def make(self, molecule: Molecule) -> Response[_output_model]:
+        """Create conformer ensemble output from a Molecule input."""
+        flow, output = self._build_flow(molecule)
+        return Response(output=output, detour=flow)
