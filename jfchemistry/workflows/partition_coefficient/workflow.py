@@ -264,4 +264,12 @@ class PartitionCoefficientWorkflow(PymatGenMaker):
         reduce_job = reducer.make(alpha_props, beta_props)
 
         flow = Flow([*alpha_jobs, *beta_jobs, reduce_job], name=self.name)
-        return Response(output=reduce_job.output, detour=flow)
+        output = Output(
+            structure=structure,
+            files={
+                "alpha_phase": self.alpha_phase,
+                "beta_phase": self.beta_phase,
+                "reduction_output": reduce_job.output,
+            },
+        )
+        return Response(output=output, detour=flow)
