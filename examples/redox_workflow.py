@@ -1,57 +1,45 @@
-"""Example: redox workflow for vertical and adiabatic IP/EA."""
+"""Example: redox workflow from a single Molecule input."""
 
-from jfchemistry import SystemProperty, ureg
-from jfchemistry.core.properties import Properties, PropertyClass
+from jobflow.core.flow import Flow
+from jobflow.managers.local import run_locally
+
+from jfchemistry.calculators.ase import AimNet2Calculator
+from jfchemistry.generation import RDKitGeneration
+from jfchemistry.inputs import Smiles
+from jfchemistry.optimizers import ASEOptimizer
+from jfchemistry.single_point.ase import ASESinglePoint
 from jfchemistry.workflows.redox import RedoxPropertyWorkflow
 
-
-class _SystemProperties(PropertyClass):
-    total_energy: SystemProperty
-
-
-class _EnergyProperties(Properties):
-    system: _SystemProperties
-
-
-def energy_properties(energy_ev: float) -> _EnergyProperties:
-    """Build a minimal properties object with total energy in eV."""
-    return _EnergyProperties(
-        system=_SystemProperties(
-            total_energy=SystemProperty(name="Total Energy", value=energy_ev * ureg.eV)
-        )
-    )
+SMILES = "c1ccccc1N"  # aniline
 
 
 def main() -> None:
-    """Run redox reduction from synthetic neutral/cation/anion energies."""
-    neutral_relaxed = energy_properties(-5.00)
-    cation_relaxed = energy_properties(-4.20)
-    anion_relaxed = energy_properties(-5.70)
-    cation_on_neutral = energy_properties(-4.00)
-    anion_on_neutral = energy_properties(-5.40)
+    """Build and run redox workflow using optimizer + single-point makers."""
+    smiles_job = Smiles(remove_salts=False).make(input=SMILES)
+    structure_job = RDKitGeneration(num_conformers=1).make(smiles_job.output.structure)
 
-    wf = RedoxPropertyWorkflow()
-    response = wf.make.original(
-        wf,
-        neutral_relaxed=neutral_relaxed,
-        cation_relaxed=cation_relaxed,
-        anion_relaxed=anion_relaxed,
-        cation_on_neutral_geom=cation_on_neutral,
-        anion_on_neutral_geom=anion_on_neutral,
-        neutral_charge=0,
-        cation_charge=1,
-        anion_charge=-1,
-        neutral_spin=1,
-        cation_spin=2,
-        anion_spin=2,
+    calculator = AimNet2Calculator(model="aimnet2_2025")
+    optimizer = ASEOptimizer(
+        calculator=calculator,
+        optimizer="BFGS",
+        fmax=0.02,
+        steps=300,
+        name="AimNet2 ASE BFGS",
     )
-    out = response.output
+    single_point = ASESinglePoint(calculator=calculator)
 
-    print("Redox results (eV)")
-    print("- Vertical IP:", out.properties.system.vertical_ip.value)
-    print("- Vertical EA:", out.properties.system.vertical_ea.value)
-    print("- Adiabatic IP:", out.properties.system.adiabatic_ip.value)
-    print("- Adiabatic EA:", out.properties.system.adiabatic_ea.value)
+    redox_job = RedoxPropertyWorkflow(
+        optimizer=optimizer,
+        single_point=single_point,
+    ).make(structure_job.output.structure)
+
+    flow = Flow(
+        [smiles_job, structure_job, redox_job],
+        name="Redox Workflow (single molecule + AimNet2)",
+    )
+
+    responses = run_locally(flow)
+    print("Ran flow with", len(responses), "responses")
 
 
 if __name__ == "__main__":

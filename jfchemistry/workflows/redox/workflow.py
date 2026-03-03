@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
+from jobflow.core.flow import Flow
 from jobflow.core.job import OutputReference, Response
 from pydantic import ConfigDict
 
@@ -13,6 +15,9 @@ from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass
+
+if TYPE_CHECKING:
+    from pymatgen.core.structure import Molecule
 
 
 class RedoxSystemProperties(PropertyClass):
@@ -35,7 +40,7 @@ class RedoxOutput(Output):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     files: Optional[Any] = None
-    properties: Optional[RedoxProperties] = None
+    properties: Optional[Any] = None
 
 
 @dataclass
@@ -153,36 +158,42 @@ class RedoxPropertyCalculation(PymatGenMaker):
 
 @dataclass
 class RedoxPropertyWorkflow(PymatGenMaker):
-    """Workflow wrapper over redox reducer."""
+    """Redox workflow from a single Molecule using optimizer + single-point makers."""
 
     name: str = "Redox Property Workflow"
+    optimizer: PymatGenMaker | None = None
+    single_point: PymatGenMaker | None = None
+    neutral_charge: int | None = None
+    neutral_spin_multiplicity: int | None = None
+    cation_charge: int | None = None
+    cation_spin_multiplicity: int | None = None
+    anion_charge: int | None = None
+    anion_spin_multiplicity: int | None = None
     _properties_model: type[RedoxProperties] = RedoxProperties
     _output_model: type[RedoxOutput] = RedoxOutput
 
-    @jfchem_job()
-    def make(  # noqa: PLR0913
-        self,
-        neutral_relaxed: Properties,
-        cation_relaxed: Properties,
-        anion_relaxed: Properties,
-        cation_on_neutral_geom: Properties,
-        anion_on_neutral_geom: Properties,
-        neutral_charge: int = 0,
-        cation_charge: int = 1,
-        anion_charge: int = -1,
-        neutral_spin: int = 1,
-        cation_spin: int = 2,
-        anion_spin: int = 2,
-    ) -> Response[_output_model]:
-        """Generate redox output from input state properties."""
-        calc = RedoxPropertyCalculation()
-        return calc.make.original(
-            calc,
-            neutral_relaxed=neutral_relaxed,
-            cation_relaxed=cation_relaxed,
-            anion_relaxed=anion_relaxed,
-            cation_on_neutral_geom=cation_on_neutral_geom,
-            anion_on_neutral_geom=anion_on_neutral_geom,
+    def _resolve_states(self, molecule: Molecule) -> tuple[int, int, int, int, int, int]:
+        base_charge = int(molecule.charge)
+        base_spin = int(molecule.spin_multiplicity) if molecule.spin_multiplicity is not None else 1
+        neutral_charge = self.neutral_charge if self.neutral_charge is not None else base_charge
+        neutral_spin = (
+            self.neutral_spin_multiplicity
+            if self.neutral_spin_multiplicity is not None
+            else base_spin
+        )
+        cation_charge = self.cation_charge if self.cation_charge is not None else neutral_charge + 1
+        anion_charge = self.anion_charge if self.anion_charge is not None else neutral_charge - 1
+        cation_spin = (
+            self.cation_spin_multiplicity
+            if self.cation_spin_multiplicity is not None
+            else max(2, neutral_spin)
+        )
+        anion_spin = (
+            self.anion_spin_multiplicity
+            if self.anion_spin_multiplicity is not None
+            else max(2, neutral_spin)
+        )
+        RedoxPropertyCalculation.validate_charge_spin_states(
             neutral_charge=neutral_charge,
             cation_charge=cation_charge,
             anion_charge=anion_charge,
@@ -190,3 +201,98 @@ class RedoxPropertyWorkflow(PymatGenMaker):
             cation_spin=cation_spin,
             anion_spin=anion_spin,
         )
+        return neutral_charge, neutral_spin, cation_charge, cation_spin, anion_charge, anion_spin
+
+    @staticmethod
+    def _set_state(molecule: Molecule, charge: int, spin: int) -> Molecule:
+        state = molecule.copy()
+        if hasattr(state, "_charge_spin_check"):
+            object.__setattr__(state, "_charge_spin_check", False)
+        state.set_charge_and_spin(charge, spin)
+        return state
+
+    def _with_state(
+        self,
+        maker: PymatGenMaker,
+        charge: int,
+        spin: int,
+        relax: bool,
+    ) -> PymatGenMaker:
+        m = deepcopy(maker)
+        if hasattr(m, "charge"):
+            m.charge = charge
+        if hasattr(m, "spin_multiplicity"):
+            m.spin_multiplicity = spin
+        if hasattr(m, "steps") and not relax:
+            m.steps = 0
+        return m
+
+    def _build_flow(self, molecule: Molecule) -> tuple[Flow, RedoxOutput]:
+        if self.optimizer is None:
+            raise ValueError("RedoxPropertyWorkflow requires an `optimizer` attribute.")
+        if self.single_point is None:
+            raise ValueError("RedoxPropertyWorkflow requires a `single_point` attribute.")
+
+        n_q, n_s, c_q, c_s, a_q, a_s = self._resolve_states(molecule)
+
+        neutral_relaxed_job = self._with_state(self.optimizer, n_q, n_s, True).make(
+            self._set_state(molecule, n_q, n_s)
+        )
+        cation_relaxed_job = self._with_state(self.optimizer, c_q, c_s, True).make(
+            self._set_state(molecule, c_q, c_s)
+        )
+        anion_relaxed_job = self._with_state(self.optimizer, a_q, a_s, True).make(
+            self._set_state(molecule, a_q, a_s)
+        )
+
+        cation_vertical_job = self._with_state(self.single_point, c_q, c_s, False).make(
+            neutral_relaxed_job.output.structure
+        )
+        anion_vertical_job = self._with_state(self.single_point, a_q, a_s, False).make(
+            neutral_relaxed_job.output.structure
+        )
+
+        reducer = RedoxPropertyCalculation()
+        final_job = reducer.make(
+            neutral_relaxed=neutral_relaxed_job.output.properties,
+            cation_relaxed=cation_relaxed_job.output.properties,
+            anion_relaxed=anion_relaxed_job.output.properties,
+            cation_on_neutral_geom=cation_vertical_job.output.properties,
+            anion_on_neutral_geom=anion_vertical_job.output.properties,
+            neutral_charge=n_q,
+            cation_charge=c_q,
+            anion_charge=a_q,
+            neutral_spin=n_s,
+            cation_spin=c_s,
+            anion_spin=a_s,
+        )
+
+        flow = Flow(
+            [
+                neutral_relaxed_job,
+                cation_relaxed_job,
+                anion_relaxed_job,
+                cation_vertical_job,
+                anion_vertical_job,
+                final_job,
+            ],
+            name=self.name,
+        )
+        output = RedoxOutput(
+            structure=neutral_relaxed_job.output.structure,
+            properties=final_job.output.properties,
+            files={
+                "neutral_relaxed": neutral_relaxed_job.output.files,
+                "cation_relaxed": cation_relaxed_job.output.files,
+                "anion_relaxed": anion_relaxed_job.output.files,
+                "cation_on_neutral_geom": cation_vertical_job.output.files,
+                "anion_on_neutral_geom": anion_vertical_job.output.files,
+            },
+        )
+        return flow, output
+
+    @jfchem_job()
+    def make(self, molecule: Molecule) -> Response[_output_model]:
+        """Create redox workflow from a single pymatgen Molecule input."""
+        flow, output = self._build_flow(molecule)
+        return Response(output=output, detour=flow)
