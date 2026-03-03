@@ -2,6 +2,7 @@
 
 from .ase import FrequencyIRASECalculation, FrequencyIRASEWorkflow
 from .orca import FrequencyIRORCACalculation, FrequencyIRORCAWorkflow
+from .pyscf import FrequencyIRPySCFCalculation, FrequencyIRPySCFWorkflow
 from .workflow import FrequencyIRAnalysisCalculation, FrequencyIRAnalysisWorkflow
 
 __all__ = [
@@ -11,4 +12,6 @@ __all__ = [
     "FrequencyIRAnalysisWorkflow",
     "FrequencyIRORCACalculation",
     "FrequencyIRORCAWorkflow",
+    "FrequencyIRPySCFCalculation",
+    "FrequencyIRPySCFWorkflow",
 ]

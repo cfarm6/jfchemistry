@@ -6,6 +6,7 @@ __all__ = [
     "FrequencyIRASEWorkflow",
     "FrequencyIRAnalysisWorkflow",
     "FrequencyIRORCAWorkflow",
+    "FrequencyIRPySCFWorkflow",
     "NelsonsFourPointMethod",
     "PartitionCoefficientWorkflow",
     "RedoxPropertyWorkflow",
@@ -35,6 +36,10 @@ def __getattr__(name: str):  # noqa: PLR0911
         from .frequency_ir import FrequencyIRORCAWorkflow
 
         return FrequencyIRORCAWorkflow
+    if name == "FrequencyIRPySCFWorkflow":
+        from .frequency_ir import FrequencyIRPySCFWorkflow
+
+        return FrequencyIRPySCFWorkflow
     if name == "RedoxPropertyWorkflow":
         from .redox import RedoxPropertyWorkflow
 
