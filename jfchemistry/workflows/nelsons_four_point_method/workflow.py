@@ -44,7 +44,7 @@ class NelsonsFourPointOutput(Output):
     """Output of the Nelsons Four Point Method."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    structure: list[Molecule]
+    structure: list[Any]
     files: Optional[Any] = None
     properties: NelsonsFourPointProperties
 

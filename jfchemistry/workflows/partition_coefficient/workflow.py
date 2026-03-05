@@ -1,9 +1,20 @@
-"""Partition coefficient calculation workflow."""
+"""Partition coefficient workflow (fresh molecule-first implementation).
+
+This workflow follows a FlexiSol-like staged protocol:
+1) optional tautomer generation per phase
+2) conformer generation per phase
+3) optional conformer filtering
+4) geometry optimization per phase
+5) optional post-opt filtering
+6) single-point energies per phase
+7) Boltzmann reduction and partition-coefficient evaluation
+"""
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from jobflow.core.flow import Flow
@@ -12,211 +23,115 @@ from pint import Quantity
 
 from jfchemistry import SystemProperty, ureg
 from jfchemistry.conformers import CRESTConformers
-from jfchemistry.conformers.base import ConformerGeneration
 from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.core.outputs import Output
 from jfchemistry.core.properties import Properties, PropertyClass
 from jfchemistry.core.unit_utils import to_magnitude
-from jfchemistry.filters import EnergyFilter, PrismPrunerFilter
 from jfchemistry.modification.tautomerization import CRESTTautomerization
-from jfchemistry.modification.tautomerization.base import TautomerMaker
 from jfchemistry.optimizers import ORCAOptimizer
-from jfchemistry.optimizers.base import GeometryOptimization
 from jfchemistry.single_point import ORCASinglePointCalculator
-from jfchemistry.single_point.base import SinglePointCalculation
 
 if TYPE_CHECKING:
     from pymatgen.core.structure import Molecule
 
-    from jfchemistry.calculators.orca.orca_keywords import SolventType as ORCASolventType
-    from jfchemistry.conformers.crest import SolvationType
+    from jfchemistry.conformers.base import ConformerGeneration
+    from jfchemistry.filters import EnergyFilter, PrismPrunerFilter
+    from jfchemistry.modification.tautomerization.base import TautomerMaker
+    from jfchemistry.optimizers.base import GeometryOptimization
+    from jfchemistry.single_point.base import SinglePointCalculation
 
-    from .solvent_list import PartitionCoefficientSolventType
-
-# CONSTANTS
-R = 8.31446261815324 * 6.241509e18 / 6.02214076e23  # eV/K
-kb = 8.617333262e-5  # eV/K
-G = 1.89 * 2.611447e22 / 6.02214076e23  # eV
-
-# Alpha Phase
-_DEFAULT_ALPHA_TAUTOMER_GENERATOR = object()
-AlphaTautomerGeneratorArg = Optional[TautomerMaker] | object
-_DEFAULT_ALPHA_TAUTOMER_ENERGY = object()
-AlphaTautomerEnergyArg = Optional[SinglePointCalculation] | object
-_DEFAULT_ALPHA_CONFORMER_GENERATOR = object()
-AlphaConformerGeneratorArg = Optional[ConformerGeneration] | object
-_DEFAULT_ALPHA_CONFORMER_ENERGY = object()
-AlphaConformerEnergyArg = Optional[SinglePointCalculation] | object
-_DEFAULT_ALPHA_GEOMETRY_OPTIMIZER = object()
-AlphaGeometryOptimizerArg = Optional[GeometryOptimization] | object
-_DEFAULT_ALPHA_SINGLE_POINT_ENERGY = object()
-AlphaSinglePointEnergyArg = SinglePointCalculation | object
-
-# Beta Phase
-_DEFAULT_BETA_TAUTOMER_GENERATOR = object()
-BetaTautomerGeneratorArg = Optional[TautomerMaker] | object
-_DEFAULT_BETA_TAUTOMER_ENERGY = object()
-BetaTautomerEnergyArg = Optional[SinglePointCalculation] | object
-_DEFAULT_BETA_CONFORMER_GENERATOR = object()
-BetaConformerGeneratorArg = Optional[ConformerGeneration] | object
-_DEFAULT_BETA_CONFORMER_ENERGY = object()
-BetaConformerEnergyArg = Optional[SinglePointCalculation] | object
-_DEFAULT_BETA_GEOMETRY_OPTIMIZER = object()
-BetaGeometryOptimizerArg = Optional[GeometryOptimization] | object
-_DEFAULT_BETA_SINGLE_POINT_ENERGY = object()
-BetaSinglePointEnergyArg = SinglePointCalculation | object
-
-# Filters
-_DEFAULT_TAUTOMER_ENERGY_FILTER = object()
-TautomerEnergyFilterArg = Optional[EnergyFilter] | object
-_DEFAULT_TAUTOMER_STRUCTURAL_FILTER = object()
-TautomerStructuralFilterArg = Optional[PrismPrunerFilter] | object
-_DEFAULT_CONFORMER_ENERGY_FILTER = object()
-ConformerEnergyFilterArg = Optional[EnergyFilter] | object
-_DEFAULT_CONFORMER_STRUCTURAL_FILTER = object()
-ConformerStructuralFilterArg = Optional[PrismPrunerFilter] | object
-_DEFAULT_GEOMETRY_OPTIMIZER_ENERGY_FILTER = object()
-GeometryOptimizerEnergyFilterArg = Optional[EnergyFilter] | object
-_DEFAULT_GEOMETRY_OPTIMIZER_STRUCTURAL_FILTER = object()
-GeometryOptimizerStructuralFilterArg = Optional[PrismPrunerFilter] | object
-
-
-@dataclass
-class PhaseComponents:
-    """Container for phase-specific workflow components."""
-
-    tautomer_generator: Optional[TautomerMaker | object]
-    tautomer_energy: Optional[SinglePointCalculation | object]
-    conformer_generator: Optional[ConformerGeneration | object]
-    conformer_energy: Optional[SinglePointCalculation | object]
-    geometry_optimizer: Optional[GeometryOptimization | object]
-    single_point_energy: Optional[SinglePointCalculation | object]
-
-
-@dataclass
-class FilterSet:
-    """Container for workflow filters."""
-
-    tautomer_energy: Optional[EnergyFilter | object]
-    tautomer_structural: Optional[PrismPrunerFilter | object]
-    conformer_energy: Optional[EnergyFilter | object]
-    conformer_structural: Optional[PrismPrunerFilter | object]
-    geometry_optimizer_energy: Optional[EnergyFilter | object]
-    geometry_optimizer_structural: Optional[PrismPrunerFilter | object]
+# eV/K
+KB_EV_PER_K = 8.617333262145e-5
+# standard-state correction term (legacy value used in prior implementation)
+G_STANDARD_STATE_EV = 1.89 * 2.611447e22 / 6.02214076e23
 
 
 class PartitionCoefficientSystemProperty(PropertyClass):
-    """Partition coefficient."""
+    """Partition coefficient properties."""
 
-    partition_coefficient: SystemProperty | OutputReference
+    log_partition_coefficient: SystemProperty | OutputReference
+    delta_g_transfer: SystemProperty | OutputReference
 
 
 class PartitionCoefficientProperties(Properties):
-    """Properties for the partition coefficient calculation."""
+    """Properties for partition-coefficient workflow."""
 
     system: PartitionCoefficientSystemProperty
 
 
 @dataclass
-class PartitionCoefficientCalculation(PymatGenMaker):
-    """Perform a partition coefficient calculation.
+class PartitionCoefficientReductionCalculation(PymatGenMaker):
+    """Reduce phase conformer energies to log partition coefficient."""
 
-    Units:
-        Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
-        or ``jfchemistry.Q_``):
-
-        - temperature: [K]
-    """
-
-    name: str = "Partition Coefficient Calculation"
-    temperature: float | Quantity = field(
-        default=298.15,
-        metadata={
-            "description": "The temperature [K]. Accepts float in [K] or pint Quantity.",
-            "unit": "K",
-        },
-    )
-    alpha_phase: PartitionCoefficientSolventType = field(
-        default="octanol", metadata={"description": "The alpha phase."}
-    )
-    beta_phase: PartitionCoefficientSolventType = field(
-        default="water", metadata={"description": "The beta phase."}
-    )
+    name: str = "Partition Coefficient Reduction"
+    temperature: float = 298.15
+    alpha_phase: str = "OCTANOL"
+    beta_phase: str = "WATER"
+    apply_standard_state_correction: bool = True
     _properties_model: type[PartitionCoefficientProperties] = PartitionCoefficientProperties
     _output_model: type[Output] = Output
 
     def __post_init__(self):
-        """Normalize unit-bearing attributes."""
+        """Normalize unit-bearing temperature inputs."""
         if isinstance(self.temperature, Quantity):
             object.__setattr__(self, "temperature", to_magnitude(self.temperature, "kelvin"))
         super().__post_init__()
 
+    @staticmethod
+    def _extract_energies_ev(properties_list: list[Properties], label: str) -> np.ndarray:
+        vals: list[float] = []
+        for i, prop in enumerate(properties_list):
+            p = Properties.model_validate(prop, extra="allow", strict=False)
+            if (
+                p.system is None
+                or not hasattr(p.system, "total_energy")
+                or (te := getattr(p.system, "total_energy", None)) is None
+                or getattr(te, "value", None) is None
+            ):
+                raise ValueError(f"Missing system.total_energy for {label}[{i}]")
+            v = te.value
+            vals.append(float(v.to(ureg.eV).magnitude) if hasattr(v, "to") else float(v))
+        if len(vals) < 1:
+            raise ValueError(f"No energies found for phase {label}")
+        return np.asarray(vals, dtype=float)
+
+    def _boltzmann_weighted_energy(self, energies_ev: np.ndarray, phase: str) -> float:
+        energies = energies_ev.copy()
+        if self.apply_standard_state_correction and phase.upper() != "GAS":
+            energies = energies + G_STANDARD_STATE_EV
+        kT = KB_EV_PER_K * self.temperature
+        factors = np.exp(-(energies - np.min(energies)) / kT)
+        weights = factors / factors.sum()
+        return float(np.dot(energies, weights))
+
     @jfchem_job()
     def make(
         self,
-        alpha_properties: list[Properties] | Properties,
-        beta_properties: list[Properties] | Properties,
+        alpha_properties: list[Properties],
+        beta_properties: list[Properties],
     ) -> Response[_output_model]:
-        """Make the partition coefficient calculation."""
-        if not isinstance(alpha_properties, list):
-            alpha_properties = [alpha_properties]
-        if not isinstance(beta_properties, list):
-            beta_properties = [beta_properties]
+        """Compute logP from phase conformer energies."""
+        alpha_e = self._extract_energies_ev(alpha_properties, "alpha")
+        beta_e = self._extract_energies_ev(beta_properties, "beta")
 
-        _alpha_properties = [
-            Properties.model_validate(property, extra="allow", strict=False)
-            for property in alpha_properties
-        ]
-        _beta_properties = [
-            Properties.model_validate(property, extra="allow", strict=False)
-            for property in beta_properties
-        ]
-        alpha_energy_list = []
-        for property in _alpha_properties:
-            if (
-                property.system is not None
-                and hasattr(property.system, "total_energy")
-                and (te := getattr(property.system, "total_energy", None)) is not None
-                and te.value is not None
-            ):
-                alpha_energy_list.append(te.value.to(ureg.eV).magnitude)
-        alpha_energy = np.array(alpha_energy_list)
-        beta_energy_list = []
-        for property in _beta_properties:
-            if (
-                property.system is not None
-                and hasattr(property.system, "total_energy")
-                and (te := getattr(property.system, "total_energy", None)) is not None
-                and te.value is not None
-            ):
-                beta_energy_list.append(te.value.to(ureg.eV).magnitude)
-        beta_energy = np.array(beta_energy_list)
-        if self.alpha_phase != "gas":
-            alpha_energy += G
-        if self.beta_phase != "gas":
-            beta_energy += G
-        # Boltzmann weighted average of the single point energy for each phase
-        kT = kb * self.temperature
-        alpha_boltz_factors = np.exp(-(alpha_energy - np.min(alpha_energy)) / kT)
-        alpha_weights = alpha_boltz_factors / np.sum(alpha_boltz_factors)
-        alpha_weighted_energy = np.sum(alpha_energy * alpha_weights)
+        g_alpha = self._boltzmann_weighted_energy(alpha_e, self.alpha_phase)
+        g_beta = self._boltzmann_weighted_energy(beta_e, self.beta_phase)
 
-        beta_boltz_factors = np.exp(-(beta_energy - np.min(beta_energy)) / kT)
-        beta_weights = beta_boltz_factors / np.sum(beta_boltz_factors)
-        beta_weighted_energy = np.sum(beta_energy * beta_weights)
+        delta_g = g_beta - g_alpha
+        log_p = delta_g / (self.temperature * KB_EV_PER_K * np.log(10.0))
 
-        partition_coefficient = (beta_weighted_energy - alpha_weighted_energy) / (
-            self.temperature * R
-        )
-        print(f"Partition Coefficient: {partition_coefficient}")
         return Response(
             output=Output(
                 properties=self._properties_model(
                     system=PartitionCoefficientSystemProperty(
-                        partition_coefficient=SystemProperty(
-                            name=f"Partition Coefficient: {self.alpha_phase} - {self.beta_phase}",
-                            value=partition_coefficient * ureg.dimensionless,
+                        log_partition_coefficient=SystemProperty(
+                            name=f"logP({self.beta_phase}/{self.alpha_phase})",
+                            value=float(log_p) * ureg.dimensionless,
+                        ),
+                        delta_g_transfer=SystemProperty(
+                            name=f"ΔG transfer {self.alpha_phase}→{self.beta_phase}",
+                            value=float(delta_g) * ureg.eV,
                         ),
                     )
                 )
@@ -226,436 +141,141 @@ class PartitionCoefficientCalculation(PymatGenMaker):
 
 @dataclass
 class PartitionCoefficientWorkflow(PymatGenMaker):
-    """Perform a partition coefficient calculation.
+    """Molecule-first partition-coefficient workflow.
 
-    For each phase, alpha and beta, the following steps are performed:
-    1. OPTIONAL: Tautomer Generation
-    2. OPTIONAL: Energy Pre-screening
-    3. OPTIONAL: Structural Filtering
-    4. OPTIONAL: Conformer Generation
-    5. OPTIONAL: Energy Pre-screening
-    6. OPTIONAL: Structural Filtering
-    7. REQUIRED: Geometry Optimization
-    8. OPTIONAL: Energy Screening
-    9. OPTIONAL: Structural Filtering
-    8. REQUIRED: Single Point Energy Calculation
-
-    The Boltzmann weighted average of the single point energy for each phase is used to calculate the partition coefficient.
-
-    The workflow defaults to the settings used for the generation of the FlexiSol dataset with the following exceptions:
-    - Prism-Pruner is used instead of CENSO
-    - CREST is used instead of GOAT
-
-    """  # noqa: E501
+    make(structure: Molecule) is the only user-facing workflow input.
+    """
 
     name: str = "Partition Coefficient Workflow"
     threads: int = 1
+    temperature: float = 298.15
     alpha_phase: str = "OCTANOL"
     beta_phase: str = "WATER"
-    temperature: float = 298.15
-    crest_executable: str = "crest"
+
+    tautomer_generator: Optional[TautomerMaker] = field(
+        default_factory=lambda: CRESTTautomerization(threads=1)
+    )
+    conformer_generator: ConformerGeneration = field(
+        default_factory=lambda: CRESTConformers(threads=1)
+    )
+    geometry_optimizer: GeometryOptimization = field(default_factory=lambda: ORCAOptimizer(cores=1))
+    single_point: SinglePointCalculation = field(
+        default_factory=lambda: ORCASinglePointCalculator(cores=1)
+    )
+
+    conformer_energy_filter: Optional[EnergyFilter] = None
+    conformer_structural_filter: Optional[PrismPrunerFilter] = None
+    optimized_energy_filter: Optional[EnergyFilter] = None
+    optimized_structural_filter: Optional[PrismPrunerFilter] = None
+
     _properties_model: type[Properties] = Properties
     _output_model: type[Output] = Output
 
+    def __post_init__(self):
+        """Normalize unit-bearing temperature inputs."""
+        if isinstance(self.temperature, Quantity):
+            object.__setattr__(self, "temperature", to_magnitude(self.temperature, "kelvin"))
+        super().__post_init__()
+
+    @staticmethod
+    def _phase_to_crest_solvation(phase: str) -> tuple[str, str]:
+        return ("alpb", phase.lower())
+
+    def _configure_for_phase(self, maker: Any, phase: str) -> Any:
+        m = deepcopy(maker)
+        # Common solvent-related knobs used across jfchemistry makers
+        if hasattr(m, "solvent"):
+            m.solvent = phase.upper()
+        if hasattr(m, "solvation"):
+            try:
+                m.solvation = self._phase_to_crest_solvation(phase)
+            except Exception:
+                pass
+        if hasattr(m, "threads"):
+            m.threads = self.threads
+        if hasattr(m, "cores"):
+            m.cores = self.threads
+        return m
+
+    def _build_phase_pipeline(self, structure: Molecule, phase: str) -> tuple[list[Any], Any]:
+        jobs: list[Any] = []
+
+        current_structure = structure
+        if self.tautomer_generator is not None:
+            tauto_maker = self._configure_for_phase(self.tautomer_generator, phase)
+            tautomer_job = tauto_maker.make(current_structure)
+            print("TAUTOMER JOB UUID: ", tautomer_job.uuid)
+            jobs.append(tautomer_job)
+            current_structure = tautomer_job.output.structure
+
+        conf_maker = self._configure_for_phase(self.conformer_generator, phase)
+        conformer_job = conf_maker.make(current_structure)
+        print("CONFORMER JOB UUID: ", conformer_job.uuid)
+        jobs.append(conformer_job)
+        phase_structures = conformer_job.output.structure
+
+        if self.conformer_energy_filter is not None:
+            ef_job = self.conformer_energy_filter.make(
+                phase_structures,
+                conformer_job.output.properties,
+            )
+            print("ENERGY FILTER JOB UUID: ", ef_job.uuid)
+            jobs.append(ef_job)
+            phase_structures = ef_job.output.structure
+
+        if self.conformer_structural_filter is not None:
+            sf_job = self.conformer_structural_filter.make(phase_structures)
+            print("STRUCTURAL FILTER JOB UUID: ", sf_job.uuid)
+            jobs.append(sf_job)
+            phase_structures = sf_job.output.structure
+
+        opt_maker = self._configure_for_phase(self.geometry_optimizer, phase)
+        opt_job = opt_maker.make(phase_structures)
+        print("OPTIMIZATION JOB UUID: ", opt_job.uuid)
+        jobs.append(opt_job)
+        optimized_structures = opt_job.output.structure
+        optimized_properties = opt_job.output.properties
+
+        if self.optimized_energy_filter is not None:
+            oef_job = self.optimized_energy_filter.make(optimized_structures, optimized_properties)
+            print("OPTIMIZED ENERGY FILTER JOB UUID: ", oef_job.uuid)
+            jobs.append(oef_job)
+            optimized_structures = oef_job.output.structure
+            optimized_properties = oef_job.output.properties
+
+        if self.optimized_structural_filter is not None:
+            osf_job = self.optimized_structural_filter.make(optimized_structures)
+            print("OPTIMIZED STRUCTURAL FILTER JOB UUID: ", osf_job.uuid)
+            jobs.append(osf_job)
+            optimized_structures = osf_job.output.structure
+
+        sp_maker = self._configure_for_phase(self.single_point, phase)
+        sp_job = sp_maker.make(optimized_structures)
+        print("SINGLE-POINT JOB UUID: ", sp_job.uuid)
+        jobs.append(sp_job)
+
+        return jobs, sp_job.output.properties
+
     @jfchem_job()
-    def make(  # noqa: PLR0913
-        self,
-        structure: Molecule,
-        alpha_tautomer_generator: AlphaTautomerGeneratorArg = _DEFAULT_ALPHA_TAUTOMER_GENERATOR,
-        alpha_tautomer_energy: AlphaTautomerEnergyArg = _DEFAULT_ALPHA_TAUTOMER_ENERGY,
-        alpha_conformer_generator: AlphaConformerGeneratorArg = _DEFAULT_ALPHA_CONFORMER_GENERATOR,
-        alpha_conformer_energy: AlphaConformerEnergyArg = _DEFAULT_ALPHA_CONFORMER_ENERGY,
-        alpha_geometry_optimizer: AlphaGeometryOptimizerArg = _DEFAULT_ALPHA_GEOMETRY_OPTIMIZER,
-        alpha_single_point_energy: AlphaSinglePointEnergyArg = _DEFAULT_ALPHA_SINGLE_POINT_ENERGY,
-        beta_tautomer_generator: BetaTautomerGeneratorArg = _DEFAULT_BETA_TAUTOMER_GENERATOR,
-        beta_tautomer_energy: BetaTautomerEnergyArg = _DEFAULT_BETA_TAUTOMER_ENERGY,
-        beta_conformer_generator: BetaConformerGeneratorArg = _DEFAULT_BETA_CONFORMER_GENERATOR,
-        beta_conformer_energy: BetaConformerEnergyArg = _DEFAULT_BETA_CONFORMER_ENERGY,
-        beta_geometry_optimizer: BetaGeometryOptimizerArg = _DEFAULT_BETA_GEOMETRY_OPTIMIZER,
-        beta_single_point_energy: BetaSinglePointEnergyArg = _DEFAULT_BETA_SINGLE_POINT_ENERGY,
-        tautomer_energy_filter: TautomerEnergyFilterArg = (_DEFAULT_TAUTOMER_ENERGY_FILTER),
-        tautomer_structural_filter: TautomerStructuralFilterArg = (
-            _DEFAULT_TAUTOMER_STRUCTURAL_FILTER
-        ),
-        conformer_energy_filter: ConformerEnergyFilterArg = (_DEFAULT_CONFORMER_ENERGY_FILTER),
-        conformer_structural_filter: ConformerStructuralFilterArg = (
-            _DEFAULT_CONFORMER_STRUCTURAL_FILTER
-        ),
-        geometry_optimizer_energy_filter: GeometryOptimizerEnergyFilterArg = (
-            _DEFAULT_GEOMETRY_OPTIMIZER_ENERGY_FILTER
-        ),
-        geometry_optimizer_structural_filter: GeometryOptimizerStructuralFilterArg = (
-            _DEFAULT_GEOMETRY_OPTIMIZER_STRUCTURAL_FILTER
-        ),
-    ) -> Response[_output_model]:
-        """Make the partition coefficient workflow."""
-        alpha_components = self._resolve_alpha_defaults(
-            alpha_tautomer_generator=alpha_tautomer_generator,
-            alpha_tautomer_energy=alpha_tautomer_energy,
-            alpha_conformer_generator=alpha_conformer_generator,
-            alpha_conformer_energy=alpha_conformer_energy,
-            alpha_geometry_optimizer=alpha_geometry_optimizer,
-            alpha_single_point_energy=alpha_single_point_energy,
-        )
-        beta_components = self._resolve_beta_defaults(
-            beta_tautomer_generator=beta_tautomer_generator,
-            beta_tautomer_energy=beta_tautomer_energy,
-            beta_conformer_generator=beta_conformer_generator,
-            beta_conformer_energy=beta_conformer_energy,
-            beta_geometry_optimizer=beta_geometry_optimizer,
-            beta_single_point_energy=beta_single_point_energy,
-        )
-        filters = self._resolve_filters(
-            tautomer_energy_filter=tautomer_energy_filter,
-            tautomer_structural_filter=tautomer_structural_filter,
-            conformer_energy_filter=conformer_energy_filter,
-            conformer_structural_filter=conformer_structural_filter,
-            geometry_optimizer_energy_filter=geometry_optimizer_energy_filter,
-            geometry_optimizer_structural_filter=geometry_optimizer_structural_filter,
-        )
-        alpha_jobs, final_alpha_job = self._build_phase_workflow(
-            structure=structure,
-            components=alpha_components,
-            filters=filters,
-        )
-        beta_jobs, final_beta_job = self._build_phase_workflow(
-            structure=structure,
-            components=beta_components,
-            filters=filters,
-        )
-        partition_coefficient_calculation = PartitionCoefficientCalculation(
+    def make(self, structure: Molecule) -> Response[_output_model]:
+        """Build partition workflow from a provided 3D molecule."""
+        alpha_jobs, alpha_props = self._build_phase_pipeline(structure, self.alpha_phase)
+        beta_jobs, beta_props = self._build_phase_pipeline(structure, self.beta_phase)
+
+        reducer = PartitionCoefficientReductionCalculation(
             temperature=self.temperature,
             alpha_phase=self.alpha_phase,
             beta_phase=self.beta_phase,
         )
-        if final_alpha_job is None or final_beta_job is None:
-            raise ValueError("No final jobs found")
-        final_job = partition_coefficient_calculation.make(
-            final_alpha_job.output.properties,  # type: ignore
-            final_beta_job.output.properties,  # type: ignore
-        )
-        flow = Flow([*alpha_jobs, *beta_jobs, final_job], name="Partition Coefficient Workflow")
-        partition_coefficient = final_job.output.properties.system.partition_coefficient
-        properties = self._properties_model(
-            system=PartitionCoefficientSystemProperty(
-                partition_coefficient=partition_coefficient,
-            )
-        )
+        reduce_job = reducer.make(alpha_props, beta_props)
+
+        flow = Flow([*alpha_jobs, *beta_jobs, reduce_job], name=self.name)
         output = Output(
-            properties=properties,
             structure=structure,
-            files=[
-                final_alpha_job.output.files if final_alpha_job.output is not None else None,  # type: ignore
-                final_beta_job.output.files if final_beta_job.output is not None else None,  # type: ignore
-            ],
+            files={
+                "alpha_phase": self.alpha_phase,
+                "beta_phase": self.beta_phase,
+                "reduction_output": reduce_job.output,
+            },
         )
         return Response(output=output, detour=flow)
-
-    @staticmethod
-    def _alpb_solvation(solvent: str) -> SolvationType:
-        return cast("SolvationType", ("alpb", solvent))
-
-    def _resolve_alpha_defaults(  # noqa: PLR0913
-        self,
-        alpha_tautomer_generator: AlphaTautomerGeneratorArg,
-        alpha_tautomer_energy: AlphaTautomerEnergyArg,
-        alpha_conformer_generator: AlphaConformerGeneratorArg,
-        alpha_conformer_energy: AlphaConformerEnergyArg,
-        alpha_geometry_optimizer: AlphaGeometryOptimizerArg,
-        alpha_single_point_energy: AlphaSinglePointEnergyArg,
-    ) -> PhaseComponents:
-        if alpha_tautomer_generator is _DEFAULT_ALPHA_TAUTOMER_GENERATOR:
-            alpha_tautomer_generator = CRESTTautomerization(
-                threads=self.threads,
-                executable=self.crest_executable,
-                solvation=self._alpb_solvation(self.alpha_phase),
-                name=f"Tautomer Generation: GFN2-xTB with ALPB:{self.alpha_phase}",
-            )
-        if alpha_tautomer_energy is _DEFAULT_ALPHA_TAUTOMER_ENERGY:
-            alpha_tautomer_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="PBE",
-                basis_set="DEF2_SV_P",
-                ecp="DEF2ECP",
-                dispersion_correction="D4",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.alpha_phase.upper()),
-                name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.alpha_phase}",
-            )
-        if alpha_conformer_generator is _DEFAULT_ALPHA_CONFORMER_GENERATOR:
-            alpha_conformer_generator = CRESTConformers(
-                threads=self.threads,
-                executable=self.crest_executable,
-                solvation=self._alpb_solvation(self.alpha_phase),
-                name=f"Conformer Generation: GFN2-xTB with ALPB:{self.alpha_phase}",
-            )
-        if alpha_conformer_energy is _DEFAULT_ALPHA_CONFORMER_ENERGY:
-            alpha_conformer_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="R2SCAN_3C",
-                ecp="DEF2ECP",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.alpha_phase.upper()),
-                name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.alpha_phase}",
-            )
-        if alpha_geometry_optimizer is _DEFAULT_ALPHA_GEOMETRY_OPTIMIZER:
-            alpha_geometry_optimizer = ORCAOptimizer(
-                cores=self.threads,
-                xc_functional="R2SCAN_3C",
-                ecp="DEF2ECP",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.alpha_phase.upper()),
-                name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.alpha_phase}",
-            )
-        if alpha_single_point_energy is _DEFAULT_ALPHA_SINGLE_POINT_ENERGY:
-            alpha_single_point_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="WB97M_V",
-                basis_set="DEF2_TZVPPD",
-                ecp="DEF2ECP",
-                solvation_model="SMD",
-                solvent=cast("ORCASolventType", self.alpha_phase.upper()),
-                name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.alpha_phase}",
-            )
-        return PhaseComponents(
-            tautomer_generator=alpha_tautomer_generator,
-            tautomer_energy=alpha_tautomer_energy,
-            conformer_generator=alpha_conformer_generator,
-            conformer_energy=alpha_conformer_energy,
-            geometry_optimizer=alpha_geometry_optimizer,
-            single_point_energy=alpha_single_point_energy,
-        )
-
-    def _resolve_beta_defaults(  # noqa: PLR0913
-        self,
-        beta_tautomer_generator: BetaTautomerGeneratorArg,
-        beta_tautomer_energy: BetaTautomerEnergyArg,
-        beta_conformer_generator: BetaConformerGeneratorArg,
-        beta_conformer_energy: BetaConformerEnergyArg,
-        beta_geometry_optimizer: BetaGeometryOptimizerArg,
-        beta_single_point_energy: BetaSinglePointEnergyArg,
-    ) -> PhaseComponents:
-        if beta_tautomer_generator is _DEFAULT_BETA_TAUTOMER_GENERATOR:
-            beta_tautomer_generator = CRESTTautomerization(
-                threads=self.threads,
-                executable=self.crest_executable,
-                solvation=self._alpb_solvation(self.beta_phase),
-                name=f"Tautomer Generation: GFN2-xTB with ALPB:{self.beta_phase}",
-            )
-        if beta_tautomer_energy is _DEFAULT_BETA_TAUTOMER_ENERGY:
-            beta_tautomer_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="PBE",
-                basis_set="DEF2_SV_P",
-                ecp="DEF2ECP",
-                dispersion_correction="D4",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.beta_phase.upper()),
-                name=f"Tautomer Pre-screening: PBE/DEF2-SV(P)/CPCM:{self.beta_phase}",
-            )
-        if beta_conformer_generator is _DEFAULT_BETA_CONFORMER_GENERATOR:
-            beta_conformer_generator = CRESTConformers(
-                threads=self.threads,
-                executable=self.crest_executable,
-                solvation=self._alpb_solvation(self.beta_phase),
-                name=f"Conformer Generation: GFN2-xTB with ALPB:{self.beta_phase}",
-            )
-        if beta_conformer_energy is _DEFAULT_BETA_CONFORMER_ENERGY:
-            beta_conformer_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="R2SCAN_3C",
-                ecp="DEF2ECP",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.beta_phase.upper()),
-                name=f"Conformer Pre-screening: R2SCAN-3C/CPCM:{self.beta_phase}",
-            )
-        if beta_geometry_optimizer is _DEFAULT_BETA_GEOMETRY_OPTIMIZER:
-            beta_geometry_optimizer = ORCAOptimizer(
-                cores=self.threads,
-                xc_functional="R2SCAN_3C",
-                ecp="DEF2ECP",
-                solvation_model="CPCM",
-                solvent=cast("ORCASolventType", self.beta_phase.upper()),
-                name=f"Geometry Optimization: R2SCAN-3C/CPCM:{self.beta_phase}",
-            )
-        if beta_single_point_energy is _DEFAULT_BETA_SINGLE_POINT_ENERGY:
-            beta_single_point_energy = ORCASinglePointCalculator(
-                cores=self.threads,
-                xc_functional="WB97M_V",
-                basis_set="DEF2_TZVPPD",
-                ecp="DEF2ECP",
-                solvation_model="SMD",
-                solvent=cast("ORCASolventType", self.beta_phase.upper()),
-                name=f"Single Point Energy Calculation: WB97M-V/DEF2-TZVPPD/SMD:{self.beta_phase}",
-            )
-        return PhaseComponents(
-            tautomer_generator=beta_tautomer_generator,
-            tautomer_energy=beta_tautomer_energy,
-            conformer_generator=beta_conformer_generator,
-            conformer_energy=beta_conformer_energy,
-            geometry_optimizer=beta_geometry_optimizer,
-            single_point_energy=beta_single_point_energy,
-        )
-
-    def _resolve_filters(  # noqa: PLR0913
-        self,
-        tautomer_energy_filter: TautomerEnergyFilterArg,
-        tautomer_structural_filter: TautomerStructuralFilterArg,
-        conformer_energy_filter: ConformerEnergyFilterArg,
-        conformer_structural_filter: ConformerStructuralFilterArg,
-        geometry_optimizer_energy_filter: GeometryOptimizerEnergyFilterArg,
-        geometry_optimizer_structural_filter: GeometryOptimizerStructuralFilterArg,
-    ) -> FilterSet:
-        if tautomer_energy_filter is _DEFAULT_TAUTOMER_ENERGY_FILTER:
-            tautomer_energy_filter = None
-        if tautomer_structural_filter is _DEFAULT_TAUTOMER_STRUCTURAL_FILTER:
-            tautomer_structural_filter = PrismPrunerFilter(
-                energy_threshold=12,
-            )
-        if conformer_energy_filter is _DEFAULT_CONFORMER_ENERGY_FILTER:
-            conformer_energy_filter = None
-        if conformer_structural_filter is _DEFAULT_CONFORMER_STRUCTURAL_FILTER:
-            conformer_structural_filter = PrismPrunerFilter(
-                energy_threshold=6,
-            )
-        if geometry_optimizer_energy_filter is _DEFAULT_GEOMETRY_OPTIMIZER_ENERGY_FILTER:
-            geometry_optimizer_energy_filter = None
-        if geometry_optimizer_structural_filter is _DEFAULT_GEOMETRY_OPTIMIZER_STRUCTURAL_FILTER:
-            geometry_optimizer_structural_filter = PrismPrunerFilter(
-                energy_threshold=4,
-            )
-            tautomer_structural_filter = geometry_optimizer_structural_filter
-        return FilterSet(
-            tautomer_energy=tautomer_energy_filter,
-            tautomer_structural=tautomer_structural_filter,
-            conformer_energy=conformer_energy_filter,
-            conformer_structural=conformer_structural_filter,
-            geometry_optimizer_energy=geometry_optimizer_energy_filter,
-            geometry_optimizer_structural=geometry_optimizer_structural_filter,
-        )
-
-    def _build_phase_workflow(
-        self,
-        *,
-        structure: Molecule,
-        components: PhaseComponents,
-        filters: FilterSet,
-    ) -> tuple[list, Optional[object]]:
-        jobs: list = []
-        properties = None
-        final_job = None
-        structure_state = structure
-
-        def queue_job(condition, make_job, set_name=None, assign_final=False):
-            nonlocal structure_state, properties, final_job
-            if not condition:
-                return None
-            if set_name is not None:
-                set_name()
-            job = make_job()
-            jobs.append(job)
-            structure_state = job.output.structure
-            properties = getattr(job.output, "properties", properties)
-            if assign_final:
-                final_job = job
-            return job
-
-        queue_job(
-            isinstance(components.tautomer_generator, TautomerMaker),
-            lambda: cast("TautomerMaker", components.tautomer_generator).make(structure_state),
-        )
-        queue_job(
-            isinstance(components.tautomer_energy, PymatGenMaker)
-            and components.tautomer_generator is not None,
-            lambda: cast("PymatGenMaker", components.tautomer_energy).make(structure_state),
-        )
-        queue_job(
-            isinstance(filters.tautomer_energy, EnergyFilter)
-            and components.tautomer_generator is not None,
-            lambda: cast("EnergyFilter", filters.tautomer_energy).make(structure_state, properties),
-            set_name=lambda: setattr(
-                cast("EnergyFilter", filters.tautomer_energy),
-                "name",
-                "Tautomer Energy Filter",
-            ),
-        )
-        queue_job(
-            isinstance(filters.tautomer_structural, PrismPrunerFilter)
-            and components.tautomer_generator is not None,
-            lambda: cast("PrismPrunerFilter", filters.tautomer_structural).make(
-                structure_state, properties=properties
-            ),
-            set_name=lambda: setattr(
-                cast("PrismPrunerFilter", filters.tautomer_structural),
-                "name",
-                "Tautomer Structural Filter",
-            ),
-        )
-        queue_job(
-            isinstance(components.conformer_generator, PymatGenMaker),
-            lambda: cast("PymatGenMaker", components.conformer_generator).make(structure_state),
-        )
-        queue_job(
-            isinstance(components.conformer_energy, PymatGenMaker)
-            and components.conformer_generator is not None,
-            lambda: cast("PymatGenMaker", components.conformer_energy).make(structure_state),
-        )
-        queue_job(
-            isinstance(filters.conformer_structural, PrismPrunerFilter)
-            and components.conformer_generator is not None,
-            lambda: cast("PrismPrunerFilter", filters.conformer_structural).make(
-                structure_state, properties=properties
-            ),
-            set_name=lambda: setattr(
-                cast("PrismPrunerFilter", filters.conformer_structural),
-                "name",
-                "Conformer Structural Filter",
-            ),
-        )
-        queue_job(
-            isinstance(filters.conformer_energy, EnergyFilter)
-            and components.conformer_generator is not None,
-            lambda: cast("EnergyFilter", filters.conformer_energy).make(
-                structure_state, properties
-            ),
-            set_name=lambda: setattr(
-                cast("EnergyFilter", filters.conformer_energy),
-                "name",
-                "Conformer Energy Filter",
-            ),
-        )
-        queue_job(
-            isinstance(components.geometry_optimizer, PymatGenMaker),
-            lambda: cast("PymatGenMaker", components.geometry_optimizer).make(structure_state),
-        )
-        queue_job(
-            isinstance(filters.geometry_optimizer_energy, EnergyFilter)
-            and components.geometry_optimizer is not None,
-            lambda: cast("EnergyFilter", filters.geometry_optimizer_energy).make(
-                structure_state, properties
-            ),
-            set_name=lambda: setattr(
-                cast("EnergyFilter", filters.geometry_optimizer_energy),
-                "name",
-                "Geometry Optimizer Energy Filter",
-            ),
-        )
-        queue_job(
-            isinstance(filters.geometry_optimizer_structural, PrismPrunerFilter)
-            and components.geometry_optimizer is not None,
-            lambda: cast("PrismPrunerFilter", filters.geometry_optimizer_structural).make(
-                structure_state, properties=properties
-            ),
-            set_name=lambda: setattr(
-                cast("PrismPrunerFilter", filters.geometry_optimizer_structural),
-                "name",
-                "Geometry Optimizer Structural Filter",
-            ),
-        )
-        queue_job(
-            isinstance(components.single_point_energy, PymatGenMaker)
-            and components.geometry_optimizer is not None,
-            lambda: cast("PymatGenMaker", components.single_point_energy).make(structure_state),
-            assign_final=True,
-        )
-        return jobs, final_job

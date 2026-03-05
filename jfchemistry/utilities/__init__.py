@@ -1,14 +1,14 @@
-"""Utility nodes for jfchemistry workflows."""
+"""Utility maker nodes."""
 
-from jfchemistry.utilities.combine_molecules import CombineMolecules
-from jfchemistry.utilities.rotate_molecule import RotateMolecule
-from jfchemistry.utilities.save_to_disk import SaveToDisk
-from jfchemistry.utilities.translate_molecule import (
-    TranslateMolecule,
-)
+from .combine_molecules import CombineMolecules
+from .properties_to_disk import PropertiesToDisk
+from .rotate_molecule import RotateMolecule
+from .save_to_disk import SaveToDisk
+from .translate_molecule import TranslateMolecule
 
 __all__ = [
     "CombineMolecules",
+    "PropertiesToDisk",
     "RotateMolecule",
     "SaveToDisk",
     "TranslateMolecule",

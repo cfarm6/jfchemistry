@@ -30,6 +30,7 @@ from jfchemistry.calculators.orca.orca_keywords import (
     XCFunctionalType,
 )
 from jfchemistry.core.properties import Properties, PropertyClass
+from jfchemistry.core.solvation import ImplicitSolventConfig, to_orca
 
 # Re-export types for external use
 __all__ = [
@@ -129,6 +130,10 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
             "description": "The specific solvation model implementation to use for the calculation"
         },
     )
+    implicit_solvent: Optional[ImplicitSolventConfig] = field(
+        default=None,
+        metadata={"description": "Unified implicit-solvent configuration override."},
+    )
     maxcore: Optional[int] = field(
         default=None,
         metadata={"description": "ORCA MaxCore setting in MB per core"},
@@ -159,6 +164,17 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         metadata={"description": "Extra files staged for the ORCA run"},
     )
     _properties_model: type[ORCAProperties] = ORCAProperties
+
+    def __post_init__(self):
+        """Apply unified implicit-solvent overrides when provided."""
+        if self.implicit_solvent is None:
+            return
+        mapped = to_orca(self.implicit_solvent)
+        self.solvation = mapped["solvation"] if mapped["solvation"] is SolvationType else None
+        self.solvation_model = (
+            mapped["solvation_model"] if mapped["solvation_model"] is SolvationModelType else None
+        )
+        self.solvent = mapped["solvent"] if mapped["solvent"] is SolventType else None
 
     def _set_keywords(self) -> list[SimpleKeyword]:
         """Construct OPI simple keywords from calculator settings.

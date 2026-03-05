@@ -1,23 +1,29 @@
-"""PySCF GPU DFT calculator and related classes."""
+"""PySCF DFT calculator with optional GPU backend selection."""
 
+from __future__ import annotations
+
+import importlib
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Optional
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
 
-import cupy as cp
 import numpy as np
 from ase import units
-from gpu4pyscf import dft
 from monty.json import MSONable
 from pint import Quantity
+from pyscf import dft as pyscf_dft
 from pyscf import gto, lo
 from pyscf.dft.libxc import XC_CODES
 from pyscf.gto.basis import ALIAS, GTH_ALIAS
-from pyscf.scf import hf
 
 from jfchemistry import AtomicProperty, SystemProperty, ureg
 from jfchemistry.calculators.base import WavefunctionCalculator
 from jfchemistry.core.properties import OrbitalProperty, Properties, PropertyClass
+from jfchemistry.core.solvation import ImplicitSolventConfig, to_pyscfgpu
 from jfchemistry.core.unit_utils import to_magnitude
+
+if TYPE_CHECKING:
+    from pymatgen.core.structure import Molecule
+    from pyscf.scf import hf
 
 
 class PySCFOrbitalProperties(PropertyClass):
@@ -78,8 +84,8 @@ ibo_loc_methods = Literal["IBO", "PM"]
 
 
 @dataclass
-class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
-    """PySCF GPU DFT Calculator with full type support.
+class PySCFCalculator(WavefunctionCalculator, MSONable):
+    """PySCF DFT Calculator with optional GPU backend and full type support.
 
     Units:
         Pass a float in the listed unit or a pint Quantity (e.g. ``jfchemistry.ureg``
@@ -114,7 +120,11 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         localized_orbital_ibo_locmethod: IBO localization algorithm selection (default: "IBO").
     """
 
-    name: str = "PySCF GPU Calculator"
+    name: str = "PySCF Calculator"
+    mode: Literal["auto", "cpu", "gpu"] = field(
+        default="auto",
+        metadata={"description": "Execution mode: auto, cpu, or gpu."},
+    )
     cores: int = field(
         default=1,
         metadata={"description": "The number of CPU cores to use for parallel calculations"},
@@ -134,6 +144,13 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
     dispersion_correction: Optional[str] = field(
         default=None,
         metadata={"description": "The dispersion correction to use for the calculation"},
+    )
+    implicit_solvent: Optional[ImplicitSolventConfig] = field(
+        default=None,
+        metadata={
+            "description": "Unified implicit-solvent config. PySCF-GPU adapter currently "
+            "supports only model='none'."
+        },
     )
     participation_ratio: bool = field(
         default=False,
@@ -249,16 +266,44 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
         },
     )
     _properties_model: type[PySCFProperties] = PySCFProperties
+    _filename = "input.xyz"
 
     def __post_init__(self):
-        """Normalize unit-bearing attributes."""
+        """Normalize unit-bearing attributes and validate solvent support."""
         if self.homo_threshold is not None and isinstance(self.homo_threshold, Quantity):
             object.__setattr__(self, "homo_threshold", to_magnitude(self.homo_threshold, "eV"))
         if self.lumo_threshold is not None and isinstance(self.lumo_threshold, Quantity):
             object.__setattr__(self, "lumo_threshold", to_magnitude(self.lumo_threshold, "eV"))
+        if self.implicit_solvent is not None:
+            to_pyscfgpu(self.implicit_solvent)
 
-    def _setup_mf(self, mol: gto.Mole) -> dft.RKS:
-        mf = dft.RKS(mol, xc=self.xc_functional)
+    def _gpu_available(self) -> bool:
+        """Return True when gpu4pyscf backend is importable/available."""
+        try:
+            from gpu4pyscf import dft as _  # noqa: F401
+        except Exception:
+            return False
+        return True
+
+    def _selected_backend(self) -> str:
+        """Resolve runtime backend from requested mode."""
+        if self.mode == "cpu":
+            return "cpu"
+        if self.mode == "gpu":
+            if not self._gpu_available():
+                raise RuntimeError("GPU mode selected but gpu4pyscf backend is unavailable")
+            return "gpu"
+        # auto mode
+        return "gpu" if self._gpu_available() else "cpu"
+
+    def _setup_mf(self, mol: gto.Mole) -> Any:
+        """Create PySCF mean-field object in selected mode."""
+        backend = self._selected_backend()
+        if backend == "gpu":
+            gpu4pyscf_dft = importlib.import_module("gpu4pyscf.dft")
+            mf = gpu4pyscf_dft.RKS(mol, xc=self.xc_functional)
+        else:
+            mf = pyscf_dft.RKS(mol, xc=self.xc_functional)
         if self.joltqc:
             try:
                 import jqc.pyscf  # ty:ignore[unresolved-import]
@@ -484,13 +529,28 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
             )
         return handler(mf, ctx)
 
+    def _get_mol(self, molecule: Molecule) -> gto.Mole:
+        """Get the PySCF Mole object from the molecule."""
+        molecule.to(self._filename, fmt="xyz")
+        return gto.Mole(atom=self._filename, basis=self.basis_set, xc=self.xc_functional)
+
+    def _setup_mf(self, mol: gto.Mole) -> Any:
+        """Create PySCF mean-field object in selected mode."""
+        backend = self._selected_backend()
+        if backend == "gpu":
+            gpu4pyscf_dft = importlib.import_module("gpu4pyscf.dft")
+            mf = gpu4pyscf_dft.RKS(mol, xc=self.xc_functional)
+        else:
+            mf = pyscf_dft.RKS(mol, xc=self.xc_functional)
+        return mf
+
     def _get_properties(self, mf: hf.RHF) -> PySCFProperties:
         """Parse the properties from the output."""
         total_energy = mf.e_tot
         overlap_matrix = mf.get_ovlp()
         if self.participation_ratio:
-            S = overlap_matrix
-            B = cp.zeros((mf.mol.natm, S.shape[0]))
+            S = np.asarray(overlap_matrix)
+            B = np.zeros((mf.mol.natm, S.shape[0]))
             for i in range(mf.mol.nbas):
                 atom_idx = mf.mol.bas_atom(i)
                 B[atom_idx, i] = 1
@@ -506,7 +566,7 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
                 for C_i in homo_orbitals.T:
                     for i in range(mf.mol.natm):
                         _, _, ao_start, ao_end = mf.mol.aoslice_by_atom()[i, :]
-                        ao_indices = cp.arange(ao_start, ao_end)
+                        ao_indices = np.arange(ao_start, ao_end)
                         B[i, ao_indices] = C_i[ao_indices]
                     P_i = B @ S @ C_i
                     P_homo.append(P_i)
@@ -520,7 +580,7 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
                 for C_i in lumo_orbitals.T:
                     for i in range(mf.mol.natm):
                         _, _, ao_start, ao_end = mf.mol.aoslice_by_atom()[i, :]
-                        ao_indices = cp.arange(ao_start, ao_end)
+                        ao_indices = np.arange(ao_start, ao_end)
                         B[i, ao_indices] = C_i[ao_indices]
                     P_i = B @ S @ C_i
                     P_lumo.append(P_i)
@@ -559,7 +619,7 @@ class PySCFGPUCalculator(WavefunctionCalculator, MSONable):
             ),
             overlap_matrix=OrbitalProperty(
                 name="Overlap Matrix",
-                value=cp.asnumpy(overlap_matrix).tolist(),
+                value=np.asarray(overlap_matrix).tolist(),
                 description="Atomic orbital overlap matrix (S)",
             ),
             localized_mo_coefficients=OrbitalProperty(

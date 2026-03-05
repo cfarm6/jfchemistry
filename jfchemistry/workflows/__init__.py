@@ -1,19 +1,49 @@
 """Workflows for the jfchemistry package."""
 
 __all__ = [
+    "ConformerEnsembleWorkflow",
     "FreeEnergyDifferenceWorkflow",
+    "FrequencyIRASEWorkflow",
+    "FrequencyIRAnalysisWorkflow",
+    "FrequencyIRORCAWorkflow",
+    "FrequencyIRPySCFWorkflow",
     "NelsonsFourPointMethod",
     "PartitionCoefficientWorkflow",
+    "RedoxPropertyWorkflow",
     "ReorganizationEnergyWorkflow",
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str):  # noqa: PLR0911
     """Lazily import workflows to avoid importing optional heavy dependencies on import."""
     if name == "PartitionCoefficientWorkflow":
         from .partition_coefficient import PartitionCoefficientWorkflow
 
         return PartitionCoefficientWorkflow
+    if name == "ConformerEnsembleWorkflow":
+        from .conformer_ensemble import ConformerEnsembleWorkflow
+
+        return ConformerEnsembleWorkflow
+    if name == "FrequencyIRAnalysisWorkflow":
+        from .frequency_ir import FrequencyIRAnalysisWorkflow
+
+        return FrequencyIRAnalysisWorkflow
+    if name == "FrequencyIRASEWorkflow":
+        from .frequency_ir import FrequencyIRASEWorkflow
+
+        return FrequencyIRASEWorkflow
+    if name == "FrequencyIRORCAWorkflow":
+        from .frequency_ir import FrequencyIRORCAWorkflow
+
+        return FrequencyIRORCAWorkflow
+    if name == "FrequencyIRPySCFWorkflow":
+        from .frequency_ir import FrequencyIRPySCFWorkflow
+
+        return FrequencyIRPySCFWorkflow
+    if name == "RedoxPropertyWorkflow":
+        from .redox import RedoxPropertyWorkflow
+
+        return RedoxPropertyWorkflow
     if name == "FreeEnergyDifferenceWorkflow":
         from .free_energy_difference import FreeEnergyDifferenceWorkflow
 

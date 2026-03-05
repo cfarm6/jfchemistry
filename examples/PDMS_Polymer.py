@@ -142,11 +142,6 @@ npt_job_6 = TorchSimMolecularDynamicsNPTNoseHoover(
 nvt_job_7 = TorchSimMolecularDynamicsNVTNoseHoover(
     temperature=600.0,
     duration=50_000,
-    calculator=torchsim_calculator,
-    timestep=1.0,
-    log_temperature=True,
-    log_trajectory=True,
-    log_potential_energy=True,
     log_interval=1_000.0,
     logfile="nvt_7",
     tau=100.0,
@@ -154,14 +149,9 @@ nvt_job_7 = TorchSimMolecularDynamicsNVTNoseHoover(
 
 nvt_job_8 = TorchSimMolecularDynamicsNVTNoseHoover(
     temperature=300.0,
-    duration=100_000,
-    calculator=torchsim_calculator,
-    timestep=1.0,
-    log_temperature=True,
-    log_trajectory=True,
-    log_potential_energy=True,
+    duration=50_000,
     log_interval=1_000.0,
-    logfile="nvt_8",
+    logfile="nvt_7",
     tau=100.0,
 ).make(nvt_job_7.output.structure)
 
