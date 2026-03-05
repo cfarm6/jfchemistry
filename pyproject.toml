@@ -22,14 +22,15 @@ dependencies = [
     "periodictable>=2.0.2,<3",
     "fairchem-core>=2.14,<3",
     "aimnet[ase]",
-    "orb-models>=0.5.5,<0.6",
+    "orb-models @ git+https://github.com/orbital-materials/orb-models.git@main",
     "torch-sim-atomistic>=0.5.0,<0.6",
     "gpu4pyscf-cuda13x>=1.5.1,<2",
     "orca-pi>=1.0.1",
     "microsoft-skala>=1.1.0,<2",
     "cutensor-cu13>=2.4.1,<3",
     "joltqc @ git+https://github.com/ByteDance-Seed/JoltQC.git",
-    "cupy-cuda13x>=13.6.0,<14", "monty>=2025.3.3,<2026",
+    "cupy-cuda13x>=13.6.0,<14",
+    "monty>=2025.3.3,<2026",
     "torchtnt @ git+https://github.com/meta-pytorch/tnt.git"
 ]
 

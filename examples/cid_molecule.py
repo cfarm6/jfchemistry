@@ -3,14 +3,16 @@
 from jobflow.core.flow import Flow
 from jobflow.managers.local import run_locally
 
-from jfchemistry.calculators.ase import AimNet2Calculator
+from jfchemistry.calculators.ase import ORBCalculator
 from jfchemistry.generation import RDKitGeneration
 from jfchemistry.inputs import PubChemCID
 from jfchemistry.optimizers import ASEOptimizer
 from jfchemistry.utilities import CombineMolecules, RotateMolecule, SaveToDisk, TranslateMolecule
 
 # Select Calculator
-calculator = AimNet2Calculator(model="aimnet2_2025")
+calculator = ORBCalculator(
+    model="orb-v3-conservative-inf-omat", compile=True, d3_correction=True, device="cuda"
+)
 
 
 # Pull molecules from PubChem by CID
@@ -35,7 +37,7 @@ combine_job = CombineMolecules().make([translate_job.output.structure, jobs2[-1]
 
 final_opt_job = ASEOptimizer(calculator=calculator).make(combine_job.output.structure)
 
-save_job = SaveToDisk().make(final_opt_job.output.structure, filename="final_opt.xyz")
+save_job = SaveToDisk(filename="final_opt.xyz").make(final_opt_job.output.structure)
 flow = Flow(
     [
         *jobs1,

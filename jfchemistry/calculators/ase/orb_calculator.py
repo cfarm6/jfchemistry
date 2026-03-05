@@ -59,6 +59,7 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
             - "float32-highest": Higher precision float32
             - "float64": Double precision
         compile: Whether to compile the model for faster inference (default: False).
+        d3_correction: Whether to use the D3 correction (default: False).
 
     Examples:
         >>> from jfchemistry.calculators import ORBModelCalculator # doctest: +SKIP
@@ -99,7 +100,9 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
         default="float32-high", metadata={"description": "The precision to use"}
     )
     compile: bool = field(default=False, metadata={"description": "Whether to compile the model"})
-
+    d3_correction: bool = field(
+        default=False, metadata={"description": "Whether to use the D3 correction"}
+    )
     _properties_model: type[OrbProperties] = OrbProperties
 
     def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
@@ -133,26 +136,27 @@ class ORBCalculator(ASECalculator, MachineLearnedInteratomicPotentialCalculator,
                 "ORB OMol models do not support periodic boundary conditions.\
                 Please remove the cell from the atoms object."
             )
-        try:
-            from orb_models.forcefield import pretrained
-            from orb_models.forcefield.calculator import ORBCalculator
-        except ImportError as e:
-            raise ImportError(
-                "The 'orb-models' package is required to use ORBCalculator but is not available."
-                "Please install it from: https://github.com/orbital-materials/orb-models"
-            ) from e
+        from orb_models.forcefield import pretrained
+        from orb_models.forcefield.inference.calculator import ORBCalculator
+        from orb_models.forcefield.inference.d3_model import AlchemiDFTD3, D3SumModel
+
         if self.charge is not None:
             charge = self.charge
         if self.spin_multiplicity is not None:
             spin_multiplicity = self.spin_multiplicity
 
-        orbff = getattr(pretrained, self.model.replace("-", "_"))(
+        orbff, atoms_adapter = getattr(pretrained, self.model.replace("-", "_"))(
             device=self.device,
             precision=self.precision,
             compile=self.compile,
         )
 
-        atoms.calc = ORBCalculator(orbff, device=self.device)
+        if self.d3_correction:
+            orbff = D3SumModel(
+                orbff, AlchemiDFTD3(functional="PBE", damping="BJ", compile=self.compile)
+            )
+
+        atoms.calc = ORBCalculator(orbff, atoms_adapter=atoms_adapter, device=self.device)
         atoms.info["charge"] = charge
         atoms.info["spin"] = spin_multiplicity
         return atoms
