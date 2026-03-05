@@ -98,7 +98,8 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
         default=False, metadata={"description": "Whether to compile the model"}
     )
     compile_kwargs: dict[str, str] = field(
-        default={}, metadata={"description": "Keyword arguments for the model compilation"}
+        default_factory=dict,
+        metadata={"description": "Keyword arguments for the model compilation"},
     )
     _properties_model: type[AimNet2Properties] = AimNet2Properties
 
