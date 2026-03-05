@@ -97,6 +97,9 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
     compile_model: bool = field(
         default=False, metadata={"description": "Whether to compile the model"}
     )
+    compile_kwargs: dict[str, str] = field(
+        default={}, metadata={"description": "Keyword arguments for the model compilation"}
+    )
     _properties_model: type[AimNet2Properties] = AimNet2Properties
 
     def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
@@ -136,6 +139,7 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
             needs_dispersion=self.needs_dispersion,
             device=self.device,
             compile_model=self.compile_model,
+            compile_kwargs=self.compile_kwargs,
         )
         atoms.calc = AIMNet2ASE(model, charge, spin_multiplicity)
 
