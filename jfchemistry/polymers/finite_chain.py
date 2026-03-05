@@ -191,11 +191,11 @@ class GenerateFiniteCopolymerChain(Maker):
         default=100,
         metadata={"description": "Number of conformers to generate for each monomer type."},
     )
-    sequence_mode: Literal[
-        "explicit", "weighted_random", "alternating", "periodic", "block"
-    ] = field(
-        default="explicit",
-        metadata={"description": "Mode used to define repeating-unit sequence."},
+    sequence_mode: Literal["explicit", "weighted_random", "alternating", "periodic", "block"] = (
+        field(
+            default="explicit",
+            metadata={"description": "Mode used to define repeating-unit sequence."},
+        )
     )
     sequence: list[int] = field(
         default_factory=list,

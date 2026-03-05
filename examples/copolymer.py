@@ -26,9 +26,9 @@ def main() -> None:
     poly_b = polymer_from_smiles("C[*:1]", "[*:1]CC(C=CC=C)[*:2]", "C[*:2]")
 
     maker = GenerateFiniteCopolymerChain(
-        sequence_mode="weighted_random",
+        sequence_mode="alternating",
         chain_length=8,
-        unit_weights=[0.65, 0.35],
+        alternating_units=[0, 1],
         random_seed=42,
         dihedral_angles=175.0,
         num_conformers=5,
@@ -38,7 +38,7 @@ def main() -> None:
     response = maker.make.original(maker, [poly_a, poly_b])
     xyz = response.output.files["chain.xyz"]
 
-    out = Path("examples/copolymer_weighted_random.xyz")
+    out = Path("copolymer_weighted_random.xyz")
     out.write_text(xyz)
     print(f"Wrote {out}")
     print(f"Sequence: {maker.sequence}")
