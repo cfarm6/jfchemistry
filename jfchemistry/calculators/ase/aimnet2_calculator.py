@@ -5,7 +5,9 @@ for fast and accurate calculation of molecular energies and partial charges.
 """
 
 from dataclasses import dataclass, field
+from typing import Literal, Optional
 
+from aimnet.calculators import AIMNet2ASE, AIMNet2Calculator
 from ase import Atoms
 from monty.json import MSONable
 
@@ -69,7 +71,32 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
     """
 
     name: str = "AimNet2 Calculator"
-    model: str = field(default="aimnet2_2025", metadata={"description": "AimNet2 model to use"})
+    model: Literal["aimnet2_wb97m", "aimnet2_2025", "aimnet2nse", "aimnet2pd"] = field(
+        default="aimnet2_2025", metadata={"description": "AimNet2 model to use"}
+    )
+    nb_threshold: int = field(
+        default=120, metadata={"description": "Number of neighbors threshold for the model"}
+    )
+    needs_coulomb: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "Whether the model needs Coulomb interaction. \
+            If None, the model will use what is defined in the model metadata."
+        },
+    )
+    needs_dispersion: Optional[bool] = field(
+        default=None,
+        metadata={
+            "description": "Whether the model needs dispersion interaction. \
+            If None, the model will use what is defined in the model metadata."
+        },
+    )
+    device: Literal["cpu", "cuda"] = field(
+        default="cpu", metadata={"description": "The device to use for the calculator"}
+    )
+    compile_model: bool = field(
+        default=False, metadata={"description": "Whether to compile the model"}
+    )
     _properties_model: type[AimNet2Properties] = AimNet2Properties
 
     def _set_calculator(self, atoms: Atoms, charge: float = 0, spin_multiplicity: int = 1) -> Atoms:
@@ -98,18 +125,19 @@ class AimNet2Calculator(ASECalculator, MachineLearnedInteratomicPotentialCalcula
             >>> atoms = calc.set_calculator(atoms, charge=0, spin_multiplicity=1) # doctest: +SKIP
             >>> energy = atoms.get_potential_energy() # doctest: +SKIP
         """
-        try:
-            from aimnet.calculators import AIMNet2ASE
-        except ImportError as e:
-            raise ImportError(
-                "The 'aimnet' package is required to use AimNet2Calculator but is not available. "
-                "Please install it from: https://github.com/cfarm6/aimnetcentral.git"
-            ) from e
         if self.charge is not None:
             charge = self.charge
         if self.spin_multiplicity is not None:
             spin_multiplicity = self.spin_multiplicity
-        atoms.calc = AIMNet2ASE(self.model, charge, spin_multiplicity)
+        model = AIMNet2Calculator(
+            self.model,
+            nb_threshold=self.nb_threshold,
+            needs_coulomb=self.needs_coulomb,
+            needs_dispersion=self.needs_dispersion,
+            device=self.device,
+            compile_model=self.compile_model,
+        )
+        atoms.calc = AIMNet2ASE(model, charge, spin_multiplicity)
 
         aimnet2_atomtypes = [1, 6, 7, 8, 9, 17, 16, 5, 14, 15, 33, 34, 35, 53]
         atomic_nums = atoms.get_atomic_numbers()

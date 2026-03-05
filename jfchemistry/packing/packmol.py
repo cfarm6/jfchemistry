@@ -113,7 +113,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
             "unit": "Å",
         },
     )
-    packmol_path: str = field(
+    executable: str = field(
         default="packmol",
         metadata={"description": "path to packmol executable"},
     )
@@ -262,7 +262,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
         """
         try:
             result = subprocess.run(
-                [self.packmol_path, "-i", input_file],
+                [self.executable, "-i", input_file],
                 capture_output=False,
                 text=True,
                 check=False,
@@ -279,7 +279,7 @@ class PackmolPacking[InputType: list[Molecule], OutputType: Structure](
                     raise RuntimeError(error_msg)
         except FileNotFoundError:
             raise RuntimeError(
-                f"Packmol executable not found at '{self.packmol_path}'. "
+                f"Packmol executable not found at '{self.executable}'. "
                 "Please ensure packmol is installed and in your PATH."
             ) from None
 

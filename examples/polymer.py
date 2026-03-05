@@ -12,7 +12,7 @@ from jfchemistry.utilities import SaveToDisk
 
 chain_length = 20
 number_chains = 5
-calculator = AimNet2Calculator(model="aimnet2")
+calculator = AimNet2Calculator(model="aimnet2_2025")
 
 # BEGIN WORKFLOW
 
