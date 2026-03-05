@@ -39,6 +39,7 @@ def main() -> None:
     )
 
     responses = run_locally(flow)
+
     print("Ran flow with", len(responses), "responses")
 
 

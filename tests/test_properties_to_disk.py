@@ -6,6 +6,8 @@ from jfchemistry import SystemProperty, ureg
 from jfchemistry.core.properties import Properties, PropertyClass
 from jfchemistry.utilities import PropertiesToDisk
 
+FILE_NUM = 2
+
 
 class _SystemProperties(PropertyClass):
     total_energy: SystemProperty
@@ -43,7 +45,7 @@ def test_properties_to_disk_list_suffixes(tmp_path) -> None:
     resp = maker.make.original(maker, props)
 
     files = resp.output.files["properties_json"]
-    assert len(files) == 2
+    assert len(files) == FILE_NUM
     p0 = tmp_path / "props_0.json"
     p1 = tmp_path / "props_1.json"
     assert p0.exists()

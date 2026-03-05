@@ -22,6 +22,7 @@ from jfchemistry.core.solvation import ImplicitSolventConfig, to_pyscfgpu
 from jfchemistry.core.unit_utils import to_magnitude
 
 if TYPE_CHECKING:
+    from pymatgen.core.structure import Molecule
     from pyscf.scf import hf
 
 
@@ -265,6 +266,7 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
         },
     )
     _properties_model: type[PySCFProperties] = PySCFProperties
+    _filename = "input.xyz"
 
     def __post_init__(self):
         """Normalize unit-bearing attributes and validate solvent support."""
@@ -526,6 +528,21 @@ class PySCFCalculator(WavefunctionCalculator, MSONable):
                 f"Unsupported localized orbital method: {self.localized_orbital_method}"
             )
         return handler(mf, ctx)
+
+    def _get_mol(self, molecule: Molecule) -> gto.Mole:
+        """Get the PySCF Mole object from the molecule."""
+        molecule.to(self._filename, fmt="xyz")
+        return gto.Mole(atom=self._filename, basis=self.basis_set, xc=self.xc_functional)
+
+    def _setup_mf(self, mol: gto.Mole) -> Any:
+        """Create PySCF mean-field object in selected mode."""
+        backend = self._selected_backend()
+        if backend == "gpu":
+            gpu4pyscf_dft = importlib.import_module("gpu4pyscf.dft")
+            mf = gpu4pyscf_dft.RKS(mol, xc=self.xc_functional)
+        else:
+            mf = pyscf_dft.RKS(mol, xc=self.xc_functional)
+        return mf
 
     def _get_properties(self, mf: hf.RHF) -> PySCFProperties:
         """Parse the properties from the output."""

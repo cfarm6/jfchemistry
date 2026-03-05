@@ -40,7 +40,7 @@ class RedoxOutput(Output):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     files: Optional[Any] = None
-    properties: Optional[Any] = None
+    properties: Optional[RedoxProperties] = None
 
 
 @dataclass
@@ -220,11 +220,11 @@ class RedoxPropertyWorkflow(PymatGenMaker):
     ) -> PymatGenMaker:
         m = deepcopy(maker)
         if hasattr(m, "charge"):
-            m.charge = charge
+            m.charge = charge  # type: ignore[attr-defined]
         if hasattr(m, "spin_multiplicity"):
-            m.spin_multiplicity = spin
+            m.spin_multiplicity = spin  # type: ignore[attr-defined]
         if hasattr(m, "steps") and not relax:
-            m.steps = 0
+            m.steps = 0  # type: ignore[attr-defined]
         return m
 
     def _build_flow(self, molecule: Molecule) -> tuple[Flow, RedoxOutput]:

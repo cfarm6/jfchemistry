@@ -44,30 +44,6 @@ class ConformerEnsembleOutput(Output):
 
 
 @dataclass
-class ConformerSinglePointEvaluationCalculation(PymatGenMaker):
-    """Evaluate a single-point maker over a conformer list."""
-
-    name: str = "Conformer Single Point Evaluation"
-    single_point: PymatGenMaker | None = None
-    _output_model: type[Output] = Output
-
-    @jfchem_job()
-    def make(self, conformers: list[Molecule]) -> Response[_output_model]:
-        """Run single-point calculations on each conformer and collect properties."""
-        if self.single_point is None:
-            raise ValueError(
-                "ConformerSinglePointEvaluationCalculation requires `single_point`."
-            )
-        properties: list[Properties] = []
-        files: list[Any] = []
-        for conformer in conformers:
-            job = self.single_point.make.original(self.single_point, conformer)
-            properties.append(job.output.properties)
-            files.append(job.output.files)
-        return Response(output=Output(structure=conformers, properties=properties, files=files))
-
-
-@dataclass
 class ConformerEnsembleCalculation(PymatGenMaker):
     """Reduce conformer energies into Boltzmann ensemble properties."""
 
@@ -172,9 +148,7 @@ class ConformerEnsembleWorkflow(PymatGenMaker):
         calc = ConformerEnsembleCalculation(temperature=self.temperature)
 
         if self.single_point is not None:
-            sp_eval_job = ConformerSinglePointEvaluationCalculation(
-                single_point=self.single_point
-            ).make(conformer_job.output.structure)
+            sp_eval_job = self.single_point.make(conformer_job.output.structure)
             reducer_job = calc.make(sp_eval_job.output.properties)
             jobs = [conformer_job, sp_eval_job, reducer_job]
             files = {

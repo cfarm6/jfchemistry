@@ -158,9 +158,7 @@ class PartitionCoefficientWorkflow(PymatGenMaker):
     conformer_generator: ConformerGeneration = field(
         default_factory=lambda: CRESTConformers(threads=1)
     )
-    geometry_optimizer: GeometryOptimization = field(
-        default_factory=lambda: ORCAOptimizer(cores=1)
-    )
+    geometry_optimizer: GeometryOptimization = field(default_factory=lambda: ORCAOptimizer(cores=1))
     single_point: SinglePointCalculation = field(
         default_factory=lambda: ORCASinglePointCalculator(cores=1)
     )
@@ -206,11 +204,13 @@ class PartitionCoefficientWorkflow(PymatGenMaker):
         if self.tautomer_generator is not None:
             tauto_maker = self._configure_for_phase(self.tautomer_generator, phase)
             tautomer_job = tauto_maker.make(current_structure)
+            print("TAUTOMER JOB UUID: ", tautomer_job.uuid)
             jobs.append(tautomer_job)
             current_structure = tautomer_job.output.structure
 
         conf_maker = self._configure_for_phase(self.conformer_generator, phase)
         conformer_job = conf_maker.make(current_structure)
+        print("CONFORMER JOB UUID: ", conformer_job.uuid)
         jobs.append(conformer_job)
         phase_structures = conformer_job.output.structure
 
@@ -219,33 +219,39 @@ class PartitionCoefficientWorkflow(PymatGenMaker):
                 phase_structures,
                 conformer_job.output.properties,
             )
+            print("ENERGY FILTER JOB UUID: ", ef_job.uuid)
             jobs.append(ef_job)
             phase_structures = ef_job.output.structure
 
         if self.conformer_structural_filter is not None:
             sf_job = self.conformer_structural_filter.make(phase_structures)
+            print("STRUCTURAL FILTER JOB UUID: ", sf_job.uuid)
             jobs.append(sf_job)
             phase_structures = sf_job.output.structure
 
         opt_maker = self._configure_for_phase(self.geometry_optimizer, phase)
         opt_job = opt_maker.make(phase_structures)
+        print("OPTIMIZATION JOB UUID: ", opt_job.uuid)
         jobs.append(opt_job)
         optimized_structures = opt_job.output.structure
         optimized_properties = opt_job.output.properties
 
         if self.optimized_energy_filter is not None:
             oef_job = self.optimized_energy_filter.make(optimized_structures, optimized_properties)
+            print("OPTIMIZED ENERGY FILTER JOB UUID: ", oef_job.uuid)
             jobs.append(oef_job)
             optimized_structures = oef_job.output.structure
             optimized_properties = oef_job.output.properties
 
         if self.optimized_structural_filter is not None:
             osf_job = self.optimized_structural_filter.make(optimized_structures)
+            print("OPTIMIZED STRUCTURAL FILTER JOB UUID: ", osf_job.uuid)
             jobs.append(osf_job)
             optimized_structures = osf_job.output.structure
 
         sp_maker = self._configure_for_phase(self.single_point, phase)
         sp_job = sp_maker.make(optimized_structures)
+        print("SINGLE-POINT JOB UUID: ", sp_job.uuid)
         jobs.append(sp_job)
 
         return jobs, sp_job.output.properties

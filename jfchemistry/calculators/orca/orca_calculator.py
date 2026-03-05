@@ -170,9 +170,11 @@ class ORCACalculator(WavefunctionCalculator, MSONable):
         if self.implicit_solvent is None:
             return
         mapped = to_orca(self.implicit_solvent)
-        self.solvation = mapped["solvation"]  # type: ignore[assignment]
-        self.solvation_model = mapped["solvation_model"]  # type: ignore[assignment]
-        self.solvent = mapped["solvent"]  # type: ignore[assignment]
+        self.solvation = mapped["solvation"] if mapped["solvation"] is SolvationType else None
+        self.solvation_model = (
+            mapped["solvation_model"] if mapped["solvation_model"] is SolvationModelType else None
+        )
+        self.solvent = mapped["solvent"] if mapped["solvent"] is SolventType else None
 
     def _set_keywords(self) -> list[SimpleKeyword]:
         """Construct OPI simple keywords from calculator settings.

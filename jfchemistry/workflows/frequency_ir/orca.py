@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 from jobflow.core.job import Response
 
 from jfchemistry import SystemProperty, ureg
-from jfchemistry.calculators.orca.orca_calculator import ORCACalculator
 from jfchemistry.core.jfchem_job import jfchem_job
 from jfchemistry.core.makers import PymatGenMaker
 from jfchemistry.workflows.frequency_ir.workflow import (
@@ -23,6 +22,8 @@ from jfchemistry.workflows.frequency_ir.workflow import (
 
 if TYPE_CHECKING:
     from pymatgen.core.structure import Molecule
+
+    from jfchemistry.calculators.orca.orca_calculator import ORCACalculator
 
 
 @dataclass
@@ -81,24 +82,23 @@ class FrequencyIRORCACalculation(PymatGenMaker):
             mol_path = Path(tmpdir) / "input.xyz"
             molecule.to(str(mol_path), fmt="xyz")
 
-            calc = ORCACalculator(**self.calculator.as_dict())
-            calc.working_dir = tmpdir
+            self.calculator.working_dir = tmpdir
             # ensure frequency job keyword
-            if "FREQ" not in [k.upper() for k in calc.additional_keywords]:
-                calc.additional_keywords.append("FREQ")
+            if "FREQ" not in [k.upper() for k in self.calculator.additional_keywords]:
+                self.calculator.additional_keywords.append("FREQ")
 
-            sk_list = calc._set_keywords()
-            opi_calc = calc._build_calculator("orca_freq")
+            sk_list = self.calculator._set_keywords()
+            opi_calc = self.calculator._build_calculator("orca_freq")
 
             from opi.input.structures.structure import Structure
 
             opi_calc.structure = Structure.from_xyz(str(mol_path))
-            calc._set_structure_charge_and_spin(
+            self.calculator._set_structure_charge_and_spin(
                 opi_calc,
-                molecule.charge,
-                molecule.spin_multiplicity,
+                int(molecule.charge),
+                int(molecule.spin_multiplicity) if molecule.spin_multiplicity else None,
             )
-            calc._configure_calculator_input(opi_calc, sk_list)
+            self.calculator._configure_calculator_input(opi_calc, sk_list)
             opi_calc.write_input()
             opi_calc.run()
 

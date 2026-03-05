@@ -27,7 +27,7 @@ from jfchemistry.workflows.frequency_ir.workflow import (
 if TYPE_CHECKING:
     from pymatgen.core.structure import Molecule
 
-    from jfchemistry.calculators.ase import ASECalculator
+    from jfchemistry.calculators.ase.ase_calculator import ASECalculator
 
 
 @dataclass
@@ -74,7 +74,7 @@ class FrequencyIRASECalculation(PymatGenMaker):
                 ir = Infrared(atoms, name=ir_name, delta=self.displacement, nfree=self.nfree)
                 ir.run()
                 frequencies = [float(x) for x in ir.get_frequencies()]
-                intensities = [float(x) for x in ir.intensities]
+                intensities: list[int | float] = [float(x) for x in ir.intensities]
                 ir.clean()
             except Exception:
                 vib = Vibrations(atoms, name=vib_name, delta=self.displacement, nfree=self.nfree)

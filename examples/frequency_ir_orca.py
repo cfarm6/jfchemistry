@@ -18,9 +18,8 @@ def main() -> None:
 
     orca_calc = ORCACalculator(
         xc_functional="B3LYP",
-        basis_set="def2-SVP",
+        basis_set="def2_SVP",
         cores=4,
-        additional_keywords=["FREQ"],
     )
 
     freq_job = FrequencyIRORCAWorkflow(

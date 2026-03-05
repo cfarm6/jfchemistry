@@ -64,8 +64,7 @@ class FrequencyIRPySCFCalculation(PymatGenMaker):
         e_corr_ev = (float(th["E_tot"][0]) - float(th["E_elec"][0])) * EH_TO_EV
         h_corr_ev = (float(th["H_tot"][0]) - float(th["E_elec"][0])) * EH_TO_EV
         g_corr_ev = (float(th["G_tot"][0]) - float(th["E_elec"][0])) * EH_TO_EV
-
-        return {
+        props = {
             "frequencies_cm1": frequencies_cm1,
             "intensities_km_mol": intensities_km_mol,
             "energy_ev": energy_ev,
@@ -74,6 +73,8 @@ class FrequencyIRPySCFCalculation(PymatGenMaker):
             "h_corr_ev": h_corr_ev,
             "g_corr_ev": g_corr_ev,
         }
+        print(props)
+        return props
 
     @jfchem_job()
     def make(self, molecule: Molecule) -> Response[_output_model]:
